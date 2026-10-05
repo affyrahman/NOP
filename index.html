@@ -1,0 +1,671 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Subordinate Courts of Brunei Darussalam - Notes of Proceedings Editor</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            govNavy: '#0a192f',
+            govGold: '#d97706',
+          }
+        }
+      }
+    }
+  </script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Merriweather:ital,wght@0,300;0,400;0,700;1,300&family=Roboto+Mono:wght@400;500;700&display=swap');
+    
+    body { font-family: 'Inter', sans-serif; }
+    .serif-font { font-family: 'Merriweather', serif; }
+    .mono-font { font-family: 'Roboto Mono', monospace; }
+    
+    /* Custom Scrollbar */
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+    .dark ::-webkit-scrollbar-thumb { background: #475569; }
+
+    /* NOP Editor Styling */
+    #editor {
+      min-height: 550px;
+      outline: none;
+    }
+
+    /* World-Standard Hanging Indent for Transcript Dialogue */
+    #editor p.speech-line {
+      margin-bottom: 0.85rem;
+      padding-left: 9rem; /* Indents all wrapped lines cleanly */
+      text-indent: -9rem; /* Pulls speaker tag back to left margin */
+      line-height: 1.7;
+      word-wrap: break-word;
+    }
+
+    /* Speaker Tag Styling */
+    .speaker-tag {
+      display: inline-block;
+      width: 8.5rem; /* Fixed width box for tag alignment */
+      font-weight: 700;
+      font-size: 0.85rem;
+      text-indent: 0;
+      vertical-align: top;
+      user-select: none;
+      padding: 1px 4px;
+      border-radius: 4px;
+      margin-right: 0.5rem;
+      text-transform: uppercase;
+      letter-spacing: 0.025em;
+    }
+
+    /* Color-Coded Speaker Themes */
+    .speaker-court { color: #1e3a8a; background-color: #dbeafe; border: 1px solid #bfdbfe; }
+    .dark .speaker-court { color: #93c5fd; background-color: #1e3a8a4d; border-color: #1e40af; }
+
+    .speaker-prosecution { color: #991b1b; background-color: #fee2e2; border: 1px solid #fecaca; }
+    .dark .speaker-prosecution { color: #fca5a5; background-color: #991b1b4d; border-color: #991b1b; }
+
+    .speaker-defence { color: #065f46; background-color: #d1fae5; border: 1px solid #a7f3d0; }
+    .dark .speaker-defence { color: #6ee7b7; background-color: #065f464d; border-color: #065f46; }
+
+    .speaker-dc { color: #0f766e; background-color: #ccfbf1; border: 1px solid #99f6e4; }
+    .dark .speaker-dc { color: #5eead4; background-color: #0f766e4d; border-color: #0f766e; }
+
+    .speaker-interp { color: #92400e; background-color: #fef3c7; border: 1px solid #fde68a; }
+    .dark .speaker-interp { color: #fde047; background-color: #92400e4d; border-color: #92400e; }
+
+    .speaker-witness { color: #4338ca; background-color: #e0e7ff; border: 1px solid #c7d2fe; }
+    .dark .speaker-witness { color: #a5b4fc; background-color: #4338ca4d; border-color: #4338ca; }
+
+    .tag-order { color: #6b21a8; background-color: #f3e8ff; border: 1px solid #e9d5ff; font-weight: 800; }
+    .dark .tag-order { color: #d8b4fe; background-color: #6b21a84d; border-color: #6b21a8; }
+
+    .tag-timestamp { color: #475569; font-size: 0.8em; font-weight: 700; font-family: 'Roboto Mono', monospace; background-color: #f1f5f9; border: 1px solid #e2e8f0; width: auto !important; padding: 1px 6px; }
+    .dark .tag-timestamp { color: #cbd5e1; background-color: #334155; border-color: #475569; }
+
+    /* Print Formatting Rules */
+    @media print {
+      body { background: white !important; color: black !important; }
+      header, aside, #toolbar, #actionBtns { display: none !important; }
+      main { padding: 0 !important; overflow: visible !important; }
+      #editorContainer { border: none !important; box-shadow: none !important; padding: 0 !important; width: 100% !important; max-width: 100% !important; }
+      .speaker-tag { border: none !important; background: transparent !important; color: black !important; padding: 0 !important; font-weight: bold !important; }
+      #editor p.speech-line { padding-left: 8rem !important; text-indent: -8rem !important; }
+    }
+  </style>
+</head>
+<body class="bg-slate-100 text-slate-800 dark:bg-slate-900 dark:text-slate-100 h-full flex flex-col transition-colors duration-200">
+
+  <!-- Top Navigation Header -->
+  <header class="bg-slate-900 text-white px-4 py-2.5 flex items-center justify-between shadow-md z-30 border-b border-slate-800 shrink-0">
+    <div class="flex items-center space-x-3">
+      <!-- Toggle Sidebar Button -->
+      <button onclick="toggleSidebar()" class="p-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-amber-400 hover:text-amber-300 transition flex items-center gap-2 border border-slate-700" title="Slide Case Metadata (Cmd/Ctrl + B)">
+        <i class="fa-solid fa-sidebar text-base"></i>
+        <span class="text-xs font-semibold hidden sm:inline" id="sidebarToggleText">Slide Metadata</span>
+      </button>
+
+      <div class="flex items-center space-x-2">
+        <i class="fa-solid fa-gavel text-amber-500 text-lg"></i>
+        <span class="font-bold text-sm sm:text-base tracking-wide">SUBORDINATE COURTS BRUNEI</span>
+        <span class="hidden md:inline-block bg-amber-500/20 text-amber-300 text-[10px] uppercase tracking-wider px-2 py-0.5 rounded font-mono border border-amber-500/30">Official NOP Suite</span>
+      </div>
+    </div>
+
+    <div class="flex items-center space-x-2 sm:space-x-3">
+      <!-- Live Clock -->
+      <div id="liveClock" class="font-mono text-xs bg-slate-800 px-2.5 py-1 rounded text-amber-400 border border-slate-700 hidden sm:block">00:00:00 AM</div>
+      
+      <!-- Dark/Light Theme Toggle -->
+      <button onclick="toggleDarkMode()" class="p-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 transition border border-slate-700" title="Toggle Dark/Light Mode">
+        <i id="themeIcon" class="fa-solid fa-moon text-base"></i>
+      </button>
+
+      <!-- Actions -->
+      <div id="actionBtns" class="flex items-center space-x-2">
+        <button onclick="exportWord()" class="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-medium flex items-center gap-1.5 transition shadow-sm">
+          <i class="fa-solid fa-file-word"></i>
+          <span class="hidden sm:inline">Export Word</span>
+        </button>
+        <button onclick="window.print()" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg text-xs font-medium flex items-center gap-1.5 transition border border-slate-700">
+          <i class="fa-solid fa-print"></i>
+          <span class="hidden sm:inline">Print / PDF</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Workspace Wrapper -->
+  <div class="flex-1 flex overflow-hidden relative">
+    
+    <!-- Collapsible / Sliding Metadata Sidebar -->
+    <aside id="metadataSidebar" class="w-80 bg-white dark:bg-slate-800 border-r border-slate-200 dark:border-slate-700 flex flex-col transition-all duration-300 ease-in-out z-20 shadow-lg shrink-0">
+      <div class="p-3 bg-slate-50 dark:bg-slate-800/80 border-b border-slate-200 dark:border-slate-700 flex justify-between items-center">
+        <h2 class="font-semibold text-xs tracking-wider text-slate-500 dark:text-slate-400 uppercase flex items-center gap-1.5">
+          <i class="fa-solid fa-folder-tree text-amber-500"></i> Case Metadata Controls
+        </h2>
+        <button onclick="toggleSidebar()" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 text-sm p-1">
+          <i class="fa-solid fa-angles-left"></i>
+        </button>
+      </div>
+
+      <div class="flex-1 overflow-y-auto p-4 space-y-4 text-xs">
+        
+        <!-- Case Builder -->
+        <div class="space-y-3 bg-slate-50 dark:bg-slate-700/30 p-3.5 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm">
+          <div class="flex justify-between items-center">
+            <label class="font-bold text-slate-800 dark:text-slate-100 flex items-center gap-1.5">
+              <i class="fa-solid fa-gavel text-amber-500"></i> Case Reference Builder
+            </label>
+            <span class="text-[9px] font-mono bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/30 px-1.5 py-0.5 rounded font-bold">BRUNEI FORMAT</span>
+          </div>
+
+          <!-- Quick Case Presets -->
+          <div>
+            <span class="text-[10px] text-slate-400 font-semibold uppercase block mb-1">Quick Court Presets</span>
+            <div class="grid grid-cols-4 gap-1">
+              <button type="button" onclick="applyPreset('MCCT', 'BSB')" class="p-1 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 hover:border-amber-500 rounded text-[10px] font-bold text-slate-700 dark:text-slate-300">MCCT/BSB</button>
+              <button type="button" onclick="applyPreset('ICCT', 'BSB')" class="p-1 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 hover:border-amber-500 rounded text-[10px] font-bold text-slate-700 dark:text-slate-300">ICCT/BSB</button>
+              <button type="button" onclick="applyPreset('MCCS', 'KB')" class="p-1 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 hover:border-amber-500 rounded text-[10px] font-bold text-slate-700 dark:text-slate-300">MCCS/KB</button>
+              <button type="button" onclick="applyPreset('TR', 'BSB')" class="p-1 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 hover:border-amber-500 rounded text-[10px] font-bold text-slate-700 dark:text-slate-300">TR/BSB</button>
+            </div>
+          </div>
+
+          <!-- Court Tier & Case Type Selector -->
+          <div class="grid grid-cols-2 gap-2">
+            <div>
+              <span class="text-[10px] text-slate-400 font-semibold uppercase">Jurisdiction Tier</span>
+              <select id="courtTier" onchange="syncMetadata()" class="w-full bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded p-1.5 font-medium focus:ring-2 focus:ring-amber-500 outline-none">
+                <option value="Magistrate's Court" selected>Magistrate's Court</option>
+                <option value="Intermediate Court">Intermediate Court</option>
+                <option value="High Court">High Court</option>
+                <option value="Juvenile Court">Juvenile Court</option>
+                <option value="Small Claims Tribunal">Small Claims Tribunal</option>
+              </select>
+            </div>
+            <div>
+              <span class="text-[10px] text-slate-400 font-semibold uppercase">Case Type Prefix</span>
+              <select id="caseType" onchange="syncMetadata()" class="w-full bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded p-1.5 font-medium focus:ring-2 focus:ring-amber-500 outline-none">
+                <optgroup label="Criminal Matters">
+                  <option value="MCCT" selected>MCCT (Magistrate Criminal)</option>
+                  <option value="ICCT">ICCT (Intermediate Criminal)</option>
+                  <option value="TR">TR (Traffic Offence)</option>
+                  <option value="JUV">JUV (Juvenile Case)</option>
+                  <option value="INQ">INQ (Inquest / Coroner)</option>
+                </optgroup>
+                <optgroup label="Civil & Commercial">
+                  <option value="MCCS">MCCS (Magistrate Civil)</option>
+                  <option value="ICCS">ICCS (Intermediate Civil)</option>
+                  <option value="SCT">SCT (Small Claims Tribunal)</option>
+                  <option value="BKP">BKP (Bankruptcy Petition)</option>
+                  <option value="EX">EX (Execution Proceeding)</option>
+                </optgroup>
+                <optgroup label="Appeals">
+                  <option value="MAC">MAC (Magistrate Appeal Crim)</option>
+                  <option value="MACA">MACA (Magistrate Appeal Civil)</option>
+                </optgroup>
+              </select>
+            </div>
+          </div>
+
+          <!-- District Station & Year -->
+          <div class="grid grid-cols-2 gap-2">
+            <div>
+              <span class="text-[10px] text-slate-400 font-semibold uppercase">Registry Station</span>
+              <select id="docketLoc" onchange="syncMetadata()" class="w-full bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded p-1.5 font-medium focus:ring-2 focus:ring-amber-500 outline-none">
+                <option value="BANDAR SERI BEGAWAN" selected>BSB (Bandar Seri Begawan)</option>
+                <option value="KUALA BELAIT">KB (Kuala Belait)</option>
+                <option value="TUTONG">TTG (Tutong)</option>
+                <option value="TEMBURONG">TEMB (Temburong)</option>
+              </select>
+            </div>
+            <div>
+              <span class="text-[10px] text-slate-400 font-semibold uppercase">Nature of Hearing</span>
+              <select id="hearingNature" onchange="syncMetadata()" class="w-full bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded p-1.5 font-medium focus:ring-2 focus:ring-amber-500 outline-none">
+                <option value="Mention" selected>Mention</option>
+                <option value="Trial / Hearing">Trial / Hearing</option>
+                <option value="Plea / Sentence">Plea / Sentence</option>
+                <option value="Bail Application">Bail Application</option>
+                <option value="Case Management">Case Management</option>
+                <option value="Inquiry">Inquiry</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- File Reference Numbers -->
+          <div class="grid grid-cols-2 gap-2">
+            <div>
+              <span class="text-[10px] text-slate-400 font-semibold uppercase">Docket No.</span>
+              <input type="number" id="caseNoVal" value="9" min="1" oninput="syncMetadata()" class="w-full bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded p-1.5 font-medium focus:ring-2 focus:ring-amber-500 outline-none">
+            </div>
+            <div>
+              <span class="text-[10px] text-slate-400 font-semibold uppercase">Filing Year</span>
+              <input type="number" id="caseYearVal" value="2026" oninput="syncMetadata()" class="w-full bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded p-1.5 font-medium focus:ring-2 focus:ring-amber-500 outline-none">
+            </div>
+          </div>
+
+          <div class="p-2 bg-slate-900 text-white rounded-lg border border-slate-800 text-center shadow-inner">
+            <span class="text-[9px] text-amber-400 font-bold block uppercase tracking-wider">Official Brunei Case Reference</span>
+            <span id="generatedCaseNo" class="font-mono font-bold text-sm text-amber-300">MCCT/BSB/9/2026</span>
+          </div>
+        </div>
+
+        <!-- Judicial Officer / Coram -->
+        <div>
+          <label class="font-semibold text-slate-700 dark:text-slate-300 block mb-1">Presiding Judicial Officer</label>
+          <input type="text" id="magistrateName" value="Magistrate / Senior Magistrate" oninput="syncMetadata()" class="w-full bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded p-1.5 font-medium">
+        </div>
+
+        <!-- Date & Court Room -->
+        <div class="grid grid-cols-2 gap-2">
+          <div>
+            <label class="font-semibold text-slate-700 dark:text-slate-300 block mb-1">Hearing Date</label>
+            <input type="date" id="hearingDate" onchange="syncMetadata()" class="w-full bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded p-1.5 font-medium">
+          </div>
+          <div>
+            <label class="font-semibold text-slate-700 dark:text-slate-300 block mb-1">Court Room</label>
+            <select id="courtRoom" onchange="syncMetadata()" class="w-full bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded p-1.5 font-medium">
+              <option value="Court Room 1">Court 1</option>
+              <option value="Court Room 2">Court 2</option>
+              <option value="Court Room 3">Court 3</option>
+              <option value="Court Room 4">Court 4</option>
+              <option value="Chambers">Chambers</option>
+              <option value="Virtual Court (Zoom)">Virtual Court</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Session Timestamps -->
+        <div class="p-3 bg-slate-50 dark:bg-slate-700/30 rounded-lg border border-slate-200 dark:border-slate-700 space-y-2">
+          <span class="font-semibold text-slate-700 dark:text-slate-300 block">Session Times</span>
+          <div class="flex items-center justify-between gap-2">
+            <button onclick="setStartTime()" class="flex-1 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded font-medium transition flex items-center justify-center gap-1">
+              <i class="fa-solid fa-play text-[10px]"></i> Start
+            </button>
+            <input type="text" id="startTime" value="09:15 AM" oninput="syncMetadata()" placeholder="09:00 AM" class="w-24 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 rounded p-1 text-center font-mono font-medium">
+          </div>
+          <div class="flex items-center justify-between gap-2">
+            <button onclick="setEndTime()" class="flex-1 py-1 bg-rose-600 hover:bg-rose-700 text-white rounded font-medium transition flex items-center justify-center gap-1">
+              <i class="fa-solid fa-stop text-[10px]"></i> End
+            </button>
+            <input type="text" id="endTime" value="10:45 AM" oninput="syncMetadata()" placeholder="10:30 AM" class="w-24 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 rounded p-1 text-center font-mono font-medium">
+          </div>
+        </div>
+
+        <!-- Prosecuting Officer & Legal Representatives -->
+        <div class="space-y-3">
+          <span class="font-semibold text-slate-700 dark:text-slate-300 block border-b pb-1 dark:border-slate-700">Parties & Representation</span>
+          <div>
+            <span class="text-[10px] text-slate-400 font-semibold uppercase">Prosecution / DPP Name</span>
+            <input type="text" id="dppName" value="DPP / Prosecuting Officer" oninput="syncMetadata()" class="w-full bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded p-1.5 font-medium">
+          </div>
+
+          <div class="space-y-2">
+            <div class="flex justify-between items-center">
+              <span class="text-[10px] text-slate-400 font-semibold uppercase">Defendants List</span>
+              <button onclick="addDefendant()" class="text-blue-600 dark:text-blue-400 hover:underline text-[10px] font-bold">+ Add Defendant</button>
+            </div>
+            <div id="defendantsContainer" class="space-y-2">
+              <div class="def-entry p-2 border border-slate-200 dark:border-slate-700 rounded bg-white dark:bg-slate-800 space-y-1">
+                <span class="font-bold text-emerald-600 dark:text-emerald-400 text-[11px]">D1</span>
+                <input type="text" value="Ahmad Bin Abdullah" oninput="syncMetadata()" placeholder="Defendant Name" class="def-name w-full bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded p-1 text-[11px]">
+                <input type="text" value="Counsel for D1" oninput="syncMetadata()" placeholder="Defense Counsel (DC)" class="def-counsel w-full bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded p-1 text-[11px]">
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Interpreter -->
+        <div class="space-y-1 border-t pt-2 border-slate-200 dark:border-slate-700">
+          <span class="font-semibold text-slate-700 dark:text-slate-300 block">Court Interpreter</span>
+          <input type="text" id="interpreterName" value="Malay / English Interpreter" oninput="syncMetadata()" placeholder="Interpreter Name / Language" class="w-full bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded p-1.5 font-medium">
+        </div>
+
+      </div>
+    </aside>
+
+    <!-- Rich Text NOP Typing Workspace -->
+    <main class="flex-1 flex flex-col bg-slate-100 dark:bg-slate-900 overflow-hidden relative">
+      
+      <!-- Toolbar for Quick Speakers & Hotkeys -->
+      <div id="toolbar" class="bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 p-2 flex flex-wrap items-center gap-1.5 shadow-sm z-10 shrink-0 text-xs">
+        
+        <span class="text-slate-400 text-[10px] font-bold uppercase mr-1 flex items-center gap-1">
+          <i class="fa-solid fa-bolt text-amber-500"></i> Fast Tags (Auto Line-Break):
+        </span>
+        
+        <button onclick="insertSpeaker('Court:', 'speaker-court')" class="px-2.5 py-1 bg-blue-100 text-blue-900 dark:bg-blue-950 dark:text-blue-200 border border-blue-200 dark:border-blue-800 hover:bg-blue-200 rounded font-bold transition flex items-center gap-1">
+          <span>Court</span> <span class="opacity-40 text-[9px]">(Alt+1)</span>
+        </button>
+        
+        <button onclick="insertSpeaker('Prosecution:', 'speaker-prosecution')" class="px-2.5 py-1 bg-red-100 text-red-900 dark:bg-red-950 dark:text-red-200 border border-red-200 dark:border-red-800 hover:bg-red-200 rounded font-bold transition flex items-center gap-1">
+          <span>Prosecution</span> <span class="opacity-40 text-[9px]">(Alt+2)</span>
+        </button>
+
+        <button onclick="insertSpeaker('D1:', 'speaker-defence')" class="px-2.5 py-1 bg-emerald-100 text-emerald-900 dark:bg-emerald-950 dark:text-emerald-200 border border-emerald-200 dark:border-emerald-800 hover:bg-emerald-200 rounded font-bold transition flex items-center gap-1">
+          <span>D1</span> <span class="opacity-40 text-[9px]">(Alt+3)</span>
+        </button>
+
+        <button onclick="insertSpeaker('DC for D1:', 'speaker-dc')" class="px-2.5 py-1 bg-teal-100 text-teal-900 dark:bg-teal-950 dark:text-teal-200 border border-teal-200 dark:border-teal-800 hover:bg-teal-200 rounded font-bold transition flex items-center gap-1">
+          <span>DC for D1</span> <span class="opacity-40 text-[9px]">(Alt+4)</span>
+        </button>
+
+        <button onclick="insertSpeaker('Interpreter:', 'speaker-interp')" class="px-2.5 py-1 bg-amber-100 text-amber-900 dark:bg-amber-950 dark:text-amber-200 border border-amber-200 dark:border-amber-800 hover:bg-amber-200 rounded font-bold transition flex items-center gap-1">
+          <span>Interpreter</span> <span class="opacity-40 text-[9px]">(Alt+5)</span>
+        </button>
+
+        <button onclick="insertSpeaker('Witness:', 'speaker-witness')" class="px-2.5 py-1 bg-indigo-100 text-indigo-900 dark:bg-indigo-950 dark:text-indigo-200 border border-indigo-200 dark:border-indigo-800 hover:bg-indigo-200 rounded font-bold transition flex items-center gap-1">
+          <span>Witness</span> <span class="opacity-40 text-[9px]">(Alt+6)</span>
+        </button>
+
+        <button onclick="insertSpeaker('ORDER:', 'tag-order')" class="px-2.5 py-1 bg-purple-100 text-purple-900 dark:bg-purple-950 dark:text-purple-200 border border-purple-200 dark:border-purple-800 hover:bg-purple-200 rounded font-bold transition flex items-center gap-1">
+          <span>ORDER</span> <span class="opacity-40 text-[9px]">(Alt+O)</span>
+        </button>
+
+        <div class="h-4 w-px bg-slate-300 dark:bg-slate-600 mx-1"></div>
+
+        <button onclick="insertTimestamp()" class="px-2 py-1 bg-slate-200 text-slate-700 dark:bg-slate-700 dark:text-slate-200 hover:bg-slate-300 rounded font-medium transition flex items-center gap-1" title="Insert Time Stamp (Alt+T)">
+          <i class="fa-regular fa-clock text-amber-500"></i> Time <span class="opacity-40 text-[9px]">(Alt+T)</span>
+        </button>
+
+      </div>
+
+      <!-- Scrollable NOP Page Area -->
+      <div class="flex-1 overflow-y-auto p-4 md:p-8 flex justify-center">
+        <div id="editorContainer" class="w-full max-w-4xl bg-white dark:bg-slate-800 rounded-xl shadow-lg border border-slate-200 dark:border-slate-700 p-8 md:p-12 flex flex-col justify-between transition-all min-h-[850px]">
+          
+          <div>
+            <!-- Court Document Header Block -->
+            <div class="text-center border-b-2 border-slate-900 dark:border-slate-100 pb-4 mb-6">
+              <h1 class="font-bold text-lg md:text-xl tracking-wider text-slate-900 dark:text-slate-100 uppercase">IN THE SUBORDINATE COURTS OF BRUNEI DARUSSALAM</h1>
+              <p class="text-xs font-bold text-slate-600 dark:text-slate-300 mt-1">HOLDEN AT <span id="docHdrLoc" class="underline">TEMBURONG</span></p>
+              <div class="mt-2 font-mono font-bold text-base md:text-lg text-amber-600 dark:text-amber-400" id="docHdrCaseNo">
+                CASE NO: MCCT/TEMBURONG/9/2026
+              </div>
+            </div>
+
+            <!-- World Standard Court Metadata Grid Block -->
+            <div id="docMetadataBlock" class="mb-6 p-4 bg-slate-50 dark:bg-slate-900/60 rounded-lg border border-slate-200 dark:border-slate-700 text-xs font-serif text-slate-800 dark:text-slate-200 space-y-2">
+              <div class="grid grid-cols-2 gap-4 border-b pb-2 dark:border-slate-700">
+                <div><strong class="font-sans text-slate-500 uppercase text-[10px] block">BEFORE:</strong> <span id="docMagistrate" class="font-semibold">Magistrate / Senior Magistrate</span></div>
+                <div><strong class="font-sans text-slate-500 uppercase text-[10px] block">DATE & VENUE:</strong> <span id="docDateVenue">04/10/2026 | Court Room 1</span></div>
+              </div>
+
+              <div class="grid grid-cols-2 gap-4 border-b pb-2 dark:border-slate-700">
+                <div><strong class="font-sans text-slate-500 uppercase text-[10px] block">PROSECUTION:</strong> <span id="docProsecution">DPP / Prosecuting Officer</span></div>
+                <div><strong class="font-sans text-slate-500 uppercase text-[10px] block">SESSION TIMINGS:</strong> <span id="docTimings" class="font-mono">09:15 AM - 10:45 AM</span></div>
+              </div>
+
+              <div class="grid grid-cols-2 gap-4">
+                <div><strong class="font-sans text-slate-500 uppercase text-[10px] block">DEFENDANT(S) & COUNSEL:</strong> <span id="docDefendants">D1: Ahmad Bin Abdullah (Counsel for D1)</span></div>
+                <div><strong class="font-sans text-slate-500 uppercase text-[10px] block">INTERPRETER:</strong> <span id="docInterpreter">Malay / English Interpreter</span></div>
+              </div>
+            </div>
+
+            <!-- Notes of Proceedings Editor Body -->
+            <div id="editor" contenteditable="true" class="serif-font text-sm md:text-base text-slate-800 dark:text-slate-100 focus:outline-none">
+              <p class="speech-line"><span class="speaker-tag speaker-court" contenteditable="false">Court:</span> Case called for mention.</p>
+              <p class="speech-line"><span class="speaker-tag speaker-prosecution" contenteditable="false">Prosecution:</span> Appears for the Public Prosecutor. We are ready to present the charges today.</p>
+              <p class="speech-line"><span class="speaker-tag speaker-defence" contenteditable="false">D1:</span> Present in court and confirms identity.</p>
+              <p class="speech-line"><span class="speaker-tag speaker-dc" contenteditable="false">DC for D1:</span> Confirms representation of D1 and requests adjournment to take further instructions.</p>
+              <p class="speech-line"><span class="speaker-tag tag-order" contenteditable="false">ORDER:</span> Matter adjourned to next mention date. Bail is extended.</p>
+            </div>
+          </div>
+
+          <!-- Magistrate Signature Block -->
+          <div class="mt-12 pt-6 border-t border-slate-300 dark:border-slate-700 flex justify-end">
+            <div class="text-center w-64 space-y-1">
+              <div class="h-12 border-b border-dashed border-slate-400 flex items-center justify-center text-slate-400 italic text-xs">
+                (Signed Digitally)
+              </div>
+              <p id="sigMagistrate" class="font-bold text-sm text-slate-900 dark:text-slate-100 pt-1">Magistrate / Senior Magistrate</p>
+              <p class="text-xs text-slate-500 dark:text-slate-400">Subordinate Courts, Brunei Darussalam</p>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+    </main>
+
+  </div>
+
+  <script>
+    // Live Clock
+    setInterval(() => {
+      const now = new Date();
+      document.getElementById('liveClock').innerText = now.toLocaleTimeString();
+    }, 1000);
+
+    // Default Date Initialization
+    document.getElementById('hearingDate').valueAsDate = new Date();
+
+    // Toggle Sidebar Drawer
+    function toggleSidebar() {
+      const sidebar = document.getElementById('metadataSidebar');
+      const toggleBtnText = document.getElementById('sidebarToggleText');
+      
+      sidebar.classList.toggle('-ml-80');
+      if (sidebar.classList.contains('-ml-80')) {
+        toggleBtnText.innerText = "Show Metadata";
+      } else {
+        toggleBtnText.innerText = "Slide Metadata";
+      }
+    }
+
+    // Dark Mode Toggle
+    function toggleDarkMode() {
+      document.documentElement.classList.toggle('dark');
+      const icon = document.getElementById('themeIcon');
+      if (document.documentElement.classList.contains('dark')) {
+        icon.className = 'fa-solid fa-sun text-amber-400';
+      } else {
+        icon.className = 'fa-solid fa-moon text-slate-300';
+      }
+    }
+
+    // Synchronize Metadata Sidebar to Document Output Header
+    function applyPreset(prefix, locationCode) {
+      document.getElementById('caseType').value = prefix;
+      const locSelect = document.getElementById('docketLoc');
+      if (locationCode === 'BSB') locSelect.value = 'BANDAR SERI BEGAWAN';
+      if (locationCode === 'KB') locSelect.value = 'KUALA BELAIT';
+      if (locationCode === 'TTG') locSelect.value = 'TUTONG';
+      if (locationCode === 'TEMB') locSelect.value = 'TEMBURONG';
+
+      // Automatically adjust tier matching prefix
+      const tierSelect = document.getElementById('courtTier');
+      if (prefix.startsWith('IC')) {
+        tierSelect.value = 'Intermediate Court';
+      } else if (prefix === 'SCT') {
+        tierSelect.value = 'Small Claims Tribunal';
+      } else if (prefix === 'JUV') {
+        tierSelect.value = 'Juvenile Court';
+      } else {
+        tierSelect.value = "Magistrate's Court";
+      }
+
+      syncMetadata();
+    }
+
+    function syncMetadata() {
+      const tier = document.getElementById('courtTier').value;
+      const type = document.getElementById('caseType').value;
+      const loc = document.getElementById('docketLoc').value;
+      const nature = document.getElementById('hearingNature').value;
+      const no = document.getElementById('caseNoVal').value || '1';
+      const year = document.getElementById('caseYearVal').value || '2026';
+
+      // Map Registry Station shorthand
+      let locShort = 'BSB';
+      if (loc === 'KUALA BELAIT') locShort = 'KB';
+      if (loc === 'TUTONG') locShort = 'TTG';
+      if (loc === 'TEMBURONG') locShort = 'TEMB';
+
+      const formattedCaseNo = `${type}/${locShort}/${no}/${year}`;
+      document.getElementById('generatedCaseNo').innerText = formattedCaseNo;
+      document.getElementById('docHdrCaseNo').innerText = `CASE NO: ${formattedCaseNo}`;
+      document.getElementById('docHdrLoc').innerText = loc;
+
+      // Update Magistrate & Signature
+      const magName = document.getElementById('magistrateName').value || 'Presiding Judicial Officer';
+      document.getElementById('docMagistrate').innerText = magName;
+      document.getElementById('sigMagistrate').innerText = magName;
+
+      // Date, Venue & Nature
+      const rawDate = document.getElementById('hearingDate').value;
+      const formattedDate = rawDate ? new Date(rawDate).toLocaleDateString('en-GB') : 'N/A';
+      const venue = document.getElementById('courtRoom').value;
+      document.getElementById('docDateVenue').innerText = `${formattedDate} | ${venue} (${nature})`;
+
+      // Prosecution
+      document.getElementById('docProsecution').innerText = document.getElementById('dppName').value || 'DPP / PO';
+
+      // Session Times
+      const startTime = document.getElementById('startTime').value || '--:--';
+      const endTime = document.getElementById('endTime').value || '--:--';
+      document.getElementById('docTimings').innerText = `${startTime} - ${endTime}`;
+
+      // Interpreter
+      document.getElementById('docInterpreter').innerText = document.getElementById('interpreterName').value || 'N/A';
+
+      // Aggregate Defendants
+      const defEntries = document.querySelectorAll('.def-entry');
+      const defArray = [];
+      defEntries.forEach((entry, idx) => {
+        const name = entry.querySelector('.def-name').value;
+        const counsel = entry.querySelector('.def-counsel').value;
+        let str = `D${idx + 1}: ${name || 'Unnamed'}`;
+        if (counsel) str += ` (${counsel})`;
+        defArray.push(str);
+      });
+      document.getElementById('docDefendants').innerText = defArray.length ? defArray.join('; ') : 'None';
+    }
+
+    // Session Timestamps
+    function setStartTime() {
+      const now = new Date();
+      document.getElementById('startTime').value = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      syncMetadata();
+    }
+
+    function setEndTime() {
+      const now = new Date();
+      document.getElementById('endTime').value = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      syncMetadata();
+    }
+
+    // Dynamic Defendant Rows
+    let defCount = 1;
+    function addDefendant() {
+      defCount++;
+      const container = document.getElementById('defendantsContainer');
+      const div = document.createElement('div');
+      div.className = "def-entry p-2 border border-slate-200 dark:border-slate-700 rounded bg-white dark:bg-slate-800 space-y-1";
+      div.innerHTML = `
+        <span class="font-bold text-emerald-600 dark:text-emerald-400 text-[11px]">D${defCount}</span>
+        <input type="text" placeholder="Defendant Name" oninput="syncMetadata()" class="def-name w-full bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded p-1 text-[11px]">
+        <input type="text" placeholder="Defense Counsel (DC)" oninput="syncMetadata()" class="def-counsel w-full bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded p-1 text-[11px]">
+      `;
+      container.appendChild(div);
+      syncMetadata();
+    }
+
+    // Insert Speaker Tag with Auto Line-Break
+    function insertSpeaker(speakerText, className) {
+      const editor = document.getElementById('editor');
+      editor.focus();
+
+      const sel = window.getSelection();
+      if (!sel.rangeCount) return;
+
+      const range = sel.getRangeAt(0);
+
+      // Create new paragraph with World-Standard hanging indent
+      const p = document.createElement('p');
+      p.className = 'speech-line';
+
+      const tagSpan = document.createElement('span');
+      tagSpan.className = `speaker-tag ${className}`;
+      tagSpan.contentEditable = "false";
+      tagSpan.innerText = speakerText;
+
+      p.appendChild(tagSpan);
+      p.appendChild(document.createTextNode(' '));
+
+      // Locate active paragraph node
+      let currentP = range.commonAncestorContainer;
+      while (currentP && currentP !== editor && currentP.nodeName !== 'P') {
+        currentP = currentP.parentNode;
+      }
+
+      if (currentP && currentP.nodeName === 'P' && currentP.innerText.trim() === '') {
+        // Replace empty line
+        editor.replaceChild(p, currentP);
+      } else if (currentP && currentP.nodeName === 'P') {
+        // Insert line break right below active paragraph
+        currentP.parentNode.insertBefore(p, currentP.nextSibling);
+      } else {
+        // Append to editor end
+        editor.appendChild(p);
+      }
+
+      // Position cursor right after space inside new line
+      const newRange = document.createRange();
+      newRange.selectNodeContents(p);
+      newRange.collapse(false);
+      sel.removeAllRanges();
+      sel.addRange(newRange);
+    }
+
+    // Insert Timestamp Tag
+    function insertTimestamp() {
+      const now = new Date();
+      const timeStr = `[${now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}]`;
+      insertSpeaker(timeStr, 'tag-timestamp');
+    }
+
+    // Hotkey Listener (Alt+1..6, Alt+O, Alt+T, Cmd/Ctrl+B)
+    document.addEventListener('keydown', function(e) {
+      if (e.altKey) {
+        if (e.key === '1') { e.preventDefault(); insertSpeaker('Court:', 'speaker-court'); }
+        if (e.key === '2') { e.preventDefault(); insertSpeaker('Prosecution:', 'speaker-prosecution'); }
+        if (e.key === '3') { e.preventDefault(); insertSpeaker('D1:', 'speaker-defence'); }
+        if (e.key === '4') { e.preventDefault(); insertSpeaker('DC for D1:', 'speaker-dc'); }
+        if (e.key === '5') { e.preventDefault(); insertSpeaker('Interpreter:', 'speaker-interp'); }
+        if (e.key === '6') { e.preventDefault(); insertSpeaker('Witness:', 'speaker-witness'); }
+        if (e.key.toLowerCase() === 'o') { e.preventDefault(); insertSpeaker('ORDER:', 'tag-order'); }
+        if (e.key.toLowerCase() === 't') { e.preventDefault(); insertTimestamp(); }
+      }
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'b') {
+        e.preventDefault();
+        toggleSidebar();
+      }
+    });
+
+    // Export MS Word Document
+    function exportWord() {
+      const header = "<html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'><head><title>Notes of Proceedings</title><style>p.speech-line { margin-bottom: 10pt; padding-left: 90pt; text-indent: -90pt; font-family: 'Times New Roman', serif; font-size: 11pt; } .speaker-tag { font-weight: bold; width: 85pt; display: inline-block; }</style></head><body>";
+      const footer = "</body></html>";
+      const html = header + document.getElementById('editorContainer').innerHTML + footer;
+
+      const blob = new Blob(['\ufeff', html], { type: 'application/msword' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${document.getElementById('generatedCaseNo').innerText.replace(/\//g, '_')}_NOP.doc`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+    }
+
+    // Run initial sync on load
+    window.onload = syncMetadata;
+  </script>
+</body>
+</html>
