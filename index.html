@@ -136,25 +136,18 @@
   <header class="bg-slate-900 text-white px-4 py-2.5 flex items-center justify-between shadow-md z-30 border-b border-slate-800 shrink-0">
     <div class="flex items-center space-x-3">
       <!-- Toggle Sidebar Button -->
-      <button onclick="toggleSidebar()" class="p-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-amber-400 hover:text-amber-300 transition flex items-center gap-2 border border-slate-700" title="Slide Case Metadata (Cmd/Ctrl + B)">
+      <button onclick="toggleSidebar()" class="p-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-amber-400 hover:text-amber-300 transition flex items-center gap-2 border border-slate-700" title="Slide Case Ref. (Cmd/Ctrl + B)">
         <i class="fa-solid fa-sidebar text-base"></i>
-        <span class="text-xs font-semibold hidden sm:inline" id="sidebarToggleText">Slide Metadata</span>
+        <span class="text-xs font-semibold hidden sm:inline" id="sidebarToggleText">Case Reference</span>
       </button>
 
       <div class="flex items-center space-x-2">
         <i class="fa-solid fa-gavel text-amber-500 text-lg"></i>
-        <span class="font-bold text-sm sm:text-base tracking-wide">SUBORDINATE COURTS BRUNEI</span>
-        <span class="hidden md:inline-block bg-amber-500/20 text-amber-300 text-[10px] uppercase tracking-wider px-2 py-0.5 rounded font-mono border border-amber-500/30">Official NOP Suite</span>
+        <span class="font-bold text-sm sm:text-base tracking-wide">MAGISTRATES' COURT</span>
       </div>
     </div>
 
     <div class="flex items-center space-x-2 sm:space-x-3">
-      <!-- Toggle Fast Tags Right Slider Button -->
-      <button onclick="toggleFastTagsSlider()" class="p-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-amber-400 hover:text-amber-300 transition flex items-center gap-1.5 border border-slate-700" title="Slide Fast Speaker Tags (Alt + S / Cmd + K)">
-        <i class="fa-solid fa-tags text-base"></i>
-        <span class="text-xs font-semibold hidden md:inline" id="tagsToggleText">Fast Tags</span>
-      </button>
-
       <!-- Auto-Save Status Badge -->
       <div id="autoSaveBadge" onclick="openRestorePromptManual()" class="hidden sm:flex items-center gap-1.5 bg-slate-800 hover:bg-slate-700/80 cursor-pointer text-slate-300 text-xs px-2.5 py-1 rounded-lg border border-slate-700 select-none transition" title="Click to view auto-save history / restore options">
         <i id="autoSaveIcon" class="fa-solid fa-cloud-arrow-up text-emerald-400 text-xs"></i>
@@ -165,12 +158,6 @@
       <!-- Live Clock -->
       <div id="liveClock" class="font-mono text-xs bg-slate-800 px-2.5 py-1 rounded text-amber-400 border border-slate-700 hidden sm:block">00:00:00 AM</div>
       
-      <!-- Hotkeys Guide Toggle -->
-      <button onclick="toggleShortcutsModal()" class="p-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 transition border border-slate-700 text-xs flex items-center gap-1.5" title="Keyboard Shortcuts Cheat Sheet">
-        <i class="fa-solid fa-keyboard text-amber-400 text-sm"></i>
-        <span class="hidden lg:inline text-xs font-semibold">Hotkeys</span>
-      </button>
-
       <!-- Dark/Light Theme Toggle -->
       <button onclick="toggleDarkMode()" class="p-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 transition border border-slate-700" title="Toggle Dark/Light Mode">
         <i id="themeIcon" class="fa-solid fa-moon text-base"></i>
@@ -182,9 +169,9 @@
           <i class="fa-solid fa-file-word"></i>
           <span class="hidden sm:inline">Export Word</span>
         </button>
-        <button onclick="window.print()" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg text-xs font-medium flex items-center gap-1.5 transition border border-slate-700">
-          <i class="fa-solid fa-print"></i>
-          <span class="hidden sm:inline">Print / PDF</span>
+        <button onclick="exportPDF()" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg text-xs font-medium flex items-center gap-1.5 transition border border-slate-700">
+          <i class="fa-solid fa-file-pdf text-amber-400"></i>
+          <span class="hidden sm:inline">Export PDF</span>
         </button>
       </div>
     </div>
@@ -197,7 +184,7 @@
     <aside id="metadataSidebar" class="w-80 bg-white dark:bg-slate-800 border-r border-slate-200 dark:border-slate-700 flex flex-col transition-all duration-300 ease-in-out z-20 shadow-lg shrink-0">
       <div class="p-3 bg-slate-50 dark:bg-slate-800/80 border-b border-slate-200 dark:border-slate-700 flex justify-between items-center">
         <h2 class="font-semibold text-xs tracking-wider text-slate-500 dark:text-slate-400 uppercase flex items-center gap-1.5">
-          <i class="fa-solid fa-folder-tree text-amber-500"></i> Case Metadata Controls
+          <i class="fa-solid fa-folder-tree text-amber-500"></i> Case Ref. Controls
         </h2>
         <button onclick="toggleSidebar()" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 text-sm p-1">
           <i class="fa-solid fa-angles-left"></i>
@@ -421,12 +408,12 @@
 
       <!-- Scrollable NOP Page Area -->
       <div class="flex-1 overflow-y-auto p-4 md:p-8 flex justify-center">
-        <div id="editorContainer" class="w-full max-w-4xl bg-white dark:bg-slate-800 rounded-xl shadow-lg border border-slate-200 dark:border-slate-700 p-8 md:p-12 flex flex-col justify-between transition-all min-h-[850px]">
+        <div id="editorContainer" class="w-full max-w-4xl bg-white dark:bg-slate-800 rounded-xl shadow-lg border border-slate-200 dark:border-slate-700 p-8 md:p-12 flex flex-col transition-all min-h-[850px] h-auto">
           
           <div>
             <!-- Court Document Header Block -->
             <div class="text-center border-b-2 border-slate-900 dark:border-slate-100 pb-4 mb-6">
-              <h1 class="font-bold text-lg md:text-xl tracking-wider text-slate-900 dark:text-slate-100 uppercase">IN THE SUBORDINATE COURTS OF BRUNEI DARUSSALAM</h1>
+              <h1 class="font-bold text-lg md:text-xl tracking-wider text-slate-900 dark:text-slate-100 uppercase">IN THE MAGISTRATES' COURT OF BRUNEI DARUSSALAM</h1>
               <p class="text-xs font-bold text-slate-600 dark:text-slate-300 mt-1">HOLDEN AT <span id="docHdrLoc" class="underline">BANDAR SERI BEGAWAN</span></p>
               <div class="mt-2 font-mono font-bold text-base md:text-lg text-amber-600 dark:text-amber-400" id="docHdrCaseNo">
                 CASE NO: MCCT/BSB/9/2026
@@ -446,7 +433,7 @@
               </div>
 
               <div class="grid grid-cols-2 gap-4">
-                <div><strong class="font-sans text-slate-500 uppercase text-[10px] block">DEFENDANT(S) & COUNSEL:</strong> <span id="docDefendants">D1: Defendant 1 [Present] (Unrepresented)</span></div>
+                <div><strong class="font-sans text-slate-500 uppercase text-[10px] block">DEFENDANT(S) & COUNSEL:</strong> <span id="docDefendants" class="whitespace-pre-line font-medium">D1: Defendant 1 [Present] (Unrepresented)</span></div>
                 <div><strong class="font-sans text-slate-500 uppercase text-[10px] block">INTERPRETER:</strong> <span id="docInterpreter">Malay / English Interpreter</span></div>
               </div>
             </div>
@@ -454,17 +441,6 @@
             <!-- Notes of Proceedings Editor Body -->
             <div id="editor" contenteditable="true" class="serif-font text-sm md:text-base text-slate-800 dark:text-slate-100 focus:outline-none min-h-[450px]">
               <p><br></p>
-            </div>
-          </div>
-
-          <!-- Magistrate Signature Block -->
-          <div class="mt-12 pt-6 border-t border-slate-300 dark:border-slate-700 flex justify-end">
-            <div class="text-center w-64 space-y-1">
-              <div class="h-12 border-b border-dashed border-slate-400 flex items-center justify-center text-slate-400 italic text-xs">
-                (Signed Digitally)
-              </div>
-              <p id="sigMagistrate" class="font-bold text-sm text-slate-900 dark:text-slate-100 pt-1">Magistrate</p>
-              <p class="text-xs text-slate-500 dark:text-slate-400">Subordinate Courts, Brunei Darussalam</p>
             </div>
           </div>
 
@@ -1021,7 +997,7 @@
       });
 
       const docDefs = document.getElementById('docDefendants');
-      if (docDefs) docDefs.innerText = defArray.length ? defArray.join('; ') : 'None';
+      if (docDefs) docDefs.innerText = defArray.length ? defArray.join('\n') : 'None';
 
       updateDynamicFastTags();
 
@@ -1575,11 +1551,12 @@
       markDirty();
     }
 
-    function addDefendant(nameVal = '', hasCounsel = false, counselVal = '', attendance = 'present', absentReason = 'Unexplained Absence') {
+    function addDefendant(nameVal = '', hasCounsel = undefined, counselVal = '', attendance = 'present', absentReason = 'Unexplained Absence') {
       const container = document.getElementById('defendantsContainer');
       if (!container) return;
       const count = container.querySelectorAll('.def-entry').length + 1;
-      const card = renderDefendantCard(count, nameVal, hasCounsel, counselVal, attendance, absentReason);
+      const resolvedHasCounsel = hasCounsel !== undefined ? hasCounsel : (count === 1 ? true : false);
+      const card = renderDefendantCard(count, nameVal, resolvedHasCounsel, counselVal, attendance, absentReason);
       container.appendChild(card);
       syncMetadata();
       markDirty();
@@ -1826,18 +1803,129 @@
 
     // Export MS Word Document
     function exportWord() {
-      const header = "<html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'><head><title>Notes of Proceedings</title><style>p.speech-line { margin-bottom: 10pt; padding-left: 90pt; text-indent: -90pt; font-family: 'Times New Roman', serif; font-size: 11pt; } .speaker-tag { font-weight: bold; width: 85pt; display: inline-block; }</style></head><body>";
-      const footer = "</body></html>";
-      const html = header + document.getElementById('editorContainer').innerHTML + footer;
+      const css = `
+        body { font-family: 'Times New Roman', Times, serif; font-size: 11pt; color: #000000; background: #ffffff; margin: 0; padding: 20pt; }
+        .text-center { text-align: center; }
+        .font-bold { font-weight: bold; }
+        .uppercase { text-transform: uppercase; }
+        h1 { font-size: 14pt; margin-bottom: 4pt; }
+        p { margin: 0 0 8pt 0; line-height: 1.4; }
+        .header-block { text-align: center; border-bottom: 2px solid #000000; padding-bottom: 12pt; margin-bottom: 16pt; }
+        .case-no { font-family: 'Courier New', Courier, monospace; font-size: 12pt; font-weight: bold; color: #b45309; margin-top: 6pt; }
+        .metadata-table { width: 100%; border-collapse: collapse; margin-bottom: 20pt; background: #f8fafc; border: 1px solid #cbd5e1; }
+        .metadata-table td { padding: 8pt; vertical-align: top; border-bottom: 1px solid #cbd5e1; border-right: 1px solid #cbd5e1; font-size: 10pt; }
+        .meta-label { font-family: Arial, sans-serif; font-size: 8.5pt; font-weight: bold; color: #64748b; text-transform: uppercase; display: block; margin-bottom: 2pt; }
+        .meta-val { font-weight: 600; color: #1e293b; }
+        p.speech-line { margin-bottom: 8pt; padding-left: 90pt; text-indent: -90pt; font-family: 'Times New Roman', Times, serif; font-size: 11pt; }
+        .speaker-tag { font-weight: bold; width: 85pt; display: inline-block; color: #0f172a; }
+        .speaker-court { color: #1d4ed8; }
+        .speaker-prosecution { color: #b91c1c; }
+        .speaker-dc { color: #047857; }
+        .tag-timestamp { font-family: 'Courier New', Courier, monospace; font-size: 10pt; color: #d97706; }
+        .signature-section { margin-top: 40pt; text-align: right; }
+        .signature-box { display: inline-block; text-align: center; width: 220pt; }
+        .sig-line { border-top: 1px dashed #94a3b8; height: 30pt; padding-top: 4pt; font-style: italic; color: #94a3b8; font-size: 10pt; }
+      `;
+
+      const editorClone = document.getElementById('editor').cloneNode(true);
+      editorClone.removeAttribute('contenteditable');
+
+      const caseNoText = document.getElementById('generatedCaseNo')?.innerText || 'CASE NO: MCCT/BSB/9/2026';
+      const locText = document.getElementById('docHdrLoc')?.innerText || 'BANDAR SERI BEGAWAN';
+      const magistrateText = document.getElementById('docMagistrate')?.innerText || 'Magistrate';
+      const dateVenueText = document.getElementById('docDateVenue')?.innerText || '';
+      const prosecutionText = document.getElementById('docProsecution')?.innerText || '';
+      const timingsText = document.getElementById('docTimings')?.innerText || '';
+      const defendantsText = document.getElementById('docDefendants')?.innerText || '';
+      const interpreterText = document.getElementById('docInterpreter')?.innerText || '';
+
+      const html = `
+        <html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
+        <head>
+          <title>Notes of Proceedings</title>
+          <style>${css}</style>
+        </head>
+        <body>
+          <table align="center" width="650" cellpadding="0" cellspacing="0" style="margin: 0 auto; width: 650pt;">
+            <tr>
+              <td>
+                <div class="header-block">
+                  <h1 style="font-size:14pt; font-weight:bold; text-transform:uppercase; margin:0;">IN THE SUBORDINATE COURTS OF BRUNEI DARUSSALAM</h1>
+                  <p style="font-size:10pt; font-weight:bold; margin-top:4pt; margin-bottom:0;">HOLDEN AT <u>${locText}</u></p>
+                  <div class="case-no">${caseNoText}</div>
+                </div>
+
+                <table class="metadata-table" width="100%" cellpadding="0" cellspacing="0">
+                  <tr>
+                    <td style="width: 50%;">
+                      <span class="meta-label">Before:</span>
+                      <span class="meta-val">${magistrateText}</span>
+                    </td>
+                    <td style="width: 50%;">
+                      <span class="meta-label">Date & Venue:</span>
+                      <span class="meta-val">${dateVenueText}</span>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td>
+                      <span class="meta-label">Prosecution:</span>
+                      <span class="meta-val">${prosecutionText}</span>
+                    </td>
+                    <td>
+                      <span class="meta-label">Session Timings:</span>
+                      <span class="meta-val" style="font-family: monospace;">${timingsText}</span>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td colspan="2">
+                      <span class="meta-label">Defendant(s) & Counsel:</span>
+                      <span class="meta-val" style="white-space: pre-line;">${defendantsText}</span>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td colspan="2">
+                      <span class="meta-label">Interpreter:</span>
+                      <span class="meta-val">${interpreterText}</span>
+                    </td>
+                  </tr>
+                </table>
+
+                <div class="editor-body">
+                  ${editorClone.innerHTML}
+                </div>
+
+                <div class="signature-section">
+                  <table align="right" cellpadding="0" cellspacing="0">
+                    <tr>
+                      <td style="text-align: center; width: 220pt;">
+                        <div class="sig-line">(Signed Digitally)</div>
+                        <div style="font-weight: bold; font-size: 11pt; margin-top: 4pt;">${magistrateText}</div>
+                        <div style="font-size: 9pt; color: #64748b;">Subordinate Courts, Brunei Darussalam</div>
+                      </td>
+                    </tr>
+                  </table>
+                </div>
+              </td>
+            </tr>
+          </table>
+        </body>
+        </html>
+      `;
 
       const blob = new Blob(['\ufeff', html], { type: 'application/msword' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `${document.getElementById('generatedCaseNo').innerText.replace(/\//g, '_')}_NOP.doc`;
+      a.download = `${caseNoText.replace(/[:\/]/g, '_').replace(/\s+/g, '')}_NOP.doc`;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
+      showToast('Word document exported successfully.');
+    }
+
+    // Export PDF / Print function
+    function exportPDF() {
+      window.print();
     }
 
     // ==========================================
