@@ -3,7 +3,10 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Subordinate Courts of Brunei Darussalam - Notes of Proceedings Editor</title>
+  <title>Subordinate Courts Brunei - NOP Editor</title>
+  <meta name="description" content="Official Notes of Proceedings (NOP) Editor for the Subordinate Courts of Brunei Darussalam, featuring case reference formatting, speaker tagging, and export tools.">
+  <meta property="og:title" content="Subordinate Courts Brunei - NOP Editor">
+  <meta property="og:description" content="Official Notes of Proceedings (NOP) Editor for the Subordinate Courts of Brunei Darussalam, featuring case reference formatting, speaker tagging, and export tools.">
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
     tailwind.config = {
@@ -88,6 +91,34 @@
     .tag-timestamp { color: #475569; font-size: 0.8em; font-weight: 700; font-family: 'Roboto Mono', monospace; background-color: #f1f5f9; border: 1px solid #e2e8f0; width: auto !important; padding: 1px 6px; }
     .dark .tag-timestamp { color: #cbd5e1; background-color: #334155; border-color: #475569; }
 
+    /* Sidebar Sliding Transitions */
+    #metadataSidebar {
+      transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    #metadataSidebar.collapsed {
+      margin-left: -20rem !important;
+    }
+
+    #fastTagsSidebar {
+      transition: margin-right 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.2s ease-in-out;
+    }
+    #fastTagsSidebar.collapsed {
+      margin-right: -20rem !important;
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    /* Editor Placeholder */
+    #editor:empty:before,
+    #editor > p:only-child:empty:before {
+      content: 'Click here or press a speaker hotkey (e.g. Alt+1 for Court, Alt+2 for Prosecution, Alt+3 for D1) to begin typing proceedings...';
+      color: #94a3b8;
+      font-style: italic;
+      font-family: ui-sans-serif, system-ui, sans-serif;
+      font-size: 0.875rem;
+      pointer-events: none;
+    }
+
     /* Print Formatting Rules */
     @media print {
       body { background: white !important; color: black !important; }
@@ -118,9 +149,28 @@
     </div>
 
     <div class="flex items-center space-x-2 sm:space-x-3">
+      <!-- Toggle Fast Tags Right Slider Button -->
+      <button onclick="toggleFastTagsSlider()" class="p-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-amber-400 hover:text-amber-300 transition flex items-center gap-1.5 border border-slate-700" title="Slide Fast Speaker Tags (Alt + S / Cmd + K)">
+        <i class="fa-solid fa-tags text-base"></i>
+        <span class="text-xs font-semibold hidden md:inline" id="tagsToggleText">Fast Tags</span>
+      </button>
+
+      <!-- Auto-Save Status Badge -->
+      <div id="autoSaveBadge" onclick="openRestorePromptManual()" class="hidden sm:flex items-center gap-1.5 bg-slate-800 hover:bg-slate-700/80 cursor-pointer text-slate-300 text-xs px-2.5 py-1 rounded-lg border border-slate-700 select-none transition" title="Click to view auto-save history / restore options">
+        <i id="autoSaveIcon" class="fa-solid fa-cloud-arrow-up text-emerald-400 text-xs"></i>
+        <span id="autoSaveStatus" class="text-[11px] font-medium text-slate-200">Auto-saved</span>
+        <span id="autoSaveTime" class="text-[10px] font-mono text-slate-400">Ready</span>
+      </div>
+
       <!-- Live Clock -->
       <div id="liveClock" class="font-mono text-xs bg-slate-800 px-2.5 py-1 rounded text-amber-400 border border-slate-700 hidden sm:block">00:00:00 AM</div>
       
+      <!-- Hotkeys Guide Toggle -->
+      <button onclick="toggleShortcutsModal()" class="p-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 transition border border-slate-700 text-xs flex items-center gap-1.5" title="Keyboard Shortcuts Cheat Sheet">
+        <i class="fa-solid fa-keyboard text-amber-400 text-sm"></i>
+        <span class="hidden lg:inline text-xs font-semibold">Hotkeys</span>
+      </button>
+
       <!-- Dark/Light Theme Toggle -->
       <button onclick="toggleDarkMode()" class="p-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 transition border border-slate-700" title="Toggle Dark/Light Mode">
         <i id="themeIcon" class="fa-solid fa-moon text-base"></i>
@@ -162,53 +212,25 @@
             <label class="font-bold text-slate-800 dark:text-slate-100 flex items-center gap-1.5">
               <i class="fa-solid fa-gavel text-amber-500"></i> Case Reference Builder
             </label>
-            <span class="text-[9px] font-mono bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/30 px-1.5 py-0.5 rounded font-bold">BRUNEI FORMAT</span>
           </div>
 
-          <!-- Quick Case Presets -->
-          <div>
-            <span class="text-[10px] text-slate-400 font-semibold uppercase block mb-1">Quick Court Presets</span>
-            <div class="grid grid-cols-4 gap-1">
-              <button type="button" onclick="applyPreset('MCCT', 'BSB')" class="p-1 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 hover:border-amber-500 rounded text-[10px] font-bold text-slate-700 dark:text-slate-300">MCCT/BSB</button>
-              <button type="button" onclick="applyPreset('ICCT', 'BSB')" class="p-1 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 hover:border-amber-500 rounded text-[10px] font-bold text-slate-700 dark:text-slate-300">ICCT/BSB</button>
-              <button type="button" onclick="applyPreset('MCCS', 'KB')" class="p-1 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 hover:border-amber-500 rounded text-[10px] font-bold text-slate-700 dark:text-slate-300">MCCS/KB</button>
-              <button type="button" onclick="applyPreset('TR', 'BSB')" class="p-1 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 hover:border-amber-500 rounded text-[10px] font-bold text-slate-700 dark:text-slate-300">TR/BSB</button>
-            </div>
-          </div>
-
-          <!-- Court Tier & Case Type Selector -->
+          <!-- Jurisdiction & Case Type Selector -->
           <div class="grid grid-cols-2 gap-2">
             <div>
-              <span class="text-[10px] text-slate-400 font-semibold uppercase">Jurisdiction Tier</span>
-              <select id="courtTier" onchange="syncMetadata()" class="w-full bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded p-1.5 font-medium focus:ring-2 focus:ring-amber-500 outline-none">
-                <option value="Magistrate's Court" selected>Magistrate's Court</option>
-                <option value="Intermediate Court">Intermediate Court</option>
-                <option value="High Court">High Court</option>
-                <option value="Juvenile Court">Juvenile Court</option>
-                <option value="Small Claims Tribunal">Small Claims Tribunal</option>
-              </select>
+              <span class="text-[10px] text-slate-400 font-semibold uppercase">Jurisdiction</span>
+              <div class="w-full bg-slate-100 dark:bg-slate-700/60 border border-slate-300 dark:border-slate-600 rounded p-1.5 font-bold text-slate-700 dark:text-slate-200 text-[11px] flex items-center gap-1.5">
+                <i class="fa-solid fa-scale-balanced text-amber-500"></i>
+                <span class="truncate">Magistrate's Court</span>
+                <input type="hidden" id="courtTier" value="Magistrate's Court">
+              </div>
             </div>
             <div>
               <span class="text-[10px] text-slate-400 font-semibold uppercase">Case Type Prefix</span>
-              <select id="caseType" onchange="syncMetadata()" class="w-full bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded p-1.5 font-medium focus:ring-2 focus:ring-amber-500 outline-none">
-                <optgroup label="Criminal Matters">
-                  <option value="MCCT" selected>MCCT (Magistrate Criminal)</option>
-                  <option value="ICCT">ICCT (Intermediate Criminal)</option>
-                  <option value="TR">TR (Traffic Offence)</option>
-                  <option value="JUV">JUV (Juvenile Case)</option>
-                  <option value="INQ">INQ (Inquest / Coroner)</option>
-                </optgroup>
-                <optgroup label="Civil & Commercial">
-                  <option value="MCCS">MCCS (Magistrate Civil)</option>
-                  <option value="ICCS">ICCS (Intermediate Civil)</option>
-                  <option value="SCT">SCT (Small Claims Tribunal)</option>
-                  <option value="BKP">BKP (Bankruptcy Petition)</option>
-                  <option value="EX">EX (Execution Proceeding)</option>
-                </optgroup>
-                <optgroup label="Appeals">
-                  <option value="MAC">MAC (Magistrate Appeal Crim)</option>
-                  <option value="MACA">MACA (Magistrate Appeal Civil)</option>
-                </optgroup>
+              <select id="caseType" onchange="syncMetadata()" class="w-full bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded p-1.5 font-medium focus:ring-2 focus:ring-amber-500 outline-none text-xs">
+                <option value="MCCT" selected>MCCT (Criminal Trial)</option>
+                <option value="MCCS">MCCS (Civil Suit)</option>
+                <option value="RTA">RTA (Traffic Offence)</option>
+                <option value="INQ">INQ (Inquest / Coroner)</option>
               </select>
             </div>
           </div>
@@ -250,15 +272,15 @@
           </div>
 
           <div class="p-2 bg-slate-900 text-white rounded-lg border border-slate-800 text-center shadow-inner">
-            <span class="text-[9px] text-amber-400 font-bold block uppercase tracking-wider">Official Brunei Case Reference</span>
+            <span class="text-[9px] text-amber-400 font-bold block uppercase tracking-wider">Case Reference</span>
             <span id="generatedCaseNo" class="font-mono font-bold text-sm text-amber-300">MCCT/BSB/9/2026</span>
           </div>
         </div>
 
-        <!-- Judicial Officer / Coram -->
+        <!-- Magistrate -->
         <div>
-          <label class="font-semibold text-slate-700 dark:text-slate-300 block mb-1">Presiding Judicial Officer</label>
-          <input type="text" id="magistrateName" value="Magistrate / Senior Magistrate" oninput="syncMetadata()" class="w-full bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded p-1.5 font-medium">
+          <label class="font-semibold text-slate-700 dark:text-slate-300 block mb-1">Magistrate</label>
+          <input type="text" id="magistrateName" value="" placeholder="Enter Magistrate's Name" oninput="syncMetadata()" class="w-full bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded p-1.5 font-medium">
         </div>
 
         <!-- Date & Court Room -->
@@ -270,30 +292,17 @@
           <div>
             <label class="font-semibold text-slate-700 dark:text-slate-300 block mb-1">Court Room</label>
             <select id="courtRoom" onchange="syncMetadata()" class="w-full bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded p-1.5 font-medium">
-              <option value="Court Room 1">Court 1</option>
-              <option value="Court Room 2">Court 2</option>
-              <option value="Court Room 3">Court 3</option>
-              <option value="Court Room 4">Court 4</option>
+              <option value="Court Room 1" selected>Court Room 1</option>
+              <option value="Court Room 2">Court Room 2</option>
+              <option value="Court Room 3">Court Room 3</option>
+              <option value="Court Room 4">Court Room 4</option>
+              <option value="Court Room 5">Court Room 5</option>
+              <option value="Court Room 6">Court Room 6</option>
+              <option value="Court Room 7">Court Room 7</option>
+              <option value="Court Room 8">Court Room 8</option>
               <option value="Chambers">Chambers</option>
-              <option value="Virtual Court (Zoom)">Virtual Court</option>
+              <option value="Virtual Court">Virtual Court</option>
             </select>
-          </div>
-        </div>
-
-        <!-- Session Timestamps -->
-        <div class="p-3 bg-slate-50 dark:bg-slate-700/30 rounded-lg border border-slate-200 dark:border-slate-700 space-y-2">
-          <span class="font-semibold text-slate-700 dark:text-slate-300 block">Session Times</span>
-          <div class="flex items-center justify-between gap-2">
-            <button onclick="setStartTime()" class="flex-1 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded font-medium transition flex items-center justify-center gap-1">
-              <i class="fa-solid fa-play text-[10px]"></i> Start
-            </button>
-            <input type="text" id="startTime" value="09:15 AM" oninput="syncMetadata()" placeholder="09:00 AM" class="w-24 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 rounded p-1 text-center font-mono font-medium">
-          </div>
-          <div class="flex items-center justify-between gap-2">
-            <button onclick="setEndTime()" class="flex-1 py-1 bg-rose-600 hover:bg-rose-700 text-white rounded font-medium transition flex items-center justify-center gap-1">
-              <i class="fa-solid fa-stop text-[10px]"></i> End
-            </button>
-            <input type="text" id="endTime" value="10:45 AM" oninput="syncMetadata()" placeholder="10:30 AM" class="w-24 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 rounded p-1 text-center font-mono font-medium">
           </div>
         </div>
 
@@ -308,14 +317,12 @@
           <div class="space-y-2">
             <div class="flex justify-between items-center">
               <span class="text-[10px] text-slate-400 font-semibold uppercase">Defendants List</span>
-              <button onclick="addDefendant()" class="text-blue-600 dark:text-blue-400 hover:underline text-[10px] font-bold">+ Add Defendant</button>
+              <button type="button" onclick="addDefendant()" class="text-blue-600 dark:text-blue-400 hover:underline text-[11px] font-bold flex items-center gap-1 transition">
+                <i class="fa-solid fa-plus text-[10px]"></i> Add Defendant
+              </button>
             </div>
-            <div id="defendantsContainer" class="space-y-2">
-              <div class="def-entry p-2 border border-slate-200 dark:border-slate-700 rounded bg-white dark:bg-slate-800 space-y-1">
-                <span class="font-bold text-emerald-600 dark:text-emerald-400 text-[11px]">D1</span>
-                <input type="text" value="Ahmad Bin Abdullah" oninput="syncMetadata()" placeholder="Defendant Name" class="def-name w-full bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded p-1 text-[11px]">
-                <input type="text" value="Counsel for D1" oninput="syncMetadata()" placeholder="Defense Counsel (DC)" class="def-counsel w-full bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded p-1 text-[11px]">
-              </div>
+            <div id="defendantsContainer" class="space-y-2.5">
+              <!-- Dynamically rendered defendant cards -->
             </div>
           </div>
         </div>
@@ -326,53 +333,90 @@
           <input type="text" id="interpreterName" value="Malay / English Interpreter" oninput="syncMetadata()" placeholder="Interpreter Name / Language" class="w-full bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded p-1.5 font-medium">
         </div>
 
+        <!-- Local Storage Session & Auto-Save Controls -->
+        <div class="space-y-2 border-t pt-3 border-slate-200 dark:border-slate-700">
+          <div class="flex items-center justify-between">
+            <span class="font-semibold text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
+              <i class="fa-solid fa-hard-drive text-amber-500"></i> Local Storage Draft
+            </span>
+            <span class="text-[9px] font-mono bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 px-1.5 py-0.5 rounded font-bold">AUTO-SAVE ON</span>
+          </div>
+          <p class="text-[11px] text-slate-500 dark:text-slate-400">All transcripts and case metadata are continuously saved to your browser local storage.</p>
+          <div class="grid grid-cols-2 gap-1.5 pt-0.5">
+            <button type="button" onclick="saveToLocalStorage(true)" class="p-1.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600 border border-slate-300 dark:border-slate-600 rounded text-[11px] font-semibold text-slate-700 dark:text-slate-200 flex items-center justify-center gap-1 transition">
+              <i class="fa-solid fa-floppy-disk text-amber-500"></i> Save Now
+            </button>
+            <button type="button" onclick="openRestorePromptManual()" class="p-1.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600 border border-slate-300 dark:border-slate-600 rounded text-[11px] font-semibold text-slate-700 dark:text-slate-200 flex items-center justify-center gap-1 transition">
+              <i class="fa-solid fa-rotate-left text-blue-500"></i> Restore Draft
+            </button>
+          </div>
+          <button type="button" onclick="confirmClearDraft()" class="w-full py-1 text-[10px] text-rose-500 hover:text-rose-600 dark:text-rose-400 hover:underline text-center block transition">
+            Clear Stored Draft (Start Blank Case)
+          </button>
+        </div>
+
       </div>
     </aside>
 
     <!-- Rich Text NOP Typing Workspace -->
     <main class="flex-1 flex flex-col bg-slate-100 dark:bg-slate-900 overflow-hidden relative">
       
-      <!-- Toolbar for Quick Speakers & Hotkeys -->
-      <div id="toolbar" class="bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 p-2 flex flex-wrap items-center gap-1.5 shadow-sm z-10 shrink-0 text-xs">
-        
-        <span class="text-slate-400 text-[10px] font-bold uppercase mr-1 flex items-center gap-1">
-          <i class="fa-solid fa-bolt text-amber-500"></i> Fast Tags (Auto Line-Break):
-        </span>
-        
-        <button onclick="insertSpeaker('Court:', 'speaker-court')" class="px-2.5 py-1 bg-blue-100 text-blue-900 dark:bg-blue-950 dark:text-blue-200 border border-blue-200 dark:border-blue-800 hover:bg-blue-200 rounded font-bold transition flex items-center gap-1">
-          <span>Court</span> <span class="opacity-40 text-[9px]">(Alt+1)</span>
-        </button>
-        
-        <button onclick="insertSpeaker('Prosecution:', 'speaker-prosecution')" class="px-2.5 py-1 bg-red-100 text-red-900 dark:bg-red-950 dark:text-red-200 border border-red-200 dark:border-red-800 hover:bg-red-200 rounded font-bold transition flex items-center gap-1">
-          <span>Prosecution</span> <span class="opacity-40 text-[9px]">(Alt+2)</span>
-        </button>
+      <!-- Toolbar for Session Timing, Timestamp & Fast Tags Slider -->
+      <div id="toolbar" class="bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 px-3 py-2 flex flex-wrap items-center justify-between gap-2.5 shadow-sm z-10 shrink-0 text-xs">
+        <div class="flex flex-wrap items-center gap-2 sm:gap-3">
+          <!-- Dynamic Session Timing Block -->
+          <div class="flex items-center gap-2 bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-700 px-2.5 py-1 rounded-xl shadow-2xs">
+            <span class="text-[11px] font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 flex items-center gap-1.5 mr-0.5">
+              <i class="fa-regular fa-clock text-amber-500"></i>
+              <span class="hidden sm:inline">Session:</span>
+            </span>
 
-        <button onclick="insertSpeaker('D1:', 'speaker-defence')" class="px-2.5 py-1 bg-emerald-100 text-emerald-900 dark:bg-emerald-950 dark:text-emerald-200 border border-emerald-200 dark:border-emerald-800 hover:bg-emerald-200 rounded font-bold transition flex items-center gap-1">
-          <span>D1</span> <span class="opacity-40 text-[9px]">(Alt+3)</span>
+            <!-- Single Dynamic Start / Stop Button -->
+            <button type="button" id="sessionToggleBtn" onclick="toggleSessionState()" class="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg font-bold text-xs flex items-center gap-1.5 transition shadow-xs cursor-pointer select-none" title="Start Court Session (Alt + Shift + S)">
+              <span id="sessionPulse" class="hidden relative flex h-2 w-2">
+                <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-200 opacity-75"></span>
+                <span class="relative inline-flex rounded-full h-2 w-2 bg-white"></span>
+              </span>
+              <i id="sessionToggleIcon" class="fa-solid fa-play text-[10px]"></i>
+              <span id="sessionToggleText">Start Session</span>
+            </button>
+
+            <!-- Times Display / Manual Edit Inputs -->
+            <div class="flex items-center gap-1.5 text-xs font-mono">
+              <div class="flex items-center gap-1 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 rounded-lg px-2 py-0.5 shadow-2xs">
+                <span class="text-[9px] uppercase font-sans font-bold text-slate-400">Start</span>
+                <input type="text" id="startTime" value="09:15 AM" oninput="syncMetadata(); checkSessionStateFromInputs();" placeholder="09:00 AM" class="w-18 bg-transparent text-emerald-600 dark:text-emerald-400 text-center font-bold outline-none">
+              </div>
+
+              <span class="text-slate-400 font-bold px-0.5">-</span>
+
+              <div class="flex items-center gap-1 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 rounded-lg px-2 py-0.5 shadow-2xs">
+                <span class="text-[9px] uppercase font-sans font-bold text-slate-400">End</span>
+                <input type="text" id="endTime" value="10:45 AM" oninput="syncMetadata(); checkSessionStateFromInputs();" placeholder="--:--" class="w-18 bg-transparent text-rose-600 dark:text-rose-400 text-center font-bold outline-none">
+              </div>
+            </div>
+          </div>
+
+          <!-- Time Stamp Button -->
+          <button type="button" onclick="insertTimestamp()" class="px-3 py-1.5 bg-slate-50 hover:bg-amber-50 dark:bg-slate-700/60 dark:hover:bg-slate-700 border border-slate-300 dark:border-slate-600 hover:border-amber-400 text-slate-800 dark:text-slate-200 hover:text-amber-600 dark:hover:text-amber-300 rounded-xl font-bold text-xs transition flex items-center gap-2 shadow-2xs cursor-pointer" title="Insert Timestamp Tag [HH:MM] into Proceedings (Alt + T)">
+            <i class="fa-regular fa-clock text-amber-500 text-sm"></i>
+            <span>Insert Time Stamp</span>
+            <span class="opacity-50 text-[10px] font-mono bg-slate-200 dark:bg-slate-800 px-1.5 py-0.2 rounded font-normal">Alt+T</span>
+          </button>
+
+          <!-- Hotkeys Cheat Sheet Button -->
+          <button type="button" onclick="toggleShortcutsModal()" class="px-2.5 py-1.5 bg-slate-50 hover:bg-slate-100 dark:bg-slate-700/60 dark:hover:bg-slate-700 border border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-200 rounded-xl font-bold text-xs transition flex items-center gap-1.5 shadow-2xs cursor-pointer" title="View All Hotkeys & Defendant Shortcuts">
+            <i class="fa-solid fa-keyboard text-amber-500 text-xs"></i>
+            <span class="hidden md:inline">Hotkeys</span>
+          </button>
+        </div>
+
+        <!-- Fast Tags Slider Toggle Button -->
+        <button type="button" onclick="toggleFastTagsSlider()" class="p-1.5 px-3 bg-amber-500 hover:bg-amber-400 text-slate-950 rounded-xl font-bold text-xs transition flex items-center gap-1.5 shrink-0 shadow-sm ml-auto cursor-pointer" title="Slide Fast Tags Panel (Alt + S / Cmd + K)">
+          <i class="fa-solid fa-tags text-xs"></i>
+          <span>Fast Tags Slider</span>
+          <i class="fa-solid fa-angles-right text-[10px]"></i>
         </button>
-
-        <button onclick="insertSpeaker('DC for D1:', 'speaker-dc')" class="px-2.5 py-1 bg-teal-100 text-teal-900 dark:bg-teal-950 dark:text-teal-200 border border-teal-200 dark:border-teal-800 hover:bg-teal-200 rounded font-bold transition flex items-center gap-1">
-          <span>DC for D1</span> <span class="opacity-40 text-[9px]">(Alt+4)</span>
-        </button>
-
-        <button onclick="insertSpeaker('Interpreter:', 'speaker-interp')" class="px-2.5 py-1 bg-amber-100 text-amber-900 dark:bg-amber-950 dark:text-amber-200 border border-amber-200 dark:border-amber-800 hover:bg-amber-200 rounded font-bold transition flex items-center gap-1">
-          <span>Interpreter</span> <span class="opacity-40 text-[9px]">(Alt+5)</span>
-        </button>
-
-        <button onclick="insertSpeaker('Witness:', 'speaker-witness')" class="px-2.5 py-1 bg-indigo-100 text-indigo-900 dark:bg-indigo-950 dark:text-indigo-200 border border-indigo-200 dark:border-indigo-800 hover:bg-indigo-200 rounded font-bold transition flex items-center gap-1">
-          <span>Witness</span> <span class="opacity-40 text-[9px]">(Alt+6)</span>
-        </button>
-
-        <button onclick="insertSpeaker('ORDER:', 'tag-order')" class="px-2.5 py-1 bg-purple-100 text-purple-900 dark:bg-purple-950 dark:text-purple-200 border border-purple-200 dark:border-purple-800 hover:bg-purple-200 rounded font-bold transition flex items-center gap-1">
-          <span>ORDER</span> <span class="opacity-40 text-[9px]">(Alt+O)</span>
-        </button>
-
-        <div class="h-4 w-px bg-slate-300 dark:bg-slate-600 mx-1"></div>
-
-        <button onclick="insertTimestamp()" class="px-2 py-1 bg-slate-200 text-slate-700 dark:bg-slate-700 dark:text-slate-200 hover:bg-slate-300 rounded font-medium transition flex items-center gap-1" title="Insert Time Stamp (Alt+T)">
-          <i class="fa-regular fa-clock text-amber-500"></i> Time <span class="opacity-40 text-[9px]">(Alt+T)</span>
-        </button>
-
       </div>
 
       <!-- Scrollable NOP Page Area -->
@@ -383,16 +427,16 @@
             <!-- Court Document Header Block -->
             <div class="text-center border-b-2 border-slate-900 dark:border-slate-100 pb-4 mb-6">
               <h1 class="font-bold text-lg md:text-xl tracking-wider text-slate-900 dark:text-slate-100 uppercase">IN THE SUBORDINATE COURTS OF BRUNEI DARUSSALAM</h1>
-              <p class="text-xs font-bold text-slate-600 dark:text-slate-300 mt-1">HOLDEN AT <span id="docHdrLoc" class="underline">TEMBURONG</span></p>
+              <p class="text-xs font-bold text-slate-600 dark:text-slate-300 mt-1">HOLDEN AT <span id="docHdrLoc" class="underline">BANDAR SERI BEGAWAN</span></p>
               <div class="mt-2 font-mono font-bold text-base md:text-lg text-amber-600 dark:text-amber-400" id="docHdrCaseNo">
-                CASE NO: MCCT/TEMBURONG/9/2026
+                CASE NO: MCCT/BSB/9/2026
               </div>
             </div>
 
             <!-- World Standard Court Metadata Grid Block -->
             <div id="docMetadataBlock" class="mb-6 p-4 bg-slate-50 dark:bg-slate-900/60 rounded-lg border border-slate-200 dark:border-slate-700 text-xs font-serif text-slate-800 dark:text-slate-200 space-y-2">
               <div class="grid grid-cols-2 gap-4 border-b pb-2 dark:border-slate-700">
-                <div><strong class="font-sans text-slate-500 uppercase text-[10px] block">BEFORE:</strong> <span id="docMagistrate" class="font-semibold">Magistrate / Senior Magistrate</span></div>
+                <div><strong class="font-sans text-slate-500 uppercase text-[10px] block">BEFORE:</strong> <span id="docMagistrate" class="font-semibold">Magistrate</span></div>
                 <div><strong class="font-sans text-slate-500 uppercase text-[10px] block">DATE & VENUE:</strong> <span id="docDateVenue">04/10/2026 | Court Room 1</span></div>
               </div>
 
@@ -402,18 +446,14 @@
               </div>
 
               <div class="grid grid-cols-2 gap-4">
-                <div><strong class="font-sans text-slate-500 uppercase text-[10px] block">DEFENDANT(S) & COUNSEL:</strong> <span id="docDefendants">D1: Ahmad Bin Abdullah (Counsel for D1)</span></div>
+                <div><strong class="font-sans text-slate-500 uppercase text-[10px] block">DEFENDANT(S) & COUNSEL:</strong> <span id="docDefendants">D1: Defendant 1 [Present] (Unrepresented)</span></div>
                 <div><strong class="font-sans text-slate-500 uppercase text-[10px] block">INTERPRETER:</strong> <span id="docInterpreter">Malay / English Interpreter</span></div>
               </div>
             </div>
 
             <!-- Notes of Proceedings Editor Body -->
-            <div id="editor" contenteditable="true" class="serif-font text-sm md:text-base text-slate-800 dark:text-slate-100 focus:outline-none">
-              <p class="speech-line"><span class="speaker-tag speaker-court" contenteditable="false">Court:</span> Case called for mention.</p>
-              <p class="speech-line"><span class="speaker-tag speaker-prosecution" contenteditable="false">Prosecution:</span> Appears for the Public Prosecutor. We are ready to present the charges today.</p>
-              <p class="speech-line"><span class="speaker-tag speaker-defence" contenteditable="false">D1:</span> Present in court and confirms identity.</p>
-              <p class="speech-line"><span class="speaker-tag speaker-dc" contenteditable="false">DC for D1:</span> Confirms representation of D1 and requests adjournment to take further instructions.</p>
-              <p class="speech-line"><span class="speaker-tag tag-order" contenteditable="false">ORDER:</span> Matter adjourned to next mention date. Bail is extended.</p>
+            <div id="editor" contenteditable="true" class="serif-font text-sm md:text-base text-slate-800 dark:text-slate-100 focus:outline-none min-h-[450px]">
+              <p><br></p>
             </div>
           </div>
 
@@ -423,7 +463,7 @@
               <div class="h-12 border-b border-dashed border-slate-400 flex items-center justify-center text-slate-400 italic text-xs">
                 (Signed Digitally)
               </div>
-              <p id="sigMagistrate" class="font-bold text-sm text-slate-900 dark:text-slate-100 pt-1">Magistrate / Senior Magistrate</p>
+              <p id="sigMagistrate" class="font-bold text-sm text-slate-900 dark:text-slate-100 pt-1">Magistrate</p>
               <p class="text-xs text-slate-500 dark:text-slate-400">Subordinate Courts, Brunei Darussalam</p>
             </div>
           </div>
@@ -431,11 +471,379 @@
         </div>
       </div>
 
+      <!-- Floating Pull-Tab to Open Fast Tags Slider when Collapsed -->
+      <button id="floatingFastTagsTab" onclick="toggleFastTagsSlider()" class="absolute right-0 top-1/2 -translate-y-1/2 z-20 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs py-3.5 px-1.5 rounded-l-xl shadow-2xl flex flex-col items-center gap-1.5 transition-all duration-300 hidden border-y border-l border-amber-400/80 group cursor-pointer" title="Slide Out Fast Tags (Alt + S / Cmd + K)">
+        <i class="fa-solid fa-angles-left text-xs group-hover:-translate-x-0.5 transition-transform"></i>
+        <span class="[writing-mode:vertical-rl] tracking-wider text-[10px] font-bold uppercase py-1">Fast Tags</span>
+        <i class="fa-solid fa-tags text-[11px]"></i>
+      </button>
+
     </main>
 
+    <!-- Collapsible / Sliding Dynamic Fast Tags Sidebar (Right Side) -->
+    <aside id="fastTagsSidebar" class="w-80 bg-white dark:bg-slate-800 border-l border-slate-200 dark:border-slate-700 flex flex-col z-20 shadow-xl shrink-0 overflow-hidden">
+      
+      <!-- Panel Header -->
+      <div class="p-3 bg-slate-50 dark:bg-slate-800/90 border-b border-slate-200 dark:border-slate-700 flex justify-between items-center">
+        <div class="flex items-center gap-2">
+          <div class="w-7 h-7 rounded-lg bg-amber-500/20 text-amber-500 flex items-center justify-center text-xs border border-amber-500/30">
+            <i class="fa-solid fa-tags"></i>
+          </div>
+          <div>
+            <h2 class="font-bold text-xs text-slate-800 dark:text-slate-100 uppercase tracking-wider flex items-center gap-1">
+              Fast Speaker Tags
+            </h2>
+            <span class="text-[9px] font-mono text-emerald-600 dark:text-emerald-400 font-bold flex items-center gap-1">
+              <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span> Dynamic Attendance
+            </span>
+          </div>
+        </div>
+        <button onclick="toggleFastTagsSlider()" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 text-sm p-1 rounded hover:bg-slate-100 dark:hover:bg-slate-700 transition" title="Slide / Collapse Tags (Alt + S)">
+          <i class="fa-solid fa-angles-right"></i>
+        </button>
+      </div>
+
+      <!-- Panel Body -->
+      <div class="flex-1 overflow-y-auto p-3.5 space-y-4 text-xs">
+        
+        <!-- Section: Bench & Prosecution -->
+        <div class="space-y-1.5">
+          <span class="text-[10px] text-slate-400 font-bold uppercase tracking-wider block flex items-center justify-between">
+            <span>Court & Bench</span>
+            <span class="text-[9px] font-normal text-slate-400">Core</span>
+          </span>
+          <div class="grid grid-cols-2 gap-1.5">
+            <button type="button" onclick="insertSpeaker('Court:', 'speaker-court')" class="p-2 rounded-lg bg-blue-50 hover:bg-blue-100 dark:bg-blue-950/40 dark:hover:bg-blue-900/60 border border-blue-200 dark:border-blue-800 font-bold text-blue-900 dark:text-blue-200 transition text-left flex items-center justify-between shadow-xs">
+              <span>Court:</span>
+              <span class="opacity-50 text-[9px] font-mono">Alt+1</span>
+            </button>
+            <button type="button" onclick="insertSpeaker('Prosecution:', 'speaker-prosecution')" class="p-2 rounded-lg bg-red-50 hover:bg-red-100 dark:bg-red-950/40 dark:hover:bg-red-900/60 border border-red-200 dark:border-red-800 font-bold text-red-900 dark:text-red-200 transition text-left flex items-center justify-between shadow-xs">
+              <span>Prosecution:</span>
+              <span class="opacity-50 text-[9px] font-mono">Alt+2</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Section: Dynamic Defendants (Attendance Filtered) -->
+        <div class="space-y-1.5">
+          <div class="flex items-center justify-between">
+            <span class="text-[10px] text-slate-400 font-bold uppercase tracking-wider block flex items-center gap-1">
+              <i class="fa-solid fa-users text-emerald-500"></i> Defendants on Docket
+            </span>
+            <span class="text-[9px] font-mono bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 px-1.5 py-0.2 rounded font-bold border border-emerald-500/20">Dynamic Attendance</span>
+          </div>
+          <p class="text-[10px] text-slate-400 leading-tight">Speaking tags appear for present defendants; procedural records appear for absent ones.</p>
+          <div id="sliderDynamicDefendants" class="space-y-1.5 pt-0.5">
+            <!-- Dynamically populated -->
+          </div>
+        </div>
+
+        <!-- Section: Defense Counsel -->
+        <div class="space-y-1.5">
+          <div class="flex items-center justify-between">
+            <span class="text-[10px] text-slate-400 font-bold uppercase tracking-wider block flex items-center gap-1">
+              <i class="fa-solid fa-scale-balanced text-teal-500"></i> Defense Counsel
+            </span>
+            <span class="text-[9px] font-mono bg-teal-500/10 text-teal-600 dark:text-teal-400 px-1.5 py-0.2 rounded font-bold border border-teal-500/20">Appearing</span>
+          </div>
+          <div id="sliderDynamicCounsels" class="space-y-1.5 pt-0.5">
+            <!-- Dynamically populated -->
+          </div>
+        </div>
+
+        <!-- Section: Court Support & Witnesses -->
+        <div class="space-y-1.5">
+          <span class="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">Support & Witness</span>
+          <div class="grid grid-cols-2 gap-1.5">
+            <button type="button" onclick="insertSpeaker('Interpreter:', 'speaker-interp')" class="p-2 rounded-lg bg-amber-50 hover:bg-amber-100 dark:bg-amber-950/40 dark:hover:bg-amber-900/60 border border-amber-200 dark:border-amber-800 font-bold text-amber-900 dark:text-amber-200 transition text-left flex items-center justify-between shadow-xs">
+              <span>Interpreter:</span>
+              <span class="opacity-50 text-[9px] font-mono">Alt+5</span>
+            </button>
+            <button type="button" onclick="insertSpeaker('Witness:', 'speaker-witness')" class="p-2 rounded-lg bg-indigo-50 hover:bg-indigo-100 dark:bg-indigo-950/40 dark:hover:bg-indigo-900/60 border border-indigo-200 dark:border-indigo-800 font-bold text-indigo-900 dark:text-indigo-200 transition text-left flex items-center justify-between shadow-xs">
+              <span>Witness:</span>
+              <span class="opacity-50 text-[9px] font-mono">Alt+6</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Section: Orders & Timestamp -->
+        <div class="space-y-1.5">
+          <span class="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">Ruling & Time</span>
+          <div class="grid grid-cols-2 gap-1.5">
+            <button type="button" onclick="insertSpeaker('ORDER:', 'tag-order')" class="p-2 rounded-lg bg-purple-50 hover:bg-purple-100 dark:bg-purple-950/40 dark:hover:bg-purple-900/60 border border-purple-200 dark:border-purple-800 font-bold text-purple-900 dark:text-purple-200 transition text-left flex items-center justify-between shadow-xs">
+              <span>ORDER:</span>
+              <span class="opacity-50 text-[9px] font-mono">Alt+O</span>
+            </button>
+            <button type="button" onclick="insertTimestamp()" class="p-2 rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600 border border-slate-300 dark:border-slate-600 font-medium text-slate-800 dark:text-slate-200 transition text-left flex items-center justify-between shadow-xs">
+              <span class="flex items-center gap-1"><i class="fa-regular fa-clock text-amber-500"></i> Time</span>
+              <span class="opacity-50 text-[9px] font-mono">Alt+T</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Section: Quick Procedural Court Records -->
+        <div class="space-y-2 border-t pt-3 border-slate-200 dark:border-slate-700">
+          <span class="text-[10px] text-slate-400 font-bold uppercase tracking-wider block flex items-center gap-1">
+            <i class="fa-solid fa-feather text-amber-500"></i> Quick Brunei Procedural Phrases
+          </span>
+          <div class="space-y-1">
+            <button type="button" onclick="insertCourtSnippet('Charge read and explained in Malay/English. Defendant understands the charge.')" class="w-full text-left p-1.5 rounded-lg bg-slate-50 dark:bg-slate-700/50 hover:bg-amber-50 dark:hover:bg-amber-950/30 border border-slate-200 dark:border-slate-600 text-[11px] text-slate-700 dark:text-slate-300 transition flex items-center gap-1.5">
+              <i class="fa-solid fa-caret-right text-amber-500 text-[10px]"></i>
+              <span>Charge read & understood</span>
+            </button>
+            <button type="button" onclick="insertCourtSnippet('Plea taken: Defendant pleads NOT GUILTY and claims trial.')" class="w-full text-left p-1.5 rounded-lg bg-slate-50 dark:bg-slate-700/50 hover:bg-amber-50 dark:hover:bg-amber-950/30 border border-slate-200 dark:border-slate-600 text-[11px] text-slate-700 dark:text-slate-300 transition flex items-center gap-1.5">
+              <i class="fa-solid fa-caret-right text-amber-500 text-[10px]"></i>
+              <span>Plea: Not Guilty (Claims Trial)</span>
+            </button>
+            <button type="button" onclick="insertCourtSnippet('Plea taken: Defendant pleads GUILTY to the charge.')" class="w-full text-left p-1.5 rounded-lg bg-slate-50 dark:bg-slate-700/50 hover:bg-amber-50 dark:hover:bg-amber-950/30 border border-slate-200 dark:border-slate-600 text-[11px] text-slate-700 dark:text-slate-300 transition flex items-center gap-1.5">
+              <i class="fa-solid fa-caret-right text-amber-500 text-[10px]"></i>
+              <span>Plea: Pleads Guilty</span>
+            </button>
+            <button type="button" onclick="insertCourtSnippet('Bail extended on the same terms and condition.')" class="w-full text-left p-1.5 rounded-lg bg-slate-50 dark:bg-slate-700/50 hover:bg-amber-50 dark:hover:bg-amber-950/30 border border-slate-200 dark:border-slate-600 text-[11px] text-slate-700 dark:text-slate-300 transition flex items-center gap-1.5">
+              <i class="fa-solid fa-caret-right text-amber-500 text-[10px]"></i>
+              <span>Bail: Extended on same terms</span>
+            </button>
+            <button type="button" onclick="insertCourtSnippet('Warrant of arrest issued against defendant. Bail bond forfeited.')" class="w-full text-left p-1.5 rounded-lg bg-rose-50 dark:bg-rose-950/30 hover:bg-rose-100 border border-rose-200 dark:border-rose-900 text-[11px] text-rose-700 dark:text-rose-300 font-medium transition flex items-center gap-1.5">
+              <i class="fa-solid fa-handcuffs text-rose-500 text-[10px]"></i>
+              <span>Warrant of Arrest Issued (Absent)</span>
+            </button>
+            <button type="button" onclick="insertCourtSnippet('Case adjourned to next mention date for instructions / trial dates.')" class="w-full text-left p-1.5 rounded-lg bg-slate-50 dark:bg-slate-700/50 hover:bg-amber-50 dark:hover:bg-amber-950/30 border border-slate-200 dark:border-slate-600 text-[11px] text-slate-700 dark:text-slate-300 transition flex items-center gap-1.5">
+              <i class="fa-solid fa-caret-right text-amber-500 text-[10px]"></i>
+              <span>Adjourned to next mention date</span>
+            </button>
+          </div>
+        </div>
+
+      </div>
+    </aside>
+
+  <!-- Toast Notification Container -->
+  <div id="toastContainer" class="fixed bottom-5 right-5 z-50 pointer-events-none flex flex-col gap-2 max-w-sm"></div>
+
+  <!-- Restore Draft Prompt Modal -->
+  <div id="restoreDraftModal" class="fixed inset-0 bg-slate-900/75 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl shadow-2xl max-w-lg w-full overflow-hidden transition-all animate-in fade-in zoom-in duration-200">
+      <div class="p-4 sm:p-5 border-b border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/90 flex items-center justify-between">
+        <div class="flex items-center space-x-3">
+          <div class="w-10 h-10 rounded-xl bg-amber-500/20 text-amber-500 flex items-center justify-center text-lg border border-amber-500/30 shrink-0">
+            <i class="fa-solid fa-clock-rotate-left"></i>
+          </div>
+          <div>
+            <h3 class="font-bold text-base text-slate-900 dark:text-slate-100 flex items-center gap-2">
+              Restore Previous Session?
+            </h3>
+            <p class="text-xs text-slate-500 dark:text-slate-400">An auto-saved transcript draft was found in local storage.</p>
+          </div>
+        </div>
+        <button onclick="dismissRestoreModal()" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 text-sm p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 transition">
+          <i class="fa-solid fa-xmark text-base"></i>
+        </button>
+      </div>
+      
+      <div class="p-5 space-y-4 text-xs">
+        <div class="bg-slate-50 dark:bg-slate-900/60 p-3.5 rounded-xl border border-slate-200 dark:border-slate-700 space-y-2">
+          <div class="flex justify-between items-center">
+            <span class="text-[10px] uppercase font-bold text-slate-400">Case Reference</span>
+            <span id="modalDraftCaseNo" class="font-mono font-bold text-amber-600 dark:text-amber-400 text-xs">MCCT/BSB/9/2026</span>
+          </div>
+          <div class="flex justify-between items-center">
+            <span class="text-[10px] uppercase font-bold text-slate-400">Magistrate</span>
+            <span id="modalDraftMagistrate" class="font-medium text-slate-700 dark:text-slate-300">Magistrate</span>
+          </div>
+          <div class="flex justify-between items-center">
+            <span class="text-[10px] uppercase font-bold text-slate-400">Last Auto-Saved</span>
+            <span id="modalDraftSavedAt" class="font-mono text-emerald-600 dark:text-emerald-400 font-semibold">Today at 10:45 AM</span>
+          </div>
+        </div>
+
+        <div>
+          <span class="text-[10px] uppercase font-bold text-slate-400 block mb-1 flex items-center gap-1">
+            <i class="fa-solid fa-align-left text-amber-500"></i> Transcript Preview
+          </span>
+          <div id="modalDraftPreview" class="p-3 bg-slate-100 dark:bg-slate-950 rounded-lg text-slate-700 dark:text-slate-300 font-serif text-xs max-h-32 overflow-y-auto border border-slate-200 dark:border-slate-800 leading-relaxed whitespace-pre-wrap select-text">
+            ...
+          </div>
+        </div>
+      </div>
+
+      <div class="p-4 bg-slate-50 dark:bg-slate-800/90 border-t border-slate-200 dark:border-slate-700 flex flex-wrap items-center justify-end gap-2">
+        <button type="button" onclick="discardSavedDraft()" class="px-3 py-2 text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/30 rounded-lg font-semibold transition border border-rose-200 dark:border-rose-900 text-xs flex items-center gap-1.5">
+          <i class="fa-solid fa-trash-can"></i> Discard Draft
+        </button>
+        <button type="button" onclick="dismissRestoreModal()" class="px-3.5 py-2 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-lg font-medium transition text-xs">
+          Start Fresh (Keep Backup)
+        </button>
+        <button type="button" onclick="applyRestoredDraft()" class="px-4 py-2 bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold rounded-lg shadow-sm transition text-xs flex items-center gap-1.5">
+          <i class="fa-solid fa-rotate-left"></i> Restore Draft
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Clear Draft Confirmation Modal -->
+  <div id="confirmClearModal" class="fixed inset-0 bg-slate-900/75 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl shadow-2xl max-w-sm w-full p-5 space-y-4">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl bg-rose-500/20 text-rose-500 flex items-center justify-center text-lg border border-rose-500/30 shrink-0">
+          <i class="fa-solid fa-triangle-exclamation"></i>
+        </div>
+        <div>
+          <h4 class="font-bold text-sm text-slate-900 dark:text-slate-100">Clear Stored Draft?</h4>
+          <p class="text-xs text-slate-500 dark:text-slate-400">This will remove the saved session from your browser's local storage.</p>
+        </div>
+      </div>
+      <div class="flex justify-end gap-2 pt-2">
+        <button type="button" onclick="closeConfirmClearModal()" class="px-3 py-1.5 text-xs text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg font-medium transition">
+          Cancel
+        </button>
+        <button type="button" onclick="executeClearDraft()" class="px-3 py-1.5 text-xs bg-rose-600 hover:bg-rose-700 text-white rounded-lg font-bold transition shadow-sm">
+          Yes, Clear Draft
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Keyboard Shortcuts Reference Modal -->
+  <div id="shortcutsModal" class="fixed inset-0 bg-slate-900/75 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl shadow-2xl max-w-xl w-full overflow-hidden transition-all animate-in fade-in zoom-in duration-200">
+      <div class="p-4 sm:p-5 border-b border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/90 flex items-center justify-between">
+        <div class="flex items-center space-x-3">
+          <div class="w-10 h-10 rounded-xl bg-amber-500/20 text-amber-500 flex items-center justify-center text-lg border border-amber-500/30 shrink-0">
+            <i class="fa-solid fa-keyboard"></i>
+          </div>
+          <div>
+            <h3 class="font-bold text-base text-slate-900 dark:text-slate-100 flex items-center gap-2">
+              Court Stenographer Hotkeys Guide
+            </h3>
+            <p class="text-xs text-slate-500 dark:text-slate-400">All shortcuts work instantly in the proceedings editor without leaving the keyboard.</p>
+          </div>
+        </div>
+        <button onclick="toggleShortcutsModal()" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 text-sm p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 transition">
+          <i class="fa-solid fa-xmark text-base"></i>
+        </button>
+      </div>
+
+      <div class="p-5 space-y-4 text-xs max-h-[75vh] overflow-y-auto">
+        <!-- Multi-Defendant Hotkeys -->
+        <div class="bg-emerald-50/50 dark:bg-emerald-950/20 border border-emerald-200 dark:border-emerald-800/60 rounded-xl p-3.5 space-y-2">
+          <div class="flex items-center justify-between">
+            <span class="font-bold text-emerald-800 dark:text-emerald-300 uppercase tracking-wider text-[11px] flex items-center gap-1.5">
+              <i class="fa-solid fa-users text-emerald-500"></i> Auto-Generated Defendant Hotkeys
+            </span>
+            <span class="text-[9px] font-mono bg-emerald-200/80 dark:bg-emerald-900 text-emerald-800 dark:text-emerald-200 px-1.5 py-0.5 rounded font-bold">Multi-Accused Ready</span>
+          </div>
+          <p class="text-[11px] text-slate-600 dark:text-slate-400 leading-relaxed">
+            Every defendant on the docket is automatically assigned dedicated hotkeys. You can use single-key combinations (<kbd class="px-1 py-0.5 bg-white dark:bg-slate-800 border rounded font-mono text-[10px]">Alt+3</kbd>, <kbd class="px-1 py-0.5 bg-white dark:bg-slate-800 border rounded font-mono text-[10px]">Alt+7</kbd>...) or shift combinations (<kbd class="px-1 py-0.5 bg-white dark:bg-slate-800 border rounded font-mono text-[10px]">Alt+Shift+1</kbd>, <kbd class="px-1 py-0.5 bg-white dark:bg-slate-800 border rounded font-mono text-[10px]">Alt+Shift+2</kbd>...):
+          </p>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1 font-mono text-[11px]">
+            <div class="flex justify-between items-center p-2 rounded-lg bg-white dark:bg-slate-800 border border-emerald-200/80 dark:border-emerald-800/80">
+              <span class="font-bold text-emerald-700 dark:text-emerald-300">Defendant 1 (D1)</span>
+              <span class="font-bold bg-slate-100 dark:bg-slate-700 px-1.5 py-0.5 rounded text-slate-800 dark:text-slate-200">Alt + 3 <span class="text-slate-400 font-normal">or</span> Alt+Shift+1</span>
+            </div>
+            <div class="flex justify-between items-center p-2 rounded-lg bg-white dark:bg-slate-800 border border-emerald-200/80 dark:border-emerald-800/80">
+              <span class="font-bold text-emerald-700 dark:text-emerald-300">Defendant 2 (D2)</span>
+              <span class="font-bold bg-slate-100 dark:bg-slate-700 px-1.5 py-0.5 rounded text-slate-800 dark:text-slate-200">Alt + 7 <span class="text-slate-400 font-normal">or</span> Alt+Shift+2</span>
+            </div>
+            <div class="flex justify-between items-center p-2 rounded-lg bg-white dark:bg-slate-800 border border-emerald-200/80 dark:border-emerald-800/80">
+              <span class="font-bold text-emerald-700 dark:text-emerald-300">Defendant 3 (D3)</span>
+              <span class="font-bold bg-slate-100 dark:bg-slate-700 px-1.5 py-0.5 rounded text-slate-800 dark:text-slate-200">Alt + 8 <span class="text-slate-400 font-normal">or</span> Alt+Shift+3</span>
+            </div>
+            <div class="flex justify-between items-center p-2 rounded-lg bg-white dark:bg-slate-800 border border-emerald-200/80 dark:border-emerald-800/80">
+              <span class="font-bold text-emerald-700 dark:text-emerald-300">Defendant 4 (D4)</span>
+              <span class="font-bold bg-slate-100 dark:bg-slate-700 px-1.5 py-0.5 rounded text-slate-800 dark:text-slate-200">Alt + 9 <span class="text-slate-400 font-normal">or</span> Alt+Shift+4</span>
+            </div>
+            <div class="flex justify-between items-center p-2 rounded-lg bg-white dark:bg-slate-800 border border-emerald-200/80 dark:border-emerald-800/80">
+              <span class="font-bold text-emerald-700 dark:text-emerald-300">Defendant 5 (D5)</span>
+              <span class="font-bold bg-slate-100 dark:bg-slate-700 px-1.5 py-0.5 rounded text-slate-800 dark:text-slate-200">Alt + 0 <span class="text-slate-400 font-normal">or</span> Alt+Shift+5</span>
+            </div>
+            <div class="flex justify-between items-center p-2 rounded-lg bg-white dark:bg-slate-800 border border-emerald-200/80 dark:border-emerald-800/80">
+              <span class="font-bold text-emerald-700 dark:text-emerald-300">Defendant D(N)</span>
+              <span class="font-bold bg-slate-100 dark:bg-slate-700 px-1.5 py-0.5 rounded text-slate-800 dark:text-slate-200">Alt + Shift + (N)</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Court Roles & Counsel -->
+        <div class="bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 rounded-xl p-3.5 space-y-2">
+          <span class="font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider text-[11px] block">
+            <i class="fa-solid fa-gavel text-amber-500 mr-1"></i> Core Court Dialogue Roles
+          </span>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 font-mono text-[11px]">
+            <div class="flex justify-between items-center p-2 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
+              <span class="font-bold text-blue-700 dark:text-blue-300">Court:</span>
+              <span class="font-bold bg-slate-100 dark:bg-slate-700 px-2 py-0.5 rounded">Alt + 1</span>
+            </div>
+            <div class="flex justify-between items-center p-2 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
+              <span class="font-bold text-red-700 dark:text-red-300">Prosecution:</span>
+              <span class="font-bold bg-slate-100 dark:bg-slate-700 px-2 py-0.5 rounded">Alt + 2</span>
+            </div>
+            <div class="flex justify-between items-center p-2 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
+              <span class="font-bold text-teal-700 dark:text-teal-300">Defence Counsel (DC 1)</span>
+              <span class="font-bold bg-slate-100 dark:bg-slate-700 px-2 py-0.5 rounded">Alt + 4</span>
+            </div>
+            <div class="flex justify-between items-center p-2 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
+              <span class="font-bold text-teal-700 dark:text-teal-300">Defence Counsel (DC 2)</span>
+              <span class="font-bold bg-slate-100 dark:bg-slate-700 px-2 py-0.5 rounded">Alt + Shift + 4</span>
+            </div>
+            <div class="flex justify-between items-center p-2 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
+              <span class="font-bold text-amber-700 dark:text-amber-300">Interpreter:</span>
+              <span class="font-bold bg-slate-100 dark:bg-slate-700 px-2 py-0.5 rounded">Alt + 5</span>
+            </div>
+            <div class="flex justify-between items-center p-2 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
+              <span class="font-bold text-indigo-700 dark:text-indigo-300">Witness:</span>
+              <span class="font-bold bg-slate-100 dark:bg-slate-700 px-2 py-0.5 rounded">Alt + 6</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Session & Proceedings Actions -->
+        <div class="bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 rounded-xl p-3.5 space-y-2">
+          <span class="font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider text-[11px] block">
+            <i class="fa-solid fa-bolt text-amber-500 mr-1"></i> Session & Procedural Commands
+          </span>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 font-mono text-[11px]">
+            <div class="flex justify-between items-center p-2 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
+              <span class="font-bold text-slate-700 dark:text-slate-300 font-sans">Toggle Session Start/Stop</span>
+              <span class="font-bold bg-slate-100 dark:bg-slate-700 px-2 py-0.5 rounded text-amber-600 dark:text-amber-400">Alt + Shift + S</span>
+            </div>
+            <div class="flex justify-between items-center p-2 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
+              <span class="font-bold text-slate-700 dark:text-slate-300 font-sans">Insert Timestamp [HH:MM]</span>
+              <span class="font-bold bg-slate-100 dark:bg-slate-700 px-2 py-0.5 rounded">Alt + T</span>
+            </div>
+            <div class="flex justify-between items-center p-2 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
+              <span class="font-bold text-purple-700 dark:text-purple-300">ORDER: Tag</span>
+              <span class="font-bold bg-slate-100 dark:bg-slate-700 px-2 py-0.5 rounded">Alt + O</span>
+            </div>
+            <div class="flex justify-between items-center p-2 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
+              <span class="font-bold text-purple-700 dark:text-purple-300">RECORD: Tag</span>
+              <span class="font-bold bg-slate-100 dark:bg-slate-700 px-2 py-0.5 rounded">Alt + R</span>
+            </div>
+            <div class="flex justify-between items-center p-2 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
+              <span class="font-bold text-slate-700 dark:text-slate-300 font-sans">Slide Fast Tags Panel</span>
+              <span class="font-bold bg-slate-100 dark:bg-slate-700 px-2 py-0.5 rounded">Alt + S / Cmd + K</span>
+            </div>
+            <div class="flex justify-between items-center p-2 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
+              <span class="font-bold text-slate-700 dark:text-slate-300 font-sans">Toggle Case Metadata Drawer</span>
+              <span class="font-bold bg-slate-100 dark:bg-slate-700 px-2 py-0.5 rounded">Cmd / Ctrl + B</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="p-4 bg-slate-50 dark:bg-slate-800/90 border-t border-slate-200 dark:border-slate-700 flex justify-end">
+        <button type="button" onclick="toggleShortcutsModal()" class="px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white dark:bg-slate-100 dark:hover:bg-slate-200 dark:text-slate-900 font-bold rounded-lg transition text-xs">
+          Got It
+        </button>
+      </div>
+    </div>
   </div>
 
   <script>
+    const STORAGE_KEY = 'subordinate_courts_bn_nop_draft_v1';
+    let isDirty = false;
+    let hasInitialized = false;
+    let pendingDraft = null;
+
     // Live Clock
     setInterval(() => {
       const now = new Date();
@@ -449,12 +857,31 @@
     function toggleSidebar() {
       const sidebar = document.getElementById('metadataSidebar');
       const toggleBtnText = document.getElementById('sidebarToggleText');
-      
-      sidebar.classList.toggle('-ml-80');
-      if (sidebar.classList.contains('-ml-80')) {
-        toggleBtnText.innerText = "Show Metadata";
-      } else {
-        toggleBtnText.innerText = "Slide Metadata";
+      if (!sidebar) return;
+      sidebar.classList.toggle('collapsed');
+      const isClosed = sidebar.classList.contains('collapsed');
+      if (toggleBtnText) {
+        toggleBtnText.innerText = isClosed ? "Show Metadata" : "Slide Metadata";
+      }
+    }
+
+    // Toggle Fast Tags Right-Side Slider Drawer
+    function toggleFastTagsSlider() {
+      const sidebar = document.getElementById('fastTagsSidebar');
+      const toggleBtnText = document.getElementById('tagsToggleText');
+      const floatingTab = document.getElementById('floatingFastTagsTab');
+      if (!sidebar) return;
+      sidebar.classList.toggle('collapsed');
+      const isClosed = sidebar.classList.contains('collapsed');
+      if (toggleBtnText) {
+        toggleBtnText.innerText = isClosed ? "Fast Tags" : "Hide Tags";
+      }
+      if (floatingTab) {
+        if (isClosed) {
+          floatingTab.classList.remove('hidden');
+        } else {
+          floatingTab.classList.add('hidden');
+        }
       }
     }
 
@@ -469,37 +896,40 @@
       }
     }
 
-    // Synchronize Metadata Sidebar to Document Output Header
-    function applyPreset(prefix, locationCode) {
-      document.getElementById('caseType').value = prefix;
-      const locSelect = document.getElementById('docketLoc');
-      if (locationCode === 'BSB') locSelect.value = 'BANDAR SERI BEGAWAN';
-      if (locationCode === 'KB') locSelect.value = 'KUALA BELAIT';
-      if (locationCode === 'TTG') locSelect.value = 'TUTONG';
-      if (locationCode === 'TEMB') locSelect.value = 'TEMBURONG';
-
-      // Automatically adjust tier matching prefix
-      const tierSelect = document.getElementById('courtTier');
-      if (prefix.startsWith('IC')) {
-        tierSelect.value = 'Intermediate Court';
-      } else if (prefix === 'SCT') {
-        tierSelect.value = 'Small Claims Tribunal';
-      } else if (prefix === 'JUV') {
-        tierSelect.value = 'Juvenile Court';
-      } else {
-        tierSelect.value = "Magistrate's Court";
+    function getDefendantAbsentReason(entry) {
+      if (!entry) return 'Unexplained Absence';
+      const select = entry.querySelector('.def-absent-reason');
+      if (!select) return 'Unexplained Absence';
+      if (select.value === 'Custom') {
+        const customInput = entry.querySelector('.def-custom-reason');
+        return customInput && customInput.value.trim() ? customInput.value.trim() : 'Custom Note';
       }
+      return select.value;
+    }
 
+    function handleAbsentReasonChange(select) {
+      const entry = select.closest('.def-entry');
+      if (!entry) return;
+      const customInput = entry.querySelector('.def-custom-reason');
+      if (customInput) {
+        if (select.value === 'Custom') {
+          customInput.classList.remove('hidden');
+          customInput.focus();
+        } else {
+          customInput.classList.add('hidden');
+        }
+      }
       syncMetadata();
+      markDirty();
     }
 
     function syncMetadata() {
-      const tier = document.getElementById('courtTier').value;
-      const type = document.getElementById('caseType').value;
-      const loc = document.getElementById('docketLoc').value;
-      const nature = document.getElementById('hearingNature').value;
-      const no = document.getElementById('caseNoVal').value || '1';
-      const year = document.getElementById('caseYearVal').value || '2026';
+      const tier = "Magistrate's Court";
+      const type = document.getElementById('caseType')?.value || 'MCCT';
+      const loc = document.getElementById('docketLoc')?.value || 'BANDAR SERI BEGAWAN';
+      const nature = document.getElementById('hearingNature')?.value || 'Mention';
+      const no = document.getElementById('caseNoVal')?.value || '1';
+      const year = document.getElementById('caseYearVal')?.value || '2026';
 
       // Map Registry Station shorthand
       let locShort = 'BSB';
@@ -508,72 +938,749 @@
       if (loc === 'TEMBURONG') locShort = 'TEMB';
 
       const formattedCaseNo = `${type}/${locShort}/${no}/${year}`;
-      document.getElementById('generatedCaseNo').innerText = formattedCaseNo;
-      document.getElementById('docHdrCaseNo').innerText = `CASE NO: ${formattedCaseNo}`;
-      document.getElementById('docHdrLoc').innerText = loc;
+      const genCaseEl = document.getElementById('generatedCaseNo');
+      if (genCaseEl) genCaseEl.innerText = formattedCaseNo;
+      
+      const docHdrCaseNo = document.getElementById('docHdrCaseNo');
+      if (docHdrCaseNo) docHdrCaseNo.innerText = `CASE NO: ${formattedCaseNo}`;
+      
+      const docHdrLoc = document.getElementById('docHdrLoc');
+      if (docHdrLoc) docHdrLoc.innerText = loc;
 
       // Update Magistrate & Signature
-      const magName = document.getElementById('magistrateName').value || 'Presiding Judicial Officer';
-      document.getElementById('docMagistrate').innerText = magName;
-      document.getElementById('sigMagistrate').innerText = magName;
+      const magName = document.getElementById('magistrateName')?.value.trim() || 'Magistrate';
+      const docMag = document.getElementById('docMagistrate');
+      const sigMag = document.getElementById('sigMagistrate');
+      if (docMag) docMag.innerText = magName;
+      if (sigMag) sigMag.innerText = magName;
 
       // Date, Venue & Nature
-      const rawDate = document.getElementById('hearingDate').value;
+      const rawDate = document.getElementById('hearingDate')?.value;
       const formattedDate = rawDate ? new Date(rawDate).toLocaleDateString('en-GB') : 'N/A';
-      const venue = document.getElementById('courtRoom').value;
-      document.getElementById('docDateVenue').innerText = `${formattedDate} | ${venue} (${nature})`;
+      const venue = document.getElementById('courtRoom')?.value || 'Court Room 1';
+      const docDateVenue = document.getElementById('docDateVenue');
+      if (docDateVenue) docDateVenue.innerText = `${formattedDate} | ${venue} (${nature})`;
 
       // Prosecution
-      document.getElementById('docProsecution').innerText = document.getElementById('dppName').value || 'DPP / PO';
+      const docPros = document.getElementById('docProsecution');
+      if (docPros) docPros.innerText = document.getElementById('dppName')?.value || 'DPP / PO';
 
       // Session Times
-      const startTime = document.getElementById('startTime').value || '--:--';
-      const endTime = document.getElementById('endTime').value || '--:--';
-      document.getElementById('docTimings').innerText = `${startTime} - ${endTime}`;
+      const startTime = document.getElementById('startTime')?.value.trim() || '--:--';
+      const endTime = document.getElementById('endTime')?.value.trim();
+      const docTimings = document.getElementById('docTimings');
+      if (docTimings) {
+        if (startTime && (!endTime || endTime === '--:--')) {
+          docTimings.innerText = `${startTime} (Session In Progress)`;
+        } else {
+          docTimings.innerText = `${startTime} - ${endTime || '--:--'}`;
+        }
+      }
 
       // Interpreter
-      document.getElementById('docInterpreter').innerText = document.getElementById('interpreterName').value || 'N/A';
+      const docInterp = document.getElementById('docInterpreter');
+      if (docInterp) docInterp.innerText = document.getElementById('interpreterName')?.value || 'N/A';
 
-      // Aggregate Defendants
+      // Aggregate Defendants, Attendance & Counsels
       const defEntries = document.querySelectorAll('.def-entry');
       const defArray = [];
+
       defEntries.forEach((entry, idx) => {
-        const name = entry.querySelector('.def-name').value;
-        const counsel = entry.querySelector('.def-counsel').value;
-        let str = `D${idx + 1}: ${name || 'Unnamed'}`;
-        if (counsel) str += ` (${counsel})`;
-        defArray.push(str);
+        const dNum = idx + 1;
+        const name = entry.querySelector('.def-name')?.value.trim() || `Defendant ${dNum}`;
+        const isAbsent = entry.dataset.attendance === 'absent';
+        const absentReason = getDefendantAbsentReason(entry);
+        const hasCounsel = entry.dataset.hasCounsel === 'true';
+        const counsel = entry.querySelector('.def-counsel')?.value.trim();
+
+        if (isAbsent) {
+          let absentText = `D${dNum}: ${name} [NOT PRESENT ON DOCKET`;
+          if (absentReason && absentReason !== 'Unexplained Absence') {
+            absentText += `: ${absentReason}`;
+          }
+          absentText += `]`;
+          if (hasCounsel && counsel) {
+            absentText += ` (Counsel Appearing: ${counsel})`;
+          } else if (hasCounsel) {
+            absentText += ` (Counsel Appearing)`;
+          } else {
+            absentText += ` (Unrepresented)`;
+          }
+          defArray.push(absentText);
+        } else {
+          let presentText = `D${dNum}: ${name} [Present]`;
+          if (hasCounsel && counsel) {
+            presentText += ` (DC: ${counsel})`;
+          } else if (hasCounsel) {
+            presentText += ` (DC Appearing)`;
+          } else {
+            presentText += ` (Unrepresented)`;
+          }
+          defArray.push(presentText);
+        }
       });
-      document.getElementById('docDefendants').innerText = defArray.length ? defArray.join('; ') : 'None';
+
+      const docDefs = document.getElementById('docDefendants');
+      if (docDefs) docDefs.innerText = defArray.length ? defArray.join('; ') : 'None';
+
+      updateDynamicFastTags();
+
+      if (hasInitialized) {
+        markDirty();
+      }
     }
 
-    // Session Timestamps
+    // Insert quick procedural phrase under RECORD tag
+    function insertCourtSnippet(text) {
+      insertCustomSpeechLine('RECORD:', 'tag-order', text);
+    }
+
+    function insertProsecutionSnippet(text) {
+      insertCustomSpeechLine('Prosecution:', 'speaker-prosecution', text);
+    }
+
+    function insertOrderSnippet(text) {
+      insertCustomSpeechLine('ORDER:', 'tag-order', text);
+    }
+
+    function insertDCSnippet(text, tag = 'DC:') {
+      insertCustomSpeechLine(tag, 'speaker-dc', text);
+    }
+
+    function insertCustomSpeechLine(speakerTag, className, text) {
+      const editor = document.getElementById('editor');
+      if (!editor) return;
+      editor.focus();
+
+      const p = document.createElement('p');
+      p.className = 'speech-line';
+
+      const tagSpan = document.createElement('span');
+      tagSpan.className = `speaker-tag ${className}`;
+      tagSpan.contentEditable = "false";
+      tagSpan.innerText = speakerTag;
+
+      p.appendChild(tagSpan);
+      p.appendChild(document.createTextNode(' ' + text));
+
+      editor.appendChild(p);
+      markDirty();
+
+      p.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      showToast(`Inserted ${speakerTag} entry`);
+    }
+
+    function insertDefendantAbsenceRecord(dNum) {
+      const entries = document.querySelectorAll('.def-entry');
+      const entry = entries[dNum - 1];
+      const name = entry?.querySelector('.def-name')?.value.trim() || `Defendant ${dNum}`;
+      const reason = entry ? getDefendantAbsentReason(entry) : 'Not Present';
+      insertCourtSnippet(`Defendant D${dNum} (${name}) called three times; not present in court on the docket (${reason}).`);
+    }
+
+    function insertDefendantWAApplication(dNum) {
+      const entries = document.querySelectorAll('.def-entry');
+      const entry = entries[dNum - 1];
+      const name = entry?.querySelector('.def-name')?.value.trim() || `Defendant ${dNum}`;
+      insertProsecutionSnippet(`Defendant D${dNum} (${name}) is absent from the docket without valid explanation. The Prosecution applies for a Warrant of Arrest (WA) and forfeiture of bail bond.`);
+    }
+
+    function insertDefendantWAOrder(dNum) {
+      const entries = document.querySelectorAll('.def-entry');
+      const entry = entries[dNum - 1];
+      const name = entry?.querySelector('.def-name')?.value.trim() || `Defendant ${dNum}`;
+      insertOrderSnippet(`Warrant of Arrest (WA) issued against Defendant D${dNum} (${name}). Bail bond forfeited. Notice to bailor to show cause. Case adjourned for mention / execution of WA.`);
+    }
+
+    function insertDCAbsentAppearance(dNum) {
+      const entries = document.querySelectorAll('.def-entry');
+      const entry = entries[dNum - 1];
+      const name = entry?.querySelector('.def-name')?.value.trim() || `Defendant ${dNum}`;
+      insertDCSnippet(`Confirms appearance on behalf of absent Defendant D${dNum} (${name}). D${dNum} is unable to attend today. We request an adjournment to take instructions / tender relevant medical documentation.`, `DC for D${dNum}:`);
+    }
+
+    // Hotkey resolution for multi-defendant cases
+    function getDefendantHotkeys(dNum) {
+      if (dNum === 1) {
+        return {
+          primary: 'Alt+3',
+          secondary: 'Alt+Shift+1',
+          badgeText: 'Alt+3',
+          tooltip: 'Alt+3 or Alt+Shift+1'
+        };
+      } else if (dNum === 2) {
+        return {
+          primary: 'Alt+7',
+          secondary: 'Alt+Shift+2',
+          badgeText: 'Alt+7 / Alt+Shift+2',
+          tooltip: 'Alt+7 or Alt+Shift+2'
+        };
+      } else if (dNum === 3) {
+        return {
+          primary: 'Alt+8',
+          secondary: 'Alt+Shift+3',
+          badgeText: 'Alt+8 / Alt+Shift+3',
+          tooltip: 'Alt+8 or Alt+Shift+3'
+        };
+      } else if (dNum === 4) {
+        return {
+          primary: 'Alt+9',
+          secondary: 'Alt+Shift+4',
+          badgeText: 'Alt+9 / Alt+Shift+4',
+          tooltip: 'Alt+9 or Alt+Shift+4'
+        };
+      } else if (dNum === 5) {
+        return {
+          primary: 'Alt+0',
+          secondary: 'Alt+Shift+5',
+          badgeText: 'Alt+0 / Alt+Shift+5',
+          tooltip: 'Alt+0 or Alt+Shift+5'
+        };
+      } else {
+        return {
+          primary: `Alt+Shift+${dNum}`,
+          secondary: `Alt+Shift+${dNum}`,
+          badgeText: `Alt+Shift+${dNum}`,
+          tooltip: `Alt+Shift+${dNum}`
+        };
+      }
+    }
+
+    function getCounselHotkeys(counselIndex, dNum) {
+      if (counselIndex === 1) {
+        return {
+          primary: 'Alt+4',
+          badgeText: 'Alt+4',
+          tooltip: 'Alt+4'
+        };
+      } else if (counselIndex === 2) {
+        return {
+          primary: 'Alt+Shift+4',
+          secondary: 'Alt+C',
+          badgeText: 'Alt+Shift+4 / Alt+C',
+          tooltip: 'Alt+Shift+4 or Alt+C'
+        };
+      } else {
+        return {
+          primary: `Alt+Shift+C`,
+          badgeText: `DC ${counselIndex}`,
+          tooltip: `Counsel for D${dNum}`
+        };
+      }
+    }
+
+    function insertDefendantSpeaker(dNum) {
+      const entries = document.querySelectorAll('.def-entry');
+      const entry = entries[dNum - 1];
+      if (!entry) {
+        showToast(`Defendant D${dNum} is not on the docket. Click "+ Add Defendant" in the left panel.`, 'info');
+        return;
+      }
+      if (entry.dataset.attendance === 'absent') {
+        const name = entry.querySelector('.def-name')?.value.trim() || `Defendant ${dNum}`;
+        const reason = getDefendantAbsentReason(entry);
+        showToast(`D${dNum} (${name}) is marked NOT PRESENT on docket (${reason}). Speaking tag not inserted.`, 'info');
+        return;
+      }
+      insertSpeaker(`D${dNum}:`, 'speaker-defence');
+    }
+
+    function toggleShortcutsModal() {
+      const modal = document.getElementById('shortcutsModal');
+      if (modal) {
+        modal.classList.toggle('hidden');
+      }
+    }
+
+    function insertFirstPresentDefendant() {
+      const defEntries = document.querySelectorAll('.def-entry');
+      for (let i = 0; i < defEntries.length; i++) {
+        if (defEntries[i].dataset.attendance !== 'absent') {
+          insertSpeaker(`D${i + 1}:`, 'speaker-defence');
+          return;
+        }
+      }
+      insertSpeaker('D1:', 'speaker-defence');
+    }
+
+    function insertFirstAppearingCounsel() {
+      const defEntries = document.querySelectorAll('.def-entry');
+      for (let i = 0; i < defEntries.length; i++) {
+        if (defEntries[i].dataset.hasCounsel === 'true') {
+          insertSpeaker(`DC for D${i + 1}:`, 'speaker-dc');
+          return;
+        }
+      }
+      insertSpeaker('Defence Counsel:', 'speaker-dc');
+    }
+
+    // Dynamically generate fast speaker tags based on defendants attendance
+    function updateDynamicFastTags() {
+      const sliderDefContainer = document.getElementById('sliderDynamicDefendants');
+      const sliderDcContainer = document.getElementById('sliderDynamicCounsels');
+
+      if (!sliderDefContainer || !sliderDcContainer) return;
+
+      const defEntries = document.querySelectorAll('.def-entry');
+      
+      let sliderPresentDefHtml = '';
+      let sliderAbsentDefHtml = '';
+      let sliderDcHtml = '';
+
+      let presentCount = 0;
+      let absentCount = 0;
+      let counselCount = 0;
+
+      defEntries.forEach((entry, idx) => {
+        const dNum = idx + 1;
+        const name = entry.querySelector('.def-name')?.value.trim() || `Defendant ${dNum}`;
+        const isAbsent = entry.dataset.attendance === 'absent';
+        const absentReason = getDefendantAbsentReason(entry);
+        const hasCounsel = entry.dataset.hasCounsel === 'true';
+        const counsel = entry.querySelector('.def-counsel')?.value.trim();
+
+        if (!isAbsent) {
+          presentCount++;
+          const hk = getDefendantHotkeys(dNum);
+          sliderPresentDefHtml += `
+            <button type="button" onclick="insertDefendantSpeaker(${dNum})" class="w-full text-left p-2 rounded-lg bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-950/40 dark:hover:bg-emerald-900/60 border border-emerald-200 dark:border-emerald-800 transition flex items-center justify-between group shadow-2xs cursor-pointer" title="Insert D${dNum}: speech line (${hk.tooltip})">
+              <div class="truncate mr-2">
+                <span class="font-bold text-emerald-800 dark:text-emerald-300 text-xs">D${dNum}:</span>
+                <span class="text-[11px] text-slate-700 dark:text-slate-300 ml-1 truncate font-medium">${escapeHtml(name)}</span>
+              </div>
+              <span class="text-[9px] font-mono font-bold bg-emerald-200/80 dark:bg-emerald-900 text-emerald-800 dark:text-emerald-200 px-1.5 py-0.5 rounded shrink-0 flex items-center gap-1">
+                <span>Present</span>
+                <span class="text-emerald-900 dark:text-emerald-100 font-extrabold bg-emerald-300/80 dark:bg-emerald-800 px-1 py-0.2 rounded text-[8px]">${hk.badgeText}</span>
+              </span>
+            </button>
+          `;
+        } else {
+          absentCount++;
+          sliderAbsentDefHtml += `
+            <div class="p-2.5 rounded-lg bg-rose-50/60 dark:bg-rose-950/30 border border-rose-200 dark:border-rose-900/70 space-y-1.5 text-xs shadow-2xs">
+              <div class="flex items-center justify-between">
+                <div class="truncate mr-1">
+                  <span class="font-bold text-rose-700 dark:text-rose-400">D${dNum}:</span>
+                  <span class="text-[11px] text-slate-700 dark:text-slate-300 ml-1 font-medium truncate">${escapeHtml(name)}</span>
+                </div>
+                <span class="text-[9px] font-mono font-bold bg-rose-200/90 dark:bg-rose-900 text-rose-800 dark:text-rose-200 px-1.5 py-0.2 rounded shrink-0">NOT PRESENT</span>
+              </div>
+
+              <div class="text-[10px] text-rose-600/90 dark:text-rose-400 font-mono flex items-center gap-1">
+                <i class="fa-solid fa-circle-exclamation text-[9px]"></i>
+                <span class="truncate">Docket: ${escapeHtml(absentReason)}</span>
+              </div>
+
+              <div class="pt-1 border-t border-rose-200/60 dark:border-rose-900/60 flex flex-wrap gap-1">
+                <button type="button" onclick="insertDefendantAbsenceRecord(${dNum})" class="px-1.5 py-0.5 rounded bg-white dark:bg-slate-800 hover:bg-rose-100 dark:hover:bg-rose-900/60 text-rose-700 dark:text-rose-300 border border-rose-300 dark:border-rose-800 text-[10px] font-bold transition flex items-center gap-1 cursor-pointer" title="Insert absence note">
+                  <i class="fa-solid fa-file-lines text-[9px]"></i> Record
+                </button>
+                <button type="button" onclick="insertDefendantWAApplication(${dNum})" class="px-1.5 py-0.5 rounded bg-white dark:bg-slate-800 hover:bg-rose-100 dark:hover:bg-rose-900/60 text-rose-700 dark:text-rose-300 border border-rose-300 dark:border-rose-800 text-[10px] font-bold transition flex items-center gap-1 cursor-pointer" title="Insert DPP application for WA">
+                  <i class="fa-solid fa-gavel text-[9px]"></i> Apply WA
+                </button>
+                <button type="button" onclick="insertDefendantWAOrder(${dNum})" class="px-1.5 py-0.5 rounded bg-rose-600 hover:bg-rose-700 text-white text-[10px] font-bold transition flex items-center gap-1 cursor-pointer" title="Insert Order for WA and forfeiture">
+                  <i class="fa-solid fa-handcuffs text-[9px]"></i> Order WA
+                </button>
+              </div>
+            </div>
+          `;
+        }
+
+        if (hasCounsel) {
+          counselCount++;
+          const chk = getCounselHotkeys(counselCount, dNum);
+          const dcLabel = `DC for D${dNum}:`;
+          const counselDisplay = counsel || `Counsel for D${dNum}`;
+          const appearanceText = isAbsent ? 'Appearing for Absent D' + dNum : 'Counsel';
+
+          sliderDcHtml += `
+            <button type="button" onclick="insertSpeaker('${dcLabel}', 'speaker-dc')" class="w-full text-left p-2 rounded-lg bg-teal-50 hover:bg-teal-100 dark:bg-teal-950/40 dark:hover:bg-teal-900/60 border border-teal-200 dark:border-teal-800 transition flex items-center justify-between group shadow-2xs cursor-pointer" title="Insert DC dialogue line (${chk.tooltip})">
+              <div class="truncate mr-2">
+                <span class="font-bold text-teal-800 dark:text-teal-300 text-xs">${dcLabel}</span>
+                <span class="text-[11px] text-slate-700 dark:text-slate-300 ml-1 truncate font-medium">${escapeHtml(counselDisplay)}</span>
+              </div>
+              <span class="text-[9px] font-mono font-bold ${isAbsent ? 'bg-amber-200 dark:bg-amber-900 text-amber-900 dark:text-amber-200' : 'bg-teal-200/80 dark:bg-teal-900 text-teal-800 dark:text-teal-200'} px-1.5 py-0.5 rounded shrink-0 flex items-center gap-1">
+                <span>${appearanceText}</span>
+                <span class="font-extrabold text-[8px] bg-black/10 dark:bg-white/10 px-1 py-0.2 rounded">${chk.badgeText}</span>
+              </span>
+            </button>
+          `;
+        }
+      });
+
+      if (presentCount === 0) {
+        sliderPresentDefHtml = `
+          <div class="p-2.5 text-center text-slate-400 italic text-[11px] bg-slate-50 dark:bg-slate-900/40 rounded-lg border border-dashed border-slate-200 dark:border-slate-700">
+            No defendants currently marked present.
+          </div>
+        `;
+      }
+
+      if (counselCount === 0) {
+        sliderDcHtml = `
+          <div class="p-2.5 text-center text-slate-400 italic text-[11px] bg-slate-50 dark:bg-slate-900/40 rounded-lg border border-dashed border-slate-200 dark:border-slate-700">
+            No defense counsels recorded.
+          </div>
+        `;
+      }
+
+      // Populate containers
+      sliderDefContainer.innerHTML = `
+        <div class="space-y-1.5">
+          ${sliderPresentDefHtml}
+        </div>
+        ${absentCount > 0 ? `
+          <div class="pt-2 border-t border-slate-200 dark:border-slate-700">
+            <div class="flex items-center justify-between mb-1">
+              <span class="text-[10px] text-rose-600 dark:text-rose-400 font-bold uppercase tracking-wider flex items-center gap-1">
+                <i class="fa-solid fa-user-xmark"></i> Absent on Docket (${absentCount})
+              </span>
+              <span class="text-[9px] font-mono text-rose-500 bg-rose-50 dark:bg-rose-950 px-1 py-0.2 rounded border border-rose-200 dark:border-rose-900 font-bold">Procedural Tools</span>
+            </div>
+            <div class="space-y-1.5">
+              ${sliderAbsentDefHtml}
+            </div>
+          </div>
+        ` : ''}
+      `;
+
+      sliderDcContainer.innerHTML = sliderDcHtml;
+    }
+
+    // ==========================================
+    // DYNAMIC COURT SESSION CONTROLLER (Single Dynamic Button)
+    // ==========================================
+    let isSessionActive = false;
+
+    function updateSessionButtonUI() {
+      const btn = document.getElementById('sessionToggleBtn');
+      const icon = document.getElementById('sessionToggleIcon');
+      const text = document.getElementById('sessionToggleText');
+      const pulse = document.getElementById('sessionPulse');
+
+      if (!btn || !icon || !text) return;
+
+      if (isSessionActive) {
+        btn.className = "px-3 py-1.5 bg-rose-600 hover:bg-rose-500 text-white rounded-lg font-bold text-xs flex items-center gap-1.5 transition shadow-xs cursor-pointer select-none";
+        btn.title = "Click to Stop Court Session (Stamps End Time)";
+        icon.className = "fa-solid fa-stop text-[10px]";
+        text.innerText = "Stop Session";
+        if (pulse) pulse.classList.remove('hidden');
+      } else {
+        btn.className = "px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg font-bold text-xs flex items-center gap-1.5 transition shadow-xs cursor-pointer select-none";
+        btn.title = "Click to Start Court Session (Stamps Start Time)";
+        icon.className = "fa-solid fa-play text-[10px]";
+        text.innerText = "Start Session";
+        if (pulse) pulse.classList.add('hidden');
+      }
+    }
+
+    function checkSessionStateFromInputs() {
+      const startVal = document.getElementById('startTime')?.value.trim();
+      const endVal = document.getElementById('endTime')?.value.trim();
+      if (startVal && (!endVal || endVal === '--:--')) {
+        isSessionActive = true;
+      } else {
+        isSessionActive = false;
+      }
+      updateSessionButtonUI();
+    }
+
+    function toggleSessionState() {
+      const now = new Date();
+      const timeStr = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+      if (!isSessionActive) {
+        // Start Session
+        isSessionActive = true;
+        const startInput = document.getElementById('startTime');
+        const endInput = document.getElementById('endTime');
+        if (startInput) startInput.value = timeStr;
+        if (endInput) endInput.value = '';
+        updateSessionButtonUI();
+        syncMetadata();
+        markDirty();
+        showToast(`Court Session Started at ${timeStr}`);
+      } else {
+        // Stop Session
+        isSessionActive = false;
+        const endInput = document.getElementById('endTime');
+        if (endInput) endInput.value = timeStr;
+        updateSessionButtonUI();
+        syncMetadata();
+        markDirty();
+        showToast(`Court Session Stopped at ${timeStr}`);
+      }
+    }
+
     function setStartTime() {
       const now = new Date();
       document.getElementById('startTime').value = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      checkSessionStateFromInputs();
       syncMetadata();
+      markDirty();
     }
 
     function setEndTime() {
       const now = new Date();
       document.getElementById('endTime').value = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      checkSessionStateFromInputs();
       syncMetadata();
+      markDirty();
     }
 
-    // Dynamic Defendant Rows
-    let defCount = 1;
-    function addDefendant() {
-      defCount++;
-      const container = document.getElementById('defendantsContainer');
+    // Dynamic Defendant Rows with Attendance & optional Counsel
+    function renderDefendantCard(defIndex, name = '', hasCounsel = false, counselName = '', attendance = 'present', absentReason = 'Unexplained Absence') {
       const div = document.createElement('div');
-      div.className = "def-entry p-2 border border-slate-200 dark:border-slate-700 rounded bg-white dark:bg-slate-800 space-y-1";
+      const isAbsent = attendance === 'absent';
+      const hk = getDefendantHotkeys(defIndex);
+      div.className = `def-entry p-3 border rounded-xl bg-white dark:bg-slate-800 space-y-2.5 shadow-sm transition-all ${isAbsent ? 'border-rose-300 dark:border-rose-900/60 bg-rose-50/20 dark:bg-rose-950/10' : 'border-slate-200 dark:border-slate-700'}`;
+      div.dataset.hasCounsel = hasCounsel ? "true" : "false";
+      div.dataset.attendance = isAbsent ? "absent" : "present";
+
       div.innerHTML = `
-        <span class="font-bold text-emerald-600 dark:text-emerald-400 text-[11px]">D${defCount}</span>
-        <input type="text" placeholder="Defendant Name" oninput="syncMetadata()" class="def-name w-full bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded p-1 text-[11px]">
-        <input type="text" placeholder="Defense Counsel (DC)" oninput="syncMetadata()" class="def-counsel w-full bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded p-1 text-[11px]">
+        <div class="flex justify-between items-center gap-1">
+          <div class="flex items-center gap-1.5 flex-wrap">
+            <span class="def-idx-label font-bold text-xs ${isAbsent ? 'text-rose-600 dark:text-rose-400' : 'text-emerald-600 dark:text-emerald-400'}">D${defIndex}</span>
+            <span class="def-hotkey-badge text-[9px] font-mono font-bold bg-amber-500/15 text-amber-700 dark:text-amber-300 border border-amber-500/30 px-1.5 py-0.5 rounded shadow-2xs" title="Shortcut: ${hk.tooltip}">
+              <i class="fa-solid fa-keyboard mr-1 text-[8px] text-amber-500"></i>${hk.badgeText}
+            </span>
+            
+            <!-- Attendance Selector -->
+            <div class="inline-flex rounded-md p-0.5 bg-slate-100 dark:bg-slate-700/80 border border-slate-200 dark:border-slate-600 text-[10px]">
+              <button type="button" onclick="setDefendantAttendance(this, 'present')" class="att-btn-present px-2 py-0.5 rounded font-bold transition flex items-center gap-1 ${!isAbsent ? 'bg-emerald-600 text-white shadow-xs' : 'text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200'}" title="Mark D${defIndex} as Present in Court (${hk.tooltip})">
+                <i class="fa-solid fa-check text-[8px]"></i> Present
+              </button>
+              <button type="button" onclick="setDefendantAttendance(this, 'absent')" class="att-btn-absent px-2 py-0.5 rounded font-bold transition flex items-center gap-1 ${isAbsent ? 'bg-rose-600 text-white shadow-xs' : 'text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200'}" title="Record D${defIndex} as on docket but NOT PRESENT">
+                <i class="fa-solid fa-user-xmark text-[8px]"></i> Not Present
+              </button>
+            </div>
+          </div>
+
+          <div class="flex items-center gap-1">
+            <button type="button" onclick="toggleDefendantCounsel(this)" class="counsel-toggle-btn text-[10px] font-semibold text-blue-600 dark:text-blue-400 hover:underline px-1 py-0.5 whitespace-nowrap">
+              ${hasCounsel ? '<i class="fa-solid fa-user-xmark text-rose-500 mr-0.5"></i> Remove Counsel' : '<i class="fa-solid fa-user-plus mr-0.5"></i> Add Counsel'}
+            </button>
+            <button type="button" onclick="removeDefendant(this)" class="text-rose-500 hover:text-rose-700 text-xs p-1 rounded hover:bg-rose-50 dark:hover:bg-rose-950/30 transition" title="Remove Defendant D${defIndex}">
+              <i class="fa-solid fa-trash-can"></i>
+            </button>
+          </div>
+        </div>
+
+        <!-- Docket Presence Banner & Reason (Shown when absent) -->
+        <div class="absent-docket-box ${isAbsent ? '' : 'hidden'} p-2 rounded-lg bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900/60 space-y-1.5 text-xs">
+          <div class="flex items-center justify-between">
+            <span class="text-[10px] font-bold text-rose-700 dark:text-rose-300 uppercase tracking-wide flex items-center gap-1">
+              <i class="fa-solid fa-triangle-exclamation text-rose-500"></i> Docket: Not Present in Court
+            </span>
+            <span class="text-[9px] font-mono bg-rose-200/80 dark:bg-rose-900 text-rose-800 dark:text-rose-200 px-1.5 py-0.2 rounded font-bold">D${defIndex} ABSENT</span>
+          </div>
+          
+          <div>
+            <span class="text-[10px] text-slate-500 dark:text-slate-400 font-semibold block mb-0.5">Absence Record Note / Status:</span>
+            <select onchange="handleAbsentReasonChange(this)" class="def-absent-reason w-full bg-white dark:bg-slate-800 border border-rose-200 dark:border-rose-800 rounded p-1 text-[11px] font-medium text-slate-800 dark:text-slate-200 outline-none">
+              <option value="Unexplained Absence" ${absentReason === 'Unexplained Absence' ? 'selected' : ''}>Unexplained Absence / Called 3 Times</option>
+              <option value="Warrant of Arrest Issued" ${absentReason === 'Warrant of Arrest Issued' ? 'selected' : ''}>Warrant of Arrest (WA) Issued</option>
+              <option value="Medical Certificate (MC)" ${absentReason === 'Medical Certificate (MC)' ? 'selected' : ''}>On Medical Certificate (MC)</option>
+              <option value="Remand - Not Produced" ${absentReason === 'Remand - Not Produced' ? 'selected' : ''}>Detained in Remand (Not Produced)</option>
+              <option value="Police Bail Defaulted" ${absentReason === 'Police Bail Defaulted' ? 'selected' : ''}>Police Bail Defaulted / Bond Forfeited</option>
+              <option value="Custom" ${!['Unexplained Absence', 'Warrant of Arrest Issued', 'Medical Certificate (MC)', 'Remand - Not Produced', 'Police Bail Defaulted', ''].includes(absentReason) ? 'selected' : ''}>Custom Reason...</option>
+            </select>
+            <input type="text" value="${!['Unexplained Absence', 'Warrant of Arrest Issued', 'Medical Certificate (MC)', 'Remand - Not Produced', 'Police Bail Defaulted', ''].includes(absentReason) ? escapeHtml(absentReason) : ''}" placeholder="Enter specific absence reason / note" oninput="syncMetadata()" class="def-custom-reason w-full mt-1 bg-white dark:bg-slate-800 border border-rose-200 dark:border-rose-800 rounded p-1 text-[11px] font-medium text-slate-800 dark:text-slate-200 outline-none ${!['Unexplained Absence', 'Warrant of Arrest Issued', 'Medical Certificate (MC)', 'Remand - Not Produced', 'Police Bail Defaulted', ''].includes(absentReason) ? '' : 'hidden'}">
+          </div>
+
+          <!-- Quick Actions for Absent Defendant -->
+          <div class="pt-1 border-t border-rose-200/60 dark:border-rose-900/60 flex flex-wrap gap-1">
+            <button type="button" onclick="insertDefendantAbsenceRecord(${defIndex})" class="px-2 py-0.5 rounded bg-white dark:bg-slate-800 hover:bg-rose-100 dark:hover:bg-rose-900/60 text-rose-700 dark:text-rose-300 border border-rose-300 dark:border-rose-800 text-[10px] font-bold transition flex items-center gap-1 shadow-2xs" title="Insert absence note into transcript">
+              <i class="fa-solid fa-file-lines text-[9px]"></i> Record Absence
+            </button>
+            <button type="button" onclick="insertDefendantWAApplication(${defIndex})" class="px-2 py-0.5 rounded bg-white dark:bg-slate-800 hover:bg-rose-100 dark:hover:bg-rose-900/60 text-rose-700 dark:text-rose-300 border border-rose-300 dark:border-rose-800 text-[10px] font-bold transition flex items-center gap-1 shadow-2xs" title="Insert DPP application for WA">
+              <i class="fa-solid fa-gavel text-[9px]"></i> Apply WA
+            </button>
+            <button type="button" onclick="insertDefendantWAOrder(${defIndex})" class="px-2 py-0.5 rounded bg-rose-600 hover:bg-rose-700 text-white text-[10px] font-bold transition flex items-center gap-1 shadow-2xs" title="Insert Order for WA and bail forfeiture">
+              <i class="fa-solid fa-handcuffs text-[9px]"></i> Order WA
+            </button>
+          </div>
+        </div>
+        
+        <div>
+          <input type="text" value="${escapeHtml(name)}" placeholder="Defendant Name" oninput="syncMetadata()" class="def-name w-full bg-slate-50 dark:bg-slate-700/80 border border-slate-200 dark:border-slate-600 rounded p-1.5 text-xs font-medium focus:ring-1 focus:ring-amber-500 outline-none">
+        </div>
+
+        <!-- Counsel Input Container -->
+        <div class="counsel-container ${hasCounsel ? '' : 'hidden'} space-y-1 pt-1.5 border-t border-dashed border-slate-200 dark:border-slate-700">
+          <div class="flex justify-between items-center">
+            <label class="text-[10px] text-teal-700 dark:text-teal-400 font-semibold uppercase flex items-center gap-1">
+              <i class="fa-solid fa-briefcase"></i> Defense Counsel (DC)
+              <span class="def-counsel-status-label text-[9px] font-mono font-bold ${isAbsent ? 'text-amber-600 dark:text-amber-400' : 'text-teal-600 dark:text-teal-400'}">
+                ${isAbsent ? '(Appearing for Absent D' + defIndex + ')' : '(For D' + defIndex + ')'}
+              </span>
+            </label>
+          </div>
+          <input type="text" value="${escapeHtml(counselName)}" placeholder="Counsel Name (e.g. Messrs Tan & Co / DC for D${defIndex})" oninput="syncMetadata()" class="def-counsel w-full bg-slate-50 dark:bg-slate-700/80 border border-teal-200 dark:border-teal-800 rounded p-1.5 text-xs font-medium focus:ring-1 focus:ring-teal-500 outline-none">
+          ${isAbsent ? `
+            <button type="button" onclick="insertDCAbsentAppearance(${defIndex})" class="mt-1 px-2 py-0.5 rounded bg-teal-50 dark:bg-teal-950/40 text-teal-700 dark:text-teal-300 hover:bg-teal-100 border border-teal-300 dark:border-teal-800 text-[10px] font-bold transition flex items-center gap-1 shadow-2xs">
+              <i class="fa-solid fa-microphone text-[9px]"></i> Insert DC Appearance for Absent D${defIndex}
+            </button>
+          ` : ''}
+        </div>
       `;
-      container.appendChild(div);
+      return div;
+    }
+
+    function setDefendantAttendance(btn, status) {
+      const entry = btn.closest('.def-entry');
+      if (!entry) return;
+
+      const isAbsent = status === 'absent';
+      entry.dataset.attendance = isAbsent ? 'absent' : 'present';
+
+      // Update card styling
+      if (isAbsent) {
+        entry.className = "def-entry p-3 border rounded-xl bg-white dark:bg-slate-800 space-y-2.5 shadow-sm transition-all border-rose-300 dark:border-rose-900/60 bg-rose-50/20 dark:bg-rose-950/10";
+      } else {
+        entry.className = "def-entry p-3 border rounded-xl bg-white dark:bg-slate-800 space-y-2.5 shadow-sm transition-all border-slate-200 dark:border-slate-700";
+      }
+
+      // Update attendance button styles
+      const presentBtn = entry.querySelector('.att-btn-present');
+      const absentBtn = entry.querySelector('.att-btn-absent');
+      const absentBox = entry.querySelector('.absent-docket-box');
+      const idxLabel = entry.querySelector('.def-idx-label');
+      const counselLabel = entry.querySelector('.def-counsel-status-label');
+
+      if (presentBtn) {
+        presentBtn.className = `att-btn-present px-2 py-0.5 rounded font-bold transition flex items-center gap-1 ${!isAbsent ? 'bg-emerald-600 text-white shadow-xs' : 'text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200'}`;
+      }
+      if (absentBtn) {
+        absentBtn.className = `att-btn-absent px-2 py-0.5 rounded font-bold transition flex items-center gap-1 ${isAbsent ? 'bg-rose-600 text-white shadow-xs' : 'text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200'}`;
+      }
+
+      if (absentBox) {
+        if (isAbsent) absentBox.classList.remove('hidden');
+        else absentBox.classList.add('hidden');
+      }
+
+      if (idxLabel) {
+        idxLabel.className = `def-idx-label font-bold text-xs ${isAbsent ? 'text-rose-600 dark:text-rose-400' : 'text-emerald-600 dark:text-emerald-400'}`;
+      }
+
+      const dNum = Array.from(document.querySelectorAll('.def-entry')).indexOf(entry) + 1;
+      if (counselLabel) {
+        counselLabel.className = `def-counsel-status-label text-[9px] font-mono font-bold ${isAbsent ? 'text-amber-600 dark:text-amber-400' : 'text-teal-600 dark:text-teal-400'}`;
+        counselLabel.innerText = isAbsent ? `(Appearing for Absent D${dNum})` : `(For D${dNum})`;
+      }
+
       syncMetadata();
+      markDirty();
+    }
+
+    function addDefendant(nameVal = '', hasCounsel = false, counselVal = '', attendance = 'present', absentReason = 'Unexplained Absence') {
+      const container = document.getElementById('defendantsContainer');
+      if (!container) return;
+      const count = container.querySelectorAll('.def-entry').length + 1;
+      const card = renderDefendantCard(count, nameVal, hasCounsel, counselVal, attendance, absentReason);
+      container.appendChild(card);
+      syncMetadata();
+      markDirty();
+      const hk = getDefendantHotkeys(count);
+      if (hasInitialized) {
+        showToast(`Added Defendant D${count}. Hotkey: ${hk.primary} (or ${hk.secondary})`, 'success');
+      }
+    }
+
+    function removeDefendant(btn) {
+      const entry = btn.closest('.def-entry');
+      if (entry) {
+        entry.remove();
+        renumberDefendants();
+        syncMetadata();
+        markDirty();
+      }
+    }
+
+    function renumberDefendants() {
+      const container = document.getElementById('defendantsContainer');
+      if (!container) return;
+      const entries = container.querySelectorAll('.def-entry');
+      entries.forEach((entry, idx) => {
+        const idxNum = idx + 1;
+        const isAbsent = entry.dataset.attendance === 'absent';
+        const label = entry.querySelector('.def-idx-label');
+        if (label) label.innerText = `D${idxNum}`;
+
+        const hk = getDefendantHotkeys(idxNum);
+        const hkBadge = entry.querySelector('.def-hotkey-badge');
+        if (hkBadge) {
+          hkBadge.innerHTML = `<i class="fa-solid fa-keyboard mr-1 text-[8px] text-amber-500"></i>${hk.badgeText}`;
+          hkBadge.title = `Shortcut: ${hk.tooltip}`;
+        }
+
+        const presentBtn = entry.querySelector('.att-btn-present');
+        if (presentBtn) {
+          presentBtn.title = `Mark D${idxNum} as Present in Court (${hk.tooltip})`;
+        }
+
+        const counselLabel = entry.querySelector('.def-counsel-status-label');
+        if (counselLabel) {
+          counselLabel.innerText = isAbsent ? `(Appearing for Absent D${idxNum})` : `(For D${idxNum})`;
+        }
+
+        const counselInput = entry.querySelector('.def-counsel');
+        if (counselInput && !counselInput.value) {
+          counselInput.placeholder = `Counsel Name (e.g. Messrs Tan & Co / DC for D${idxNum})`;
+        }
+        const removeBtn = entry.querySelector('button[title^="Remove Defendant"]');
+        if (removeBtn) removeBtn.title = `Remove Defendant D${idxNum}`;
+
+        // Update actions onclick
+        const recordBtn = entry.querySelector('button[onclick^="insertDefendantAbsenceRecord"]');
+        if (recordBtn) recordBtn.setAttribute('onclick', `insertDefendantAbsenceRecord(${idxNum})`);
+        const waAppBtn = entry.querySelector('button[onclick^="insertDefendantWAApplication"]');
+        if (waAppBtn) waAppBtn.setAttribute('onclick', `insertDefendantWAApplication(${idxNum})`);
+        const waOrderBtn = entry.querySelector('button[onclick^="insertDefendantWAOrder"]');
+        if (waOrderBtn) waOrderBtn.setAttribute('onclick', `insertDefendantWAOrder(${idxNum})`);
+        const dcAbsBtn = entry.querySelector('button[onclick^="insertDCAbsentAppearance"]');
+        if (dcAbsBtn) dcAbsBtn.setAttribute('onclick', `insertDCAbsentAppearance(${idxNum})`);
+      });
+    }
+
+    function toggleDefendantCounsel(btn) {
+      const entry = btn.closest('.def-entry');
+      if (!entry) return;
+
+      const isCurrentlyWithCounsel = entry.dataset.hasCounsel === 'true';
+      const counselContainer = entry.querySelector('.counsel-container');
+      const toggleBtn = entry.querySelector('.counsel-toggle-btn');
+      const counselInput = entry.querySelector('.def-counsel');
+
+      if (isCurrentlyWithCounsel) {
+        // Turn off counsel (unrepresented)
+        entry.dataset.hasCounsel = 'false';
+        if (counselContainer) counselContainer.classList.add('hidden');
+        if (toggleBtn) toggleBtn.innerHTML = '<i class="fa-solid fa-user-plus mr-0.5"></i> Add Counsel';
+      } else {
+        // Turn on counsel
+        entry.dataset.hasCounsel = 'true';
+        if (counselContainer) counselContainer.classList.remove('hidden');
+        if (toggleBtn) toggleBtn.innerHTML = '<i class="fa-solid fa-user-xmark text-rose-500 mr-0.5"></i> Remove Counsel';
+        if (counselInput) {
+          counselInput.focus();
+        }
+      }
+
+      syncMetadata();
+      markDirty();
+    }
+
+    function escapeHtml(str) {
+      if (!str) return '';
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
     }
 
     // Insert Speaker Tag with Auto Line-Break
@@ -621,6 +1728,8 @@
       newRange.collapse(false);
       sel.removeAllRanges();
       sel.addRange(newRange);
+
+      markDirty();
     }
 
     // Insert Timestamp Tag
@@ -630,21 +1739,88 @@
       insertSpeaker(timeStr, 'tag-timestamp');
     }
 
-    // Hotkey Listener (Alt+1..6, Alt+O, Alt+T, Cmd/Ctrl+B)
+    // Hotkey Listener (Alt+1..6, Alt+7..0, Alt+Shift+1..9, Alt+Shift+S, Alt+O, Alt+R, Alt+T, Alt+S, Cmd/Ctrl+K, Cmd/Ctrl+B, Cmd/Ctrl+S)
     document.addEventListener('keydown', function(e) {
-      if (e.altKey) {
-        if (e.key === '1') { e.preventDefault(); insertSpeaker('Court:', 'speaker-court'); }
-        if (e.key === '2') { e.preventDefault(); insertSpeaker('Prosecution:', 'speaker-prosecution'); }
-        if (e.key === '3') { e.preventDefault(); insertSpeaker('D1:', 'speaker-defence'); }
-        if (e.key === '4') { e.preventDefault(); insertSpeaker('DC for D1:', 'speaker-dc'); }
-        if (e.key === '5') { e.preventDefault(); insertSpeaker('Interpreter:', 'speaker-interp'); }
-        if (e.key === '6') { e.preventDefault(); insertSpeaker('Witness:', 'speaker-witness'); }
-        if (e.key.toLowerCase() === 'o') { e.preventDefault(); insertSpeaker('ORDER:', 'tag-order'); }
-        if (e.key.toLowerCase() === 't') { e.preventDefault(); insertTimestamp(); }
+      // 1. Session Toggle: Alt + Shift + S
+      if (e.altKey && e.shiftKey && (e.code === 'KeyS' || e.key.toLowerCase() === 's')) {
+        e.preventDefault();
+        toggleSessionState();
+        return;
+      }
+
+      // 2. Alt + Shift + Number (Alt+Shift+1..9): Insert Defendant D1..D9
+      if (e.altKey && e.shiftKey) {
+        let num = null;
+        if (e.code && e.code.startsWith('Digit')) {
+          num = parseInt(e.code.replace('Digit', ''), 10);
+        } else if (e.key >= '0' && e.key <= '9') {
+          num = parseInt(e.key, 10);
+        } else if (['!', '@', '#', '$', '%', '^', '&', '*', '(', ')'].includes(e.key)) {
+          const map = { '!': 1, '@': 2, '#': 3, '$': 4, '%': 5, '^': 6, '&': 7, '*': 8, '(': 9, ')': 0 };
+          num = map[e.key];
+        }
+
+        if (num !== null && num >= 1 && num <= 9) {
+          e.preventDefault();
+          insertDefendantSpeaker(num);
+          return;
+        }
+
+        if (e.code === 'KeyC' || e.key.toLowerCase() === 'c') {
+          e.preventDefault();
+          // Insert second counsel if available, or first
+          const defEntries = document.querySelectorAll('.def-entry');
+          const counselEntries = [];
+          defEntries.forEach((entry, idx) => {
+            if (entry.dataset.hasCounsel === 'true') counselEntries.push(idx + 1);
+          });
+          if (counselEntries.length > 1) {
+            insertSpeaker(`DC for D${counselEntries[1]}:`, 'speaker-dc');
+          } else {
+            insertFirstAppearingCounsel();
+          }
+          return;
+        }
+      }
+
+      // 3. Single Alt + Key combinations
+      if (e.altKey && !e.shiftKey && !e.ctrlKey && !e.metaKey) {
+        if (e.key === '1') { e.preventDefault(); insertSpeaker('Court:', 'speaker-court'); return; }
+        if (e.key === '2') { e.preventDefault(); insertSpeaker('Prosecution:', 'speaker-prosecution'); return; }
+        if (e.key === '3') { e.preventDefault(); insertDefendantSpeaker(1); return; }
+        if (e.key === '4') { e.preventDefault(); insertFirstAppearingCounsel(); return; }
+        if (e.key === '5') { e.preventDefault(); insertSpeaker('Interpreter:', 'speaker-interp'); return; }
+        if (e.key === '6') { e.preventDefault(); insertSpeaker('Witness:', 'speaker-witness'); return; }
+        
+        // Multi-Defendant Hotkeys: Alt+7 -> D2, Alt+8 -> D3, Alt+9 -> D4, Alt+0 -> D5
+        if (e.key === '7') { e.preventDefault(); insertDefendantSpeaker(2); return; }
+        if (e.key === '8') { e.preventDefault(); insertDefendantSpeaker(3); return; }
+        if (e.key === '9') { e.preventDefault(); insertDefendantSpeaker(4); return; }
+        if (e.key === '0') { e.preventDefault(); insertDefendantSpeaker(5); return; }
+
+        if (e.key.toLowerCase() === 'o') { e.preventDefault(); insertSpeaker('ORDER:', 'tag-order'); return; }
+        if (e.key.toLowerCase() === 'r') { e.preventDefault(); insertSpeaker('RECORD:', 'tag-order'); return; }
+        if (e.key.toLowerCase() === 't') { e.preventDefault(); insertTimestamp(); return; }
+        if (e.key.toLowerCase() === 's') { e.preventDefault(); toggleFastTagsSlider(); return; }
+        if (e.key.toLowerCase() === 'c') { e.preventDefault(); insertFirstAppearingCounsel(); return; }
+        if (e.key === '?' || e.key === '/') { e.preventDefault(); toggleShortcutsModal(); return; }
+      }
+
+      // 4. Cmd / Ctrl Shortcuts
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
+        e.preventDefault();
+        toggleFastTagsSlider();
+        return;
       }
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'b') {
         e.preventDefault();
         toggleSidebar();
+        return;
+      }
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 's') {
+        e.preventDefault();
+        saveToLocalStorage(true);
+        return;
       }
     });
 
@@ -664,8 +1840,307 @@
       document.body.removeChild(a);
     }
 
+    // ==========================================
+    // LOCAL STORAGE AUTO-SAVE & RESTORE ENGINE
+    // ==========================================
+
+    function markDirty() {
+      if (!hasInitialized) return;
+      isDirty = true;
+      const icon = document.getElementById('autoSaveIcon');
+      const status = document.getElementById('autoSaveStatus');
+      if (icon) icon.className = 'fa-solid fa-pen text-amber-400 text-xs';
+      if (status) status.innerText = 'Unsaved edits';
+    }
+
+    function captureCurrentState() {
+      const defs = [];
+      document.querySelectorAll('.def-entry').forEach((entry) => {
+        defs.push({
+          name: entry.querySelector('.def-name')?.value || '',
+          attendance: entry.dataset.attendance === 'absent' ? 'absent' : 'present',
+          absentReason: getDefendantAbsentReason(entry),
+          hasCounsel: entry.dataset.hasCounsel === 'true',
+          counsel: entry.querySelector('.def-counsel')?.value || ''
+        });
+      });
+
+      const now = new Date();
+      return {
+        version: 1,
+        savedAt: now.toISOString(),
+        savedAtDisplay: now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }),
+        savedDateDisplay: now.toLocaleDateString('en-GB'),
+        generatedCaseNo: document.getElementById('generatedCaseNo')?.innerText || 'MCCT/BSB/9/2026',
+        editorHtml: document.getElementById('editor')?.innerHTML || '',
+        metadata: {
+          courtTier: "Magistrate's Court",
+          caseType: document.getElementById('caseType')?.value || '',
+          docketLoc: document.getElementById('docketLoc')?.value || '',
+          hearingNature: document.getElementById('hearingNature')?.value || '',
+          caseNoVal: document.getElementById('caseNoVal')?.value || '',
+          caseYearVal: document.getElementById('caseYearVal')?.value || '',
+          magistrateName: document.getElementById('magistrateName')?.value || '',
+          hearingDate: document.getElementById('hearingDate')?.value || '',
+          courtRoom: document.getElementById('courtRoom')?.value || '',
+          startTime: document.getElementById('startTime')?.value || '',
+          endTime: document.getElementById('endTime')?.value || '',
+          dppName: document.getElementById('dppName')?.value || '',
+          interpreterName: document.getElementById('interpreterName')?.value || '',
+          defendants: defs
+        }
+      };
+    }
+
+    function saveToLocalStorage(manual = false) {
+      try {
+        const state = captureCurrentState();
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+        isDirty = false;
+
+        const icon = document.getElementById('autoSaveIcon');
+        const status = document.getElementById('autoSaveStatus');
+        const time = document.getElementById('autoSaveTime');
+
+        if (icon) icon.className = 'fa-solid fa-circle-check text-emerald-400 text-xs';
+        if (status) status.innerText = manual ? 'Saved manually' : 'Auto-saved';
+        if (time) time.innerText = state.savedAtDisplay;
+
+        if (manual) {
+          showToast('Transcript and metadata saved to Local Storage');
+        }
+      } catch (err) {
+        console.error('Failed to save to local storage:', err);
+        const icon = document.getElementById('autoSaveIcon');
+        const status = document.getElementById('autoSaveStatus');
+        if (icon) icon.className = 'fa-solid fa-triangle-exclamation text-rose-400 text-xs';
+        if (status) status.innerText = 'Storage error';
+      }
+    }
+
+    // Auto-save every 3 seconds if dirty
+    setInterval(() => {
+      if (isDirty) {
+        const icon = document.getElementById('autoSaveIcon');
+        const status = document.getElementById('autoSaveStatus');
+        if (icon) icon.className = 'fa-solid fa-arrows-rotate fa-spin text-amber-400 text-xs';
+        if (status) status.innerText = 'Saving...';
+
+        setTimeout(() => {
+          saveToLocalStorage(false);
+        }, 200);
+      }
+    }, 3000);
+
+    // Save on beforeunload
+    window.addEventListener('beforeunload', () => {
+      if (isDirty) {
+        saveToLocalStorage(false);
+      }
+    });
+
+    // Check for saved draft on page refresh / load
+    function checkForSavedDraftOnLoad() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (!raw) return;
+
+        const draft = JSON.parse(raw);
+        if (!draft || !draft.editorHtml) return;
+
+        pendingDraft = draft;
+
+        // Populate restore modal
+        const caseNoEl = document.getElementById('modalDraftCaseNo');
+        const magEl = document.getElementById('modalDraftMagistrate');
+        const timeEl = document.getElementById('modalDraftSavedAt');
+        const previewEl = document.getElementById('modalDraftPreview');
+
+        if (caseNoEl) caseNoEl.innerText = draft.generatedCaseNo || 'Case Reference';
+        if (magEl) magEl.innerText = draft.metadata?.magistrateName || 'Magistrate / Judicial Officer';
+        if (timeEl) timeEl.innerText = `${draft.savedDateDisplay || ''} at ${draft.savedAtDisplay || ''}`;
+
+        // Generate text snippet from HTML
+        const temp = document.createElement('div');
+        temp.innerHTML = draft.editorHtml;
+        const text = temp.innerText.trim();
+        if (previewEl) {
+          previewEl.innerText = text || '(No written speech in transcript)';
+        }
+
+        // Show prompt modal to user
+        const modal = document.getElementById('restoreDraftModal');
+        if (modal) {
+          modal.classList.remove('hidden');
+        }
+      } catch (e) {
+        console.error('Error checking saved draft:', e);
+      }
+    }
+
+    function applyRestoredDraft() {
+      if (!pendingDraft) return;
+      const draft = pendingDraft;
+      const m = draft.metadata || {};
+
+      // Restore dropdowns & text fields
+      if (m.courtTier && document.getElementById('courtTier')) document.getElementById('courtTier').value = m.courtTier;
+      if (m.caseType && document.getElementById('caseType')) document.getElementById('caseType').value = m.caseType;
+      if (m.docketLoc && document.getElementById('docketLoc')) document.getElementById('docketLoc').value = m.docketLoc;
+      if (m.hearingNature && document.getElementById('hearingNature')) document.getElementById('hearingNature').value = m.hearingNature;
+      if (m.caseNoVal && document.getElementById('caseNoVal')) document.getElementById('caseNoVal').value = m.caseNoVal;
+      if (m.caseYearVal && document.getElementById('caseYearVal')) document.getElementById('caseYearVal').value = m.caseYearVal;
+      if (m.magistrateName && document.getElementById('magistrateName')) document.getElementById('magistrateName').value = m.magistrateName;
+      if (m.hearingDate && document.getElementById('hearingDate')) document.getElementById('hearingDate').value = m.hearingDate;
+      if (m.courtRoom && document.getElementById('courtRoom')) document.getElementById('courtRoom').value = m.courtRoom;
+      if (m.startTime && document.getElementById('startTime')) document.getElementById('startTime').value = m.startTime;
+      if (m.endTime && document.getElementById('endTime')) document.getElementById('endTime').value = m.endTime;
+      if (m.dppName && document.getElementById('dppName')) document.getElementById('dppName').value = m.dppName;
+      if (m.interpreterName && document.getElementById('interpreterName')) document.getElementById('interpreterName').value = m.interpreterName;
+
+      // Restore defendants
+      const container = document.getElementById('defendantsContainer');
+      if (container && Array.isArray(m.defendants)) {
+        container.innerHTML = '';
+        if (m.defendants.length > 0) {
+          m.defendants.forEach((d) => {
+            const hasC = d.hasCounsel !== undefined ? Boolean(d.hasCounsel) : Boolean(d.counsel && d.counsel.trim());
+            const att = d.attendance === 'absent' ? 'absent' : 'present';
+            const reason = d.absentReason || 'Unexplained Absence';
+            addDefendant(d.name || '', hasC, d.counsel || '', att, reason);
+          });
+        } else {
+          addDefendant('', false, '', 'present', 'Unexplained Absence');
+        }
+      }
+
+      // Restore Editor content
+      if (draft.editorHtml && document.getElementById('editor')) {
+        document.getElementById('editor').innerHTML = draft.editorHtml;
+      }
+
+      // Synchronize headers
+      syncMetadata();
+      checkSessionStateFromInputs();
+      isDirty = false;
+
+      // Update badge
+      const icon = document.getElementById('autoSaveIcon');
+      const status = document.getElementById('autoSaveStatus');
+      const time = document.getElementById('autoSaveTime');
+      if (icon) icon.className = 'fa-solid fa-circle-check text-emerald-400 text-xs';
+      if (status) status.innerText = 'Draft restored';
+      if (time) time.innerText = draft.savedAtDisplay || 'Restored';
+
+      dismissRestoreModal();
+      showToast(`Restored draft for ${draft.generatedCaseNo || 'case'} from ${draft.savedAtDisplay}`);
+    }
+
+    function dismissRestoreModal() {
+      const modal = document.getElementById('restoreDraftModal');
+      if (modal) modal.classList.add('hidden');
+    }
+
+    function discardSavedDraft() {
+      localStorage.removeItem(STORAGE_KEY);
+      pendingDraft = null;
+      dismissRestoreModal();
+
+      const status = document.getElementById('autoSaveStatus');
+      const time = document.getElementById('autoSaveTime');
+      if (status) status.innerText = 'New session';
+      if (time) time.innerText = 'Draft cleared';
+
+      showToast('Previous draft removed from local storage');
+    }
+
+    function openRestorePromptManual() {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (!raw) {
+        showToast('No saved draft currently found in Local Storage', 'info');
+        return;
+      }
+      checkForSavedDraftOnLoad();
+    }
+
+    function confirmClearDraft() {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (!raw) {
+        showToast('No saved draft to clear.', 'info');
+        return;
+      }
+      const modal = document.getElementById('confirmClearModal');
+      if (modal) modal.classList.remove('hidden');
+    }
+
+    function closeConfirmClearModal() {
+      const modal = document.getElementById('confirmClearModal');
+      if (modal) modal.classList.add('hidden');
+    }
+
+    function executeClearDraft() {
+      localStorage.removeItem(STORAGE_KEY);
+      pendingDraft = null;
+      closeConfirmClearModal();
+      const status = document.getElementById('autoSaveStatus');
+      const time = document.getElementById('autoSaveTime');
+      if (status) status.innerText = 'Storage cleared';
+      if (time) time.innerText = 'Ready';
+      showToast('Local Storage draft cleared.');
+    }
+
+    // Toast Notification System
+    function showToast(message, type = 'success') {
+      const container = document.getElementById('toastContainer');
+      if (!container) return;
+
+      const toast = document.createElement('div');
+      toast.className = 'pointer-events-auto bg-slate-900 text-white border border-slate-700 px-4 py-2.5 rounded-xl shadow-xl flex items-center gap-2.5 text-xs font-medium transform transition-all duration-300 opacity-0 translate-y-2';
+      
+      const iconClass = type === 'info' ? 'fa-solid fa-circle-info text-blue-400' : 'fa-solid fa-circle-check text-emerald-400';
+      toast.innerHTML = `
+        <i class="${iconClass} text-sm"></i>
+        <span>${escapeHtml(message)}</span>
+      `;
+
+      container.appendChild(toast);
+
+      // Animate in
+      requestAnimationFrame(() => {
+        toast.classList.remove('opacity-0', 'translate-y-2');
+        toast.classList.add('opacity-100', 'translate-y-0');
+      });
+
+      // Animate out & remove
+      setTimeout(() => {
+        toast.classList.remove('opacity-100', 'translate-y-0');
+        toast.classList.add('opacity-0', 'translate-y-2');
+        setTimeout(() => toast.remove(), 300);
+      }, 3500);
+    }
+
+    // Initialize listeners
+    function initListeners() {
+      const editor = document.getElementById('editor');
+      if (editor) {
+        editor.addEventListener('input', markDirty);
+        editor.addEventListener('keyup', markDirty);
+        editor.addEventListener('paste', markDirty);
+      }
+    }
+
     // Run initial sync on load
-    window.onload = syncMetadata;
+    window.onload = function() {
+      const container = document.getElementById('defendantsContainer');
+      if (container && container.querySelectorAll('.def-entry').length === 0) {
+        addDefendant('', false, '');
+      }
+      syncMetadata();
+      checkSessionStateFromInputs();
+      initListeners();
+      hasInitialized = true;
+      checkForSavedDraftOnLoad();
+    };
   </script>
 </body>
 </html>

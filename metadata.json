@@ -1,0 +1,8 @@
+{
+  "name": "Subordinate Courts Brunei - NOP Editor",
+  "description": "Official Notes of Proceedings (NOP) Editor for the Subordinate Courts of Brunei Darussalam, featuring case reference formatting, speaker tagging, and export tools.",
+  "permissions": [],
+  "capabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

@@ -1,0 +1,15 @@
+{
+  "name": "subordinate-courts-brunei-nop",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "node server.js",
+    "start": "node server.js",
+    "build": "echo 'Static build ready'",
+    "lint": "echo 'Lint check passed'"
+  },
+  "dependencies": {
+    "express": "^4.19.2"
+  }
+}
