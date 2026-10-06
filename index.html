@@ -22,6 +22,8 @@
     }
   </script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <!-- html2pdf for direct pixel-perfect PDF export -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Merriweather:ital,wght@0,300;0,400;0,700;1,300&family=Roboto+Mono:wght@400;500;700&display=swap');
     
@@ -37,7 +39,7 @@
 
     /* NOP Editor Styling */
     #editor {
-      min-height: 550px;
+      min-height: 600px;
       outline: none;
     }
 
@@ -47,7 +49,25 @@
       padding-left: 9rem; /* Indents all wrapped lines cleanly */
       text-indent: -9rem; /* Pulls speaker tag back to left margin */
       line-height: 1.7;
+      min-height: 1.7em;
       word-wrap: break-word;
+    }
+
+    /* Speaker Continuation Paragraph (Preserves Indent without Under-Tag Spill) */
+    #editor p.speech-continuation {
+      margin-bottom: 0.85rem;
+      padding-left: 9rem; /* Perfectly aligns with speaker dialogue column */
+      text-indent: 0;     /* Keeps text indented, preventing spill under speaker tags */
+      line-height: 1.7;
+      min-height: 1.7em;
+      word-wrap: break-word;
+    }
+
+    /* Regular paragraphs in editor */
+    #editor p:not(.speech-line):not(.speech-continuation) {
+      margin-bottom: 0.75rem;
+      line-height: 1.65;
+      min-height: 1.65em;
     }
 
     /* Speaker Tag Styling */
@@ -91,6 +111,155 @@
     .tag-timestamp { color: #475569; font-size: 0.8em; font-weight: 700; font-family: 'Roboto Mono', monospace; background-color: #f1f5f9; border: 1px solid #e2e8f0; width: auto !important; padding: 1px 6px; }
     .dark .tag-timestamp { color: #cbd5e1; background-color: #334155; border-color: #475569; }
 
+    /* Rich Text Elements in NOP Editor */
+    #editor h2 {
+      font-size: 1.25rem;
+      font-weight: 700;
+      margin-top: 1.25rem;
+      margin-bottom: 0.5rem;
+      color: inherit;
+    }
+    #editor h3 {
+      font-size: 1.1rem;
+      font-weight: 600;
+      margin-top: 1rem;
+      margin-bottom: 0.35rem;
+      color: inherit;
+    }
+    /* Lists inside Editor align with Speaker Dialogue Column */
+    #editor ul, #editor ol {
+      margin-left: 9rem; /* Perfectly aligns with speaker dialogue column */
+      padding-left: 1.25rem;
+      margin-bottom: 0.85rem;
+    }
+    #editor ul {
+      list-style-type: disc;
+    }
+    #editor ol {
+      list-style-type: decimal;
+    }
+    #editor li {
+      margin-bottom: 0.35rem;
+      line-height: 1.65;
+    }
+    #editor blockquote {
+      border-left: 3px solid #f59e0b;
+      padding-left: 1rem;
+      margin: 0.85rem 0;
+      font-style: italic;
+      color: #64748b;
+    }
+    .dark #editor blockquote {
+      color: #94a3b8;
+    }
+    #editor mark, #editor .highlight {
+      background-color: #fef08a;
+      color: #0f172a;
+      padding: 0 3px;
+      border-radius: 2px;
+    }
+
+    /* Court Standard Table in Editor */
+    #editor table.nop-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 1.25rem 0;
+      font-size: 0.875rem;
+      border: 1px solid #cbd5e1;
+    }
+    .dark #editor table.nop-table {
+      border-color: #475569;
+    }
+    #editor table.nop-table th,
+    #editor table.nop-table td {
+      border: 1px solid #cbd5e1;
+      padding: 0.6rem 0.85rem;
+      text-align: left;
+      vertical-align: top;
+      min-width: 60px;
+    }
+    .dark #editor table.nop-table th,
+    .dark #editor table.nop-table td {
+      border-color: #475569;
+    }
+    #editor table.nop-table th {
+      background-color: #f8fafc;
+      font-weight: 700;
+      color: #334155;
+    }
+    .dark #editor table.nop-table th {
+      background-color: #1e293b;
+      color: #f1f5f9;
+    }
+
+    /* Page Break Line Component */
+    .page-break-line {
+      display: flex;
+      align-items: center;
+      margin: 2rem 0;
+      user-select: none;
+    }
+    .page-break-line::before,
+    .page-break-line::after {
+      content: '';
+      flex: 1;
+      border-bottom: 2px dashed #cbd5e1;
+    }
+    .dark .page-break-line::before,
+    .dark .page-break-line::after {
+      border-bottom-color: #475569;
+    }
+    .page-break-label {
+      padding: 0 0.85rem;
+      font-size: 0.72rem;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      color: #64748b;
+      font-family: monospace;
+      background: transparent;
+    }
+    .dark .page-break-label {
+      color: #94a3b8;
+    }
+
+    /* Visual Dynamic Page Break Boundary Guide */
+    .dynamic-page-boundary {
+      position: absolute;
+      left: 0;
+      right: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      pointer-events: none;
+      user-select: none;
+      z-index: 10;
+    }
+    .dynamic-page-boundary-line {
+      width: 100%;
+      border-bottom: 1.5px dashed #e2e8f0;
+    }
+    .dark .dynamic-page-boundary-line {
+      border-bottom-color: #334155;
+    }
+    .dynamic-page-boundary-tag {
+      position: absolute;
+      right: 1.5rem;
+      font-family: monospace;
+      font-size: 0.68rem;
+      font-weight: 700;
+      background-color: #f1f5f9;
+      color: #64748b;
+      padding: 2px 8px;
+      border-radius: 4px;
+      border: 1px solid #cbd5e1;
+    }
+    .dark .dynamic-page-boundary-tag {
+      background-color: #1e293b;
+      color: #94a3b8;
+      border-color: #475569;
+    }
+
     /* Sidebar Sliding Transitions */
     #metadataSidebar {
       transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -119,14 +288,116 @@
       pointer-events: none;
     }
 
-    /* Print Formatting Rules */
+    /* Print Formatting Rules - 100% Identical to Editor */
+    @page {
+      size: A4 portrait;
+      margin: 15mm 15mm 15mm 15mm;
+    }
     @media print {
-      body { background: white !important; color: black !important; }
-      header, aside, #toolbar, #actionBtns { display: none !important; }
-      main { padding: 0 !important; overflow: visible !important; }
-      #editorContainer { border: none !important; box-shadow: none !important; padding: 0 !important; width: 100% !important; max-width: 100% !important; }
-      .speaker-tag { border: none !important; background: transparent !important; color: black !important; padding: 0 !important; font-weight: bold !important; }
-      #editor p.speech-line { padding-left: 8rem !important; text-indent: -8rem !important; }
+      * {
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+        color-adjust: exact !important;
+      }
+      body {
+        background: #ffffff !important;
+        color: #0f172a !important;
+      }
+      header, aside, #toolbar, #richTextToolbar, #actionBtns, #floatingFastTagsTab, #toastContainer, .no-print, .dynamic-page-boundary {
+        display: none !important;
+      }
+      main {
+        background: transparent !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        overflow: visible !important;
+      }
+      #editorScrollArea {
+        overflow: visible !important;
+        padding: 0 !important;
+        display: block !important;
+      }
+      #editorContainer {
+        border: none !important;
+        box-shadow: none !important;
+        padding: 0 !important;
+        margin: 0 auto !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        min-height: auto !important;
+        background: #ffffff !important;
+        color: #0f172a !important;
+      }
+      #docMetadataBlock {
+        background-color: #f8fafc !important;
+        border: 1px solid #cbd5e1 !important;
+        color: #0f172a !important;
+        padding: 14px 16px !important;
+        border-radius: 8px !important;
+        margin-bottom: 20px !important;
+      }
+      /* Maintain exact speaker colors and badges in print/PDF */
+      .speaker-tag {
+        display: inline-block !important;
+        width: 8.5rem !important;
+        flex-shrink: 0 !important;
+        margin-right: 0.75rem !important;
+        font-weight: 700 !important;
+        font-size: 0.85rem !important;
+        padding: 1px 4px !important;
+        border-radius: 4px !important;
+        text-align: center !important;
+      }
+      .speaker-court { color: #1e3a8a !important; background-color: #dbeafe !important; border: 1px solid #bfdbfe !important; }
+      .speaker-prosecution { color: #991b1b !important; background-color: #fee2e2 !important; border: 1px solid #fecaca !important; }
+      .speaker-defence { color: #065f46 !important; background-color: #d1fae5 !important; border: 1px solid #a7f3d0 !important; }
+      .speaker-dc { color: #0f766e !important; background-color: #ccfbf1 !important; border: 1px solid #99f6e4 !important; }
+      .speaker-interp { color: #92400e !important; background-color: #fef3c7 !important; border: 1px solid #fde68a !important; }
+      .speaker-witness { color: #4338ca !important; background-color: #e0e7ff !important; border: 1px solid #c7d2fe !important; }
+      .tag-order { color: #6b21a8 !important; background-color: #f3e8ff !important; border: 1px solid #e9d5ff !important; font-weight: bold !important; }
+      .tag-timestamp { color: #475569 !important; background-color: #f1f5f9 !important; border: 1px solid #e2e8f0 !important; font-family: monospace !important; }
+      
+      #editor p.speech-line {
+        margin-bottom: 0.85rem !important;
+        padding-left: 9rem !important;
+        text-indent: -9rem !important;
+        line-height: 1.7 !important;
+        page-break-inside: avoid;
+        word-wrap: break-word !important;
+      }
+      #editor p.speech-continuation {
+        margin-bottom: 0.85rem !important;
+        padding-left: 9rem !important;
+        text-indent: 0 !important;
+        line-height: 1.7 !important;
+        word-wrap: break-word !important;
+      }
+      #editor ul, #editor ol {
+        margin-left: 9rem !important;
+        padding-left: 1.25rem !important;
+        margin-bottom: 0.85rem !important;
+      }
+      table.nop-table {
+        width: 100% !important;
+        border-collapse: collapse !important;
+        margin: 1.25rem 0 !important;
+        border: 1px solid #cbd5e1 !important;
+        page-break-inside: auto;
+      }
+      table.nop-table th, table.nop-table td {
+        border: 1px solid #cbd5e1 !important;
+        padding: 0.5rem 0.75rem !important;
+      }
+      table.nop-table th {
+        background-color: #f8fafc !important;
+      }
+      .page-break-line {
+        page-break-after: always !important;
+        break-after: page !important;
+        visibility: hidden;
+        height: 0;
+        margin: 0;
+      }
     }
   </style>
 </head>
@@ -161,6 +432,12 @@
       <!-- Dark/Light Theme Toggle -->
       <button onclick="toggleDarkMode()" class="p-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 transition border border-slate-700" title="Toggle Dark/Light Mode">
         <i id="themeIcon" class="fa-solid fa-moon text-base"></i>
+      </button>
+
+      <!-- Magistrate Settings & Judicial Profile Button -->
+      <button onclick="openSettingsModal()" class="px-2.5 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 hover:text-amber-300 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition border border-slate-700 shadow-xs cursor-pointer" title="Magistrate Settings & Judicial Profile">
+        <i class="fa-solid fa-sliders text-amber-400"></i>
+        <span class="hidden md:inline">Settings</span>
       </button>
 
       <!-- Actions -->
@@ -229,7 +506,7 @@
               <select id="docketLoc" onchange="syncMetadata()" class="w-full bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded p-1.5 font-medium focus:ring-2 focus:ring-amber-500 outline-none">
                 <option value="BANDAR SERI BEGAWAN" selected>BSB (Bandar Seri Begawan)</option>
                 <option value="KUALA BELAIT">KB (Kuala Belait)</option>
-                <option value="TUTONG">TTG (Tutong)</option>
+                <option value="TUTONG">TUT (Tutong)</option>
                 <option value="TEMBURONG">TEMB (Temburong)</option>
               </select>
             </div>
@@ -250,17 +527,17 @@
           <div class="grid grid-cols-2 gap-2">
             <div>
               <span class="text-[10px] text-slate-400 font-semibold uppercase">Docket No.</span>
-              <input type="number" id="caseNoVal" value="9" min="1" oninput="syncMetadata()" class="w-full bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded p-1.5 font-medium focus:ring-2 focus:ring-amber-500 outline-none">
+              <input type="number" id="caseNoVal" value="" placeholder="e.g. 1" min="1" oninput="syncMetadata()" class="w-full bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded p-1.5 font-medium focus:ring-2 focus:ring-amber-500 outline-none">
             </div>
             <div>
               <span class="text-[10px] text-slate-400 font-semibold uppercase">Filing Year</span>
-              <input type="number" id="caseYearVal" value="2026" oninput="syncMetadata()" class="w-full bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded p-1.5 font-medium focus:ring-2 focus:ring-amber-500 outline-none">
+              <input type="number" id="caseYearVal" value="" min="1990" max="2099" oninput="syncMetadata()" class="w-full bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded p-1.5 font-medium focus:ring-2 focus:ring-amber-500 outline-none">
             </div>
           </div>
 
           <div class="p-2 bg-slate-900 text-white rounded-lg border border-slate-800 text-center shadow-inner">
             <span class="text-[9px] text-amber-400 font-bold block uppercase tracking-wider">Case Reference</span>
-            <span id="generatedCaseNo" class="font-mono font-bold text-sm text-amber-300">MCCT/BSB/9/2026</span>
+            <span id="generatedCaseNo" class="font-mono font-bold text-sm text-amber-300">MCCT/BSB/[No]/2026</span>
           </div>
         </div>
 
@@ -298,7 +575,7 @@
           <span class="font-semibold text-slate-700 dark:text-slate-300 block border-b pb-1 dark:border-slate-700">Parties & Representation</span>
           <div>
             <span class="text-[10px] text-slate-400 font-semibold uppercase">Prosecution / DPP Name</span>
-            <input type="text" id="dppName" value="DPP / Prosecuting Officer" oninput="syncMetadata()" class="w-full bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded p-1.5 font-medium">
+            <input type="text" id="dppName" value="" placeholder="Enter DPP / Prosecuting Officer Name" oninput="syncMetadata()" class="w-full bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded p-1.5 font-medium">
           </div>
 
           <div class="space-y-2">
@@ -406,10 +683,186 @@
         </button>
       </div>
 
-      <!-- Scrollable NOP Page Area -->
-      <div class="flex-1 overflow-y-auto p-4 md:p-8 flex justify-center">
-        <div id="editorContainer" class="w-full max-w-4xl bg-white dark:bg-slate-800 rounded-xl shadow-lg border border-slate-200 dark:border-slate-700 p-8 md:p-12 flex flex-col transition-all min-h-[850px] h-auto">
+      <!-- Rich Text Formatting Toolbar -->
+      <div id="richTextToolbar" class="bg-slate-50 dark:bg-slate-800/95 border-b border-slate-200 dark:border-slate-700 px-3 py-1.5 flex flex-wrap items-center justify-between gap-1.5 shadow-2xs z-10 shrink-0 text-xs select-none">
+        
+        <!-- Left formatting tools group -->
+        <div class="flex flex-wrap items-center gap-1">
+          <!-- Undo / Redo -->
+          <div class="flex items-center bg-white dark:bg-slate-700 rounded-lg border border-slate-200 dark:border-slate-600 p-0.5 shadow-2xs">
+            <button type="button" onmousedown="event.preventDefault(); formatDoc('undo')" class="p-1.5 px-2 hover:bg-slate-100 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 rounded transition" title="Undo (Ctrl+Z)">
+              <i class="fa-solid fa-rotate-left text-xs"></i>
+            </button>
+            <button type="button" onmousedown="event.preventDefault(); formatDoc('redo')" class="p-1.5 px-2 hover:bg-slate-100 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 rounded transition" title="Redo (Ctrl+Y)">
+              <i class="fa-solid fa-rotate-right text-xs"></i>
+            </button>
+          </div>
+
+          <div class="h-4 w-px bg-slate-300 dark:bg-slate-600 mx-0.5"></div>
+
+          <!-- Paragraph Style Select -->
+          <select id="formatBlockSelect" onchange="formatBlock(this.value); this.selectedIndex=0;" class="bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 text-slate-800 dark:text-slate-200 rounded-lg px-2 py-1 text-xs font-medium outline-none shadow-2xs cursor-pointer">
+            <option value="" disabled selected>Paragraph Style</option>
+            <option value="p">Normal Text</option>
+            <option value="h2">Heading 1 (Section)</option>
+            <option value="h3">Heading 2 (Sub-section)</option>
+            <option value="blockquote">Quote / Authority</option>
+          </select>
+
+          <div class="h-4 w-px bg-slate-300 dark:bg-slate-600 mx-0.5"></div>
+
+          <!-- Bold, Italic, Underline, Strikethrough, Highlight -->
+          <div class="flex items-center bg-white dark:bg-slate-700 rounded-lg border border-slate-200 dark:border-slate-600 p-0.5 shadow-2xs">
+            <button type="button" onmousedown="event.preventDefault(); formatDoc('bold')" class="p-1.5 px-2 hover:bg-slate-100 dark:hover:bg-slate-600 text-slate-800 dark:text-slate-100 font-bold rounded transition" title="Bold (Ctrl+B)">
+              <i class="fa-solid fa-bold text-xs"></i>
+            </button>
+            <button type="button" onmousedown="event.preventDefault(); formatDoc('italic')" class="p-1.5 px-2 hover:bg-slate-100 dark:hover:bg-slate-600 text-slate-800 dark:text-slate-100 italic rounded transition" title="Italic (Ctrl+I)">
+              <i class="fa-solid fa-italic text-xs"></i>
+            </button>
+            <button type="button" onmousedown="event.preventDefault(); formatDoc('underline')" class="p-1.5 px-2 hover:bg-slate-100 dark:hover:bg-slate-600 text-slate-800 dark:text-slate-100 underline rounded transition" title="Underline (Ctrl+U)">
+              <i class="fa-solid fa-underline text-xs"></i>
+            </button>
+            <button type="button" onmousedown="event.preventDefault(); formatDoc('strikeThrough')" class="p-1.5 px-2 hover:bg-slate-100 dark:hover:bg-slate-600 text-slate-800 dark:text-slate-100 line-through rounded transition" title="Strikethrough">
+              <i class="fa-solid fa-strikethrough text-xs"></i>
+            </button>
+            <button type="button" onmousedown="event.preventDefault(); toggleHighlight()" class="p-1.5 px-2 hover:bg-amber-100 dark:hover:bg-amber-950/60 text-amber-600 dark:text-amber-400 rounded transition" title="Highlight Text (Yellow)">
+              <i class="fa-solid fa-highlighter text-xs"></i>
+            </button>
+          </div>
+
+          <div class="h-4 w-px bg-slate-300 dark:bg-slate-600 mx-0.5"></div>
+
+          <!-- Alignment -->
+          <div class="flex items-center bg-white dark:bg-slate-700 rounded-lg border border-slate-200 dark:border-slate-600 p-0.5 shadow-2xs">
+            <button type="button" onmousedown="event.preventDefault(); formatDoc('justifyLeft')" class="p-1.5 px-2 hover:bg-slate-100 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 rounded transition" title="Align Left">
+              <i class="fa-solid fa-align-left text-xs"></i>
+            </button>
+            <button type="button" onmousedown="event.preventDefault(); formatDoc('justifyCenter')" class="p-1.5 px-2 hover:bg-slate-100 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 rounded transition" title="Align Center">
+              <i class="fa-solid fa-align-center text-xs"></i>
+            </button>
+            <button type="button" onmousedown="event.preventDefault(); formatDoc('justifyRight')" class="p-1.5 px-2 hover:bg-slate-100 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 rounded transition" title="Align Right">
+              <i class="fa-solid fa-align-right text-xs"></i>
+            </button>
+            <button type="button" onmousedown="event.preventDefault(); formatDoc('justifyFull')" class="p-1.5 px-2 hover:bg-slate-100 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 rounded transition" title="Justify">
+              <i class="fa-solid fa-align-justify text-xs"></i>
+            </button>
+          </div>
+
+          <div class="h-4 w-px bg-slate-300 dark:bg-slate-600 mx-0.5"></div>
+
+          <!-- Lists & Indent -->
+          <div class="flex items-center bg-white dark:bg-slate-700 rounded-lg border border-slate-200 dark:border-slate-600 p-0.5 shadow-2xs">
+            <button type="button" onmousedown="event.preventDefault(); formatDoc('insertUnorderedList')" class="p-1.5 px-2 hover:bg-slate-100 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 rounded transition" title="Bullet List">
+              <i class="fa-solid fa-list-ul text-xs"></i>
+            </button>
+            <button type="button" onmousedown="event.preventDefault(); formatDoc('insertOrderedList')" class="p-1.5 px-2 hover:bg-slate-100 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 rounded transition" title="Numbered List">
+              <i class="fa-solid fa-list-ol text-xs"></i>
+            </button>
+            <button type="button" onmousedown="event.preventDefault(); formatDoc('outdent')" class="p-1.5 px-2 hover:bg-slate-100 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 rounded transition" title="Decrease Indent">
+              <i class="fa-solid fa-outdent text-xs"></i>
+            </button>
+            <button type="button" onmousedown="event.preventDefault(); formatDoc('indent')" class="p-1.5 px-2 hover:bg-slate-100 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 rounded transition" title="Increase Indent">
+              <i class="fa-solid fa-indent text-xs"></i>
+            </button>
+          </div>
+
+          <div class="h-4 w-px bg-slate-300 dark:bg-slate-600 mx-0.5"></div>
+
+          <!-- Table Dropdown & Controls -->
+          <div class="relative inline-block" id="tableDropdownContainer">
+            <button type="button" onclick="toggleTableMenu()" class="p-1.5 px-2.5 bg-white dark:bg-slate-700 hover:bg-slate-100 dark:hover:bg-slate-600 border border-slate-200 dark:border-slate-600 text-slate-700 dark:text-slate-200 rounded-lg font-semibold text-xs flex items-center gap-1.5 shadow-2xs transition" title="Insert Table">
+              <i class="fa-solid fa-table text-amber-500 text-xs"></i>
+              <span>Table</span>
+              <i class="fa-solid fa-caret-down text-[10px] text-slate-400"></i>
+            </button>
+            
+            <!-- Table Menu Popover -->
+            <div id="tableMenu" class="hidden absolute top-full left-0 mt-1 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl shadow-xl p-3 z-30 w-64 space-y-2.5">
+              <div class="flex items-center justify-between border-b pb-1.5 border-slate-200 dark:border-slate-700">
+                <span class="font-bold text-xs text-slate-800 dark:text-slate-100">Insert Court Table</span>
+                <button type="button" onclick="toggleTableMenu()" class="text-slate-400 hover:text-slate-600 text-xs p-1">
+                  <i class="fa-solid fa-xmark"></i>
+                </button>
+              </div>
+              <div class="grid grid-cols-2 gap-2 text-xs">
+                <div>
+                  <span class="text-[10px] text-slate-400 font-semibold uppercase">Rows</span>
+                  <input type="number" id="tblRowsInput" value="3" min="1" max="20" class="w-full bg-slate-50 dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded p-1 text-xs">
+                </div>
+                <div>
+                  <span class="text-[10px] text-slate-400 font-semibold uppercase">Columns</span>
+                  <input type="number" id="tblColsInput" value="3" min="1" max="8" class="w-full bg-slate-50 dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded p-1 text-xs">
+                </div>
+              </div>
+              <button type="button" onclick="insertCustomTable()" class="w-full py-1.5 bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold text-xs rounded-lg transition shadow-2xs">
+                Create Table
+              </button>
+              <div class="border-t border-slate-200 dark:border-slate-700 pt-2 space-y-1">
+                <span class="text-[10px] text-slate-400 uppercase font-bold block">Court Presets</span>
+                <button type="button" onclick="insertPresetTable('exhibits')" class="w-full text-left p-1 text-xs hover:bg-slate-100 dark:hover:bg-slate-700/60 rounded flex items-center gap-1.5 text-slate-700 dark:text-slate-300">
+                  <i class="fa-solid fa-box-archive text-amber-500 text-[10px]"></i> Exhibit Schedule (4 cols)
+                </button>
+                <button type="button" onclick="insertPresetTable('charges')" class="w-full text-left p-1 text-xs hover:bg-slate-100 dark:hover:bg-slate-700/60 rounded flex items-center gap-1.5 text-slate-700 dark:text-slate-300">
+                  <i class="fa-solid fa-scale-balanced text-red-500 text-[10px]"></i> Charge Particulars (3 cols)
+                </button>
+                <button type="button" onclick="insertPresetTable('bail')" class="w-full text-left p-1 text-xs hover:bg-slate-100 dark:hover:bg-slate-700/60 rounded flex items-center gap-1.5 text-slate-700 dark:text-slate-300">
+                  <i class="fa-solid fa-shield-halved text-emerald-500 text-[10px]"></i> Bail Conditions (3 cols)
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Dynamic Active Table Editing Tools (visible when cursor is inside a table) -->
+          <div id="tableToolsGroup" class="hidden items-center gap-1 bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800/60 px-2 py-0.5 rounded-lg text-xs font-semibold text-amber-900 dark:text-amber-200">
+            <span class="text-[10px] uppercase font-mono font-bold mr-0.5">Table:</span>
+            <button type="button" onmousedown="event.preventDefault(); addTableRow()" class="px-1.5 py-0.5 bg-white dark:bg-slate-800 hover:bg-amber-100 dark:hover:bg-amber-900/60 rounded border border-amber-300 dark:border-amber-700 text-[11px]" title="Add Row Below">+ Row</button>
+            <button type="button" onmousedown="event.preventDefault(); deleteTableRow()" class="px-1.5 py-0.5 bg-white dark:bg-slate-800 hover:bg-rose-100 dark:hover:bg-rose-900/60 text-rose-700 dark:text-rose-300 rounded border border-rose-300 dark:border-rose-800 text-[11px]" title="Delete Current Row">- Row</button>
+            <button type="button" onmousedown="event.preventDefault(); addTableCol()" class="px-1.5 py-0.5 bg-white dark:bg-slate-800 hover:bg-amber-100 dark:hover:bg-amber-900/60 rounded border border-amber-300 dark:border-amber-700 text-[11px]" title="Add Column Right">+ Col</button>
+            <button type="button" onmousedown="event.preventDefault(); deleteTableCol()" class="px-1.5 py-0.5 bg-white dark:bg-slate-800 hover:bg-rose-100 dark:hover:bg-rose-900/60 text-rose-700 dark:text-rose-300 rounded border border-rose-300 dark:border-rose-800 text-[11px]" title="Delete Current Column">- Col</button>
+            <button type="button" onmousedown="event.preventDefault(); deleteActiveTable()" class="px-1.5 py-0.5 bg-rose-600 hover:bg-rose-700 text-white rounded text-[11px] font-bold" title="Delete Entire Table">Del Table</button>
+          </div>
+
+          <div class="h-4 w-px bg-slate-300 dark:bg-slate-600 mx-0.5"></div>
+
+          <!-- Page Break Button -->
+          <button type="button" onmousedown="event.preventDefault(); insertPageBreak()" class="p-1.5 px-2 bg-white dark:bg-slate-700 hover:bg-slate-100 dark:hover:bg-slate-600 border border-slate-200 dark:border-slate-600 text-slate-700 dark:text-slate-200 rounded-lg text-xs font-semibold flex items-center gap-1 shadow-2xs transition" title="Insert Page Break (Ctrl+Enter)">
+            <i class="fa-solid fa-file-circle-plus text-amber-500 text-xs"></i>
+            <span class="hidden xl:inline">Page Break</span>
+          </button>
+
+          <!-- Insert Magistrate Signature Button -->
+          <button type="button" onmousedown="event.preventDefault(); insertMagistrateSignature()" class="p-1.5 px-2 bg-white dark:bg-slate-700 hover:bg-amber-50 dark:hover:bg-amber-950/40 border border-slate-200 dark:border-slate-600 hover:border-amber-400 text-slate-700 dark:text-slate-200 hover:text-amber-600 dark:hover:text-amber-300 rounded-lg text-xs font-semibold flex items-center gap-1 shadow-2xs transition" title="Insert Magistrate Digital Signature Block">
+            <i class="fa-solid fa-signature text-amber-500 text-xs"></i>
+            <span class="hidden xl:inline">Signature</span>
+          </button>
+
+          <!-- Clear Formatting -->
+          <button type="button" onmousedown="event.preventDefault(); formatDoc('removeFormat')" class="p-1.5 px-2 hover:bg-slate-100 dark:hover:bg-slate-600 text-slate-500 dark:text-slate-400 rounded-lg transition" title="Clear Formatting">
+            <i class="fa-solid fa-eraser text-xs"></i>
+          </button>
+        </div>
+
+        <!-- Right pagination & document statistics -->
+        <div class="flex items-center gap-2 font-mono text-xs">
+          <!-- Dynamic Live Page Indicator -->
+          <div id="pageIndicator" class="px-2.5 py-1 bg-amber-500/10 text-amber-700 dark:text-amber-400 font-mono font-bold text-xs rounded-lg border border-amber-500/20 flex items-center gap-1.5 shadow-2xs">
+            <i class="fa-regular fa-file-lines text-amber-500 text-xs"></i>
+            <span>Page 1 of 1</span>
+          </div>
+
+          <!-- Word count badge -->
+          <span id="wordCountBadge" class="text-slate-400 dark:text-slate-500 font-mono text-[11px] hidden sm:inline">0 words</span>
+        </div>
+
+      </div>
+
+      <!-- Scrollable NOP Page Area (Centered with ample bottom scroll margin) -->
+      <div id="editorScrollArea" onscroll="handleEditorScroll()" class="flex-1 overflow-y-auto p-4 md:p-8 pb-36 flex flex-col items-center">
+        <div id="editorContainer" class="w-full max-w-4xl bg-white dark:bg-slate-800 rounded-xl shadow-xl border border-slate-200 dark:border-slate-700 p-8 md:p-12 flex flex-col transition-all min-h-[1123px] h-auto relative">
           
+          <!-- Dynamic page boundary guide container -->
+          <div id="pageBoundariesContainer" class="pointer-events-none no-print"></div>
+
           <div>
             <!-- Court Document Header Block -->
             <div class="text-center border-b-2 border-slate-900 dark:border-slate-100 pb-4 mb-6">
@@ -424,11 +877,11 @@
             <div id="docMetadataBlock" class="mb-6 p-4 bg-slate-50 dark:bg-slate-900/60 rounded-lg border border-slate-200 dark:border-slate-700 text-xs font-serif text-slate-800 dark:text-slate-200 space-y-2">
               <div class="grid grid-cols-2 gap-4 border-b pb-2 dark:border-slate-700">
                 <div><strong class="font-sans text-slate-500 uppercase text-[10px] block">BEFORE:</strong> <span id="docMagistrate" class="font-semibold">Magistrate</span></div>
-                <div><strong class="font-sans text-slate-500 uppercase text-[10px] block">DATE & VENUE:</strong> <span id="docDateVenue">04/10/2026 | Court Room 1</span></div>
+                <div><strong class="font-sans text-slate-500 uppercase text-[10px] block">DATE & VENUE:</strong> <span id="docDateVenue">6 October 2026 | Court Room 1</span></div>
               </div>
 
               <div class="grid grid-cols-2 gap-4 border-b pb-2 dark:border-slate-700">
-                <div><strong class="font-sans text-slate-500 uppercase text-[10px] block">PROSECUTION:</strong> <span id="docProsecution">DPP / Prosecuting Officer</span></div>
+                <div><strong class="font-sans text-slate-500 uppercase text-[10px] block">PROSECUTION:</strong> <span id="docProsecution">—</span></div>
                 <div><strong class="font-sans text-slate-500 uppercase text-[10px] block">SESSION TIMINGS:</strong> <span id="docTimings" class="font-mono">09:15 AM - 10:45 AM</span></div>
               </div>
 
@@ -799,8 +1252,33 @@
               <span class="font-bold bg-slate-100 dark:bg-slate-700 px-2 py-0.5 rounded">Alt + S / Cmd + K</span>
             </div>
             <div class="flex justify-between items-center p-2 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
-              <span class="font-bold text-slate-700 dark:text-slate-300 font-sans">Toggle Case Metadata Drawer</span>
+              <span class="font-bold text-slate-700 dark:text-slate-300 font-sans">Toggle Case Ref. Drawer</span>
               <span class="font-bold bg-slate-100 dark:bg-slate-700 px-2 py-0.5 rounded">Cmd / Ctrl + B</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Rich Text Formatting Hotkeys -->
+        <div class="bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 rounded-xl p-3.5 space-y-2">
+          <span class="font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider text-[11px] block">
+            <i class="fa-solid fa-pen-nib text-amber-500 mr-1"></i> Rich Text Formatting & Page Controls
+          </span>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 font-mono text-[11px]">
+            <div class="flex justify-between items-center p-2 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
+              <span class="font-bold text-slate-700 dark:text-slate-300 font-sans">Bold Selection</span>
+              <span class="font-bold bg-slate-100 dark:bg-slate-700 px-2 py-0.5 rounded">Ctrl / Cmd + B</span>
+            </div>
+            <div class="flex justify-between items-center p-2 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
+              <span class="font-bold text-slate-700 dark:text-slate-300 font-sans">Italic Selection</span>
+              <span class="font-bold bg-slate-100 dark:bg-slate-700 px-2 py-0.5 rounded">Ctrl / Cmd + I</span>
+            </div>
+            <div class="flex justify-between items-center p-2 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
+              <span class="font-bold text-slate-700 dark:text-slate-300 font-sans">Underline Selection</span>
+              <span class="font-bold bg-slate-100 dark:bg-slate-700 px-2 py-0.5 rounded">Ctrl / Cmd + U</span>
+            </div>
+            <div class="flex justify-between items-center p-2 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
+              <span class="font-bold text-slate-700 dark:text-slate-300 font-sans">Insert Page Break</span>
+              <span class="font-bold bg-slate-100 dark:bg-slate-700 px-2 py-0.5 rounded">Ctrl / Cmd + Enter</span>
             </div>
           </div>
         </div>
@@ -811,6 +1289,336 @@
           Got It
         </button>
       </div>
+    </div>
+  </div>
+
+  <!-- Magistrate Profile & Court Settings Modal -->
+  <div id="settingsModal" class="fixed inset-0 bg-slate-900/75 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl shadow-2xl max-w-2xl w-full overflow-hidden transition-all animate-in fade-in zoom-in duration-200 flex flex-col max-h-[90vh]">
+      
+      <!-- Modal Header -->
+      <div class="p-4 sm:p-5 border-b border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/90 flex items-center justify-between shrink-0">
+        <div class="flex items-center space-x-3">
+          <div class="w-10 h-10 rounded-xl bg-amber-500/20 text-amber-500 flex items-center justify-center text-lg border border-amber-500/30 shrink-0">
+            <i class="fa-solid fa-sliders"></i>
+          </div>
+          <div>
+            <h3 class="font-bold text-base text-slate-900 dark:text-slate-100 flex items-center gap-2">
+              Magistrate Profile & Court Settings
+            </h3>
+            <p class="text-xs text-slate-500 dark:text-slate-400">Save judicial defaults, court rooms, interpreters & digital signatures to autofill across cases.</p>
+          </div>
+        </div>
+        <button onclick="closeSettingsModal()" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 text-sm p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 transition cursor-pointer">
+          <i class="fa-solid fa-xmark text-base"></i>
+        </button>
+      </div>
+
+      <!-- Modal Body -->
+      <div class="p-5 space-y-5 text-xs overflow-y-auto flex-1">
+        
+        <!-- Profile Switcher & Management -->
+        <div class="bg-amber-500/5 dark:bg-amber-500/10 border border-amber-500/20 rounded-xl p-3.5 space-y-2.5">
+          <div class="flex flex-wrap items-center justify-between gap-2">
+            <div>
+              <span class="font-bold text-slate-800 dark:text-slate-200 uppercase tracking-wider text-[11px] flex items-center gap-1.5">
+                <i class="fa-solid fa-id-badge text-amber-500"></i> Active Judicial Profile
+              </span>
+              <p class="text-[11px] text-slate-500 dark:text-slate-400">Switch profiles if different magistrates share this workstation.</p>
+            </div>
+            <div class="flex items-center gap-1.5">
+              <button type="button" onclick="createNewProfilePrompt()" class="px-2.5 py-1 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-[11px] rounded-lg transition shadow-2xs flex items-center gap-1 cursor-pointer">
+                <i class="fa-solid fa-plus text-[10px]"></i> New Profile
+              </button>
+              <button type="button" id="deleteProfileBtn" onclick="deleteCurrentProfile()" class="px-2 py-1 text-rose-600 dark:text-rose-400 hover:bg-rose-100 dark:hover:bg-rose-950/40 border border-rose-200 dark:border-rose-900 rounded-lg text-[11px] font-semibold transition cursor-pointer" title="Delete Profile">
+                <i class="fa-solid fa-trash-can"></i>
+              </button>
+            </div>
+          </div>
+
+          <div class="flex items-center gap-2">
+            <select id="settingProfileSelect" onchange="switchSettingsProfile(this.value)" class="flex-1 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-lg p-2 font-semibold text-slate-800 dark:text-slate-100 text-xs focus:ring-2 focus:ring-amber-500 outline-none">
+              <!-- Dynamically rendered profile options -->
+            </select>
+            <span id="activeProfileBadge" class="bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border border-emerald-500/30 px-2.5 py-1.5 rounded-lg font-bold text-[10px] uppercase font-mono shrink-0">
+              Active
+            </span>
+          </div>
+        </div>
+
+        <!-- Judicial Defaults Form -->
+        <div class="space-y-3.5">
+          <span class="font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider text-[11px] block border-b pb-1.5 border-slate-200 dark:border-slate-700 flex items-center gap-1.5">
+            <i class="fa-solid fa-user-tie text-amber-500"></i> Magistrate & Venue Defaults
+          </span>
+
+          <!-- Magistrate Full Name -->
+          <div>
+            <label class="font-bold text-slate-700 dark:text-slate-300 block mb-1">
+              Magistrate Title & Full Name <span class="text-rose-500">*</span>
+            </label>
+            <input type="text" id="settingMagistrateName" placeholder="e.g. Senior Magistrate Hajah [Name] / Magistrate [Name]" class="w-full bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-lg p-2 font-medium text-slate-800 dark:text-slate-100 text-xs focus:ring-2 focus:ring-amber-500 outline-none">
+            <span class="text-[10px] text-slate-400 mt-1 block">Autofills the 'BEFORE:' metadata field and court document header for every case.</span>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <!-- Preferred Court District / Location -->
+            <div>
+              <label class="font-bold text-slate-700 dark:text-slate-300 block mb-1">
+                Court District / Registry
+              </label>
+              <select id="settingCourtLocation" class="w-full bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-lg p-2 font-medium text-slate-800 dark:text-slate-100 text-xs focus:ring-2 focus:ring-amber-500 outline-none">
+                <option value="BANDAR SERI BEGAWAN">BANDAR SERI BEGAWAN (BSB)</option>
+                <option value="KUALA BELAIT">KUALA BELAIT (KB)</option>
+                <option value="TUTONG">TUTONG (TUT)</option>
+                <option value="TEMBURONG">TEMBURONG (TEMB)</option>
+              </select>
+              <span class="text-[10px] text-slate-400 mt-1 block">Sets 'HOLDEN AT' location and district docket code.</span>
+            </div>
+
+            <!-- Preferred Court Room -->
+            <div>
+              <label class="font-bold text-slate-700 dark:text-slate-300 block mb-1">
+                Preferred Court Room / Venue
+              </label>
+              <select id="settingCourtRoom" class="w-full bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-lg p-2 font-medium text-slate-800 dark:text-slate-100 text-xs focus:ring-2 focus:ring-amber-500 outline-none">
+                <option value="Court Room 1">Court Room 1</option>
+                <option value="Court Room 2">Court Room 2</option>
+                <option value="Court Room 3">Court Room 3</option>
+                <option value="Court Room 4">Court Room 4</option>
+                <option value="Court Room 5">Court Room 5</option>
+                <option value="Court Room 6">Court Room 6</option>
+                <option value="Court Room 7">Court Room 7</option>
+                <option value="Court Room 8">Court Room 8</option>
+                <option value="Chambers">Chambers</option>
+                <option value="Virtual Court">Virtual Court</option>
+              </select>
+              <span class="text-[10px] text-slate-400 mt-1 block">Default hearing venue in Date & Venue card.</span>
+            </div>
+          </div>
+
+          <!-- Default Court Interpreter -->
+          <div>
+            <label class="font-bold text-slate-700 dark:text-slate-300 block mb-1">
+              Default Court Interpreter
+            </label>
+            <input type="text" id="settingInterpreterName" placeholder="e.g. Malay / English Interpreter / [Name]" class="w-full bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-lg p-2 font-medium text-slate-800 dark:text-slate-100 text-xs focus:ring-2 focus:ring-amber-500 outline-none">
+            <span class="text-[10px] text-slate-400 mt-1 block">Autofills the 'INTERPRETER:' metadata field.</span>
+          </div>
+        </div>
+
+        <!-- Export File Naming & Target Folders Section -->
+        <div class="space-y-3.5 border-t pt-3.5 border-slate-200 dark:border-slate-700">
+          <span class="font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider text-[11px] block border-b pb-1.5 border-slate-200 dark:border-slate-700 flex items-center gap-1.5">
+            <i class="fa-solid fa-file-signature text-amber-500"></i> Export File Naming & Folder Preferences
+          </span>
+
+          <!-- Preferred Naming Convention Preset -->
+          <div>
+            <label class="font-bold text-slate-700 dark:text-slate-300 block mb-1">
+              File Naming Convention
+            </label>
+            <select id="settingNamingPreset" onchange="handleNamingPresetChange()" class="w-full bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-lg p-2 font-medium text-slate-800 dark:text-slate-100 text-xs focus:ring-2 focus:ring-amber-500 outline-none">
+              <option value="yymmdd_nature_caseno_spaces">YYMMDD - [Type] - [Case number] (e.g. 261006 - Mention - MCCT BSB 1 2026)</option>
+              <option value="yymmdd_nature_caseno_underscores">YYMMDD - [Type] - [Case_No] (e.g. 261006 - Mention - MCCT_BSB_1_2026)</option>
+              <option value="caseno_nop">[Case_No] - NOP (e.g. MCCT_BSB_1_2026_NOP)</option>
+              <option value="yyyymmdd_magistrate_caseno">YYYY-MM-DD - [Magistrate] - [Case_No] (e.g. 2026-10-06 - Magistrate - MCCT_BSB_1_2026)</option>
+              <option value="custom">Custom Naming Pattern...</option>
+            </select>
+          </div>
+
+          <!-- Custom Pattern Builder (Shown when custom is selected) -->
+          <div id="customPatternBox" class="space-y-1.5 hidden bg-slate-50 dark:bg-slate-900/60 p-3 rounded-xl border border-slate-200 dark:border-slate-700">
+            <div class="flex items-center justify-between">
+              <label class="font-bold text-slate-700 dark:text-slate-300 text-[11px]">
+                Custom Pattern Template:
+              </label>
+              <span class="text-[10px] text-slate-400 font-mono">Tokens: {YYMMDD}, {Nature}, {CaseNoSpaces}...</span>
+            </div>
+            <input type="text" id="settingCustomNamingPattern" oninput="updateNamingPreview()" placeholder="{YYMMDD} - {Nature} - {CaseNoSpaces}" class="w-full bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 rounded p-1.5 font-mono text-xs text-amber-600 dark:text-amber-400 outline-none">
+            
+            <div class="flex flex-wrap gap-1 pt-1">
+              <span class="text-[10px] text-slate-400 font-semibold mr-1">Insert:</span>
+              <button type="button" onclick="insertNamingToken('{YYMMDD}')" class="px-1.5 py-0.5 bg-white dark:bg-slate-800 hover:bg-amber-100 dark:hover:bg-amber-900/60 border border-slate-200 dark:border-slate-700 rounded text-[10px] font-mono text-slate-700 dark:text-slate-300">{YYMMDD}</button>
+              <button type="button" onclick="insertNamingToken('{Nature}')" class="px-1.5 py-0.5 bg-white dark:bg-slate-800 hover:bg-amber-100 dark:hover:bg-amber-900/60 border border-slate-200 dark:border-slate-700 rounded text-[10px] font-mono text-slate-700 dark:text-slate-300">{Nature}</button>
+              <button type="button" onclick="insertNamingToken('{CaseNoSpaces}')" class="px-1.5 py-0.5 bg-white dark:bg-slate-800 hover:bg-amber-100 dark:hover:bg-amber-900/60 border border-slate-200 dark:border-slate-700 rounded text-[10px] font-mono text-slate-700 dark:text-slate-300">{CaseNoSpaces}</button>
+              <button type="button" onclick="insertNamingToken('{CaseNo}')" class="px-1.5 py-0.5 bg-white dark:bg-slate-800 hover:bg-amber-100 dark:hover:bg-amber-900/60 border border-slate-200 dark:border-slate-700 rounded text-[10px] font-mono text-slate-700 dark:text-slate-300">{CaseNo}</button>
+              <button type="button" onclick="insertNamingToken('{Magistrate}')" class="px-1.5 py-0.5 bg-white dark:bg-slate-800 hover:bg-amber-100 dark:hover:bg-amber-900/60 border border-slate-200 dark:border-slate-700 rounded text-[10px] font-mono text-slate-700 dark:text-slate-300">{Magistrate}</button>
+            </div>
+          </div>
+
+          <!-- Live Generated Filename Preview -->
+          <div class="bg-slate-900 text-white p-2.5 rounded-xl border border-slate-800 text-xs space-y-1">
+            <span class="text-[9px] uppercase font-bold text-amber-400 block tracking-wider">Live Filename Preview</span>
+            <div class="flex items-center gap-2 font-mono text-[11px] truncate">
+              <i class="fa-solid fa-file-word text-blue-400"></i>
+              <span id="settingNamingPreviewWord" class="text-slate-200 truncate">261006 - Mention - MCCT BSB 1 2026.doc</span>
+            </div>
+            <div class="flex items-center gap-2 font-mono text-[11px] truncate">
+              <i class="fa-solid fa-file-pdf text-amber-400"></i>
+              <span id="settingNamingPreviewPdf" class="text-slate-200 truncate">261006 - Mention - MCCT BSB 1 2026.pdf</span>
+            </div>
+          </div>
+
+          <!-- Separate Preferred Destination Folders -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+            <div>
+              <label class="font-bold text-slate-700 dark:text-slate-300 block mb-1 flex items-center gap-1">
+                <i class="fa-solid fa-folder text-amber-500"></i> Preferred PDF Folder Path
+              </label>
+              <input type="text" id="settingPdfFolder" placeholder="e.g. C:\Court Documents\PDF Records\" class="w-full bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-lg p-2 font-mono text-slate-800 dark:text-slate-100 text-xs focus:ring-2 focus:ring-amber-500 outline-none">
+              <span class="text-[10px] text-slate-400 mt-1 block">Displayed in export dialog for quick reference & copying.</span>
+            </div>
+
+            <div>
+              <label class="font-bold text-slate-700 dark:text-slate-300 block mb-1 flex items-center gap-1">
+                <i class="fa-solid fa-folder text-blue-500"></i> Preferred WORD Folder Path
+              </label>
+              <input type="text" id="settingWordFolder" placeholder="e.g. C:\Court Documents\Word Drafts\" class="w-full bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-lg p-2 font-mono text-slate-800 dark:text-slate-100 text-xs focus:ring-2 focus:ring-amber-500 outline-none">
+              <span class="text-[10px] text-slate-400 mt-1 block">Displayed in export dialog for separate Word archiving.</span>
+            </div>
+          </div>
+
+          <!-- Export Dialog Toggle -->
+          <div class="pt-1 flex items-center gap-2">
+            <input type="checkbox" id="settingShowExportDialog" checked class="w-4 h-4 rounded text-amber-500 focus:ring-amber-500 border-slate-300 dark:border-slate-600">
+            <label for="settingShowExportDialog" class="font-medium text-slate-700 dark:text-slate-300 text-xs cursor-pointer select-none">
+              Show Save Confirmation Dialog on export (displays target folder reminder & editable filename)
+            </label>
+          </div>
+        </div>
+
+        <!-- Digital Signature Upload & Storage -->
+        <div class="space-y-3 border-t pt-3.5 border-slate-200 dark:border-slate-700">
+          <div class="flex items-center justify-between">
+            <span class="font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider text-[11px] flex items-center gap-1.5">
+              <i class="fa-solid fa-signature text-amber-500"></i> Digital Signature
+            </span>
+            <span id="signatureStatusBadge" class="text-[10px] font-mono text-slate-400 font-bold bg-slate-100 dark:bg-slate-700 px-2 py-0.5 rounded">
+              No signature uploaded
+            </span>
+          </div>
+          <p class="text-[11px] text-slate-500 dark:text-slate-400">
+            Upload a transparent PNG or scanned signature. You can insert it directly into the proceedings using the <strong>Signature</strong> button in the editor toolbar.
+          </p>
+
+          <input type="file" id="settingSignatureFileInput" accept="image/png,image/jpeg,image/webp,image/svg+xml" onchange="handleSignatureFileUpload(event)" class="hidden">
+
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 items-center">
+            <!-- Signature Preview Card -->
+            <div class="sm:col-span-2 bg-white dark:bg-slate-900 border-2 border-dashed border-slate-300 dark:border-slate-700 rounded-xl p-3 flex flex-col items-center justify-center min-h-[100px] relative">
+              <div id="signaturePreviewPlaceholder" class="text-center text-slate-400 py-3 space-y-1">
+                <i class="fa-solid fa-file-arrow-up text-2xl text-slate-300 dark:text-slate-600"></i>
+                <span class="block text-[11px] font-medium">Click "Upload Signature" to add image</span>
+              </div>
+              <img id="signaturePreviewImg" src="" alt="Signature Preview" class="max-h-20 max-w-full object-contain hidden">
+            </div>
+
+            <!-- Signature Buttons -->
+            <div class="space-y-2">
+              <button type="button" onclick="document.getElementById('settingSignatureFileInput').click()" class="w-full py-2 px-3 bg-slate-900 hover:bg-slate-800 text-white dark:bg-slate-100 dark:hover:bg-slate-200 dark:text-slate-900 font-bold rounded-lg transition text-xs flex items-center justify-center gap-1.5 shadow-xs cursor-pointer">
+                <i class="fa-solid fa-upload text-amber-400 dark:text-amber-600"></i> Upload Signature
+              </button>
+              <button type="button" id="removeSignatureBtn" onclick="removeCurrentSignature()" class="w-full py-1.5 px-3 text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 border border-rose-200 dark:border-rose-900 rounded-lg text-xs font-semibold transition hidden flex items-center justify-center gap-1 cursor-pointer">
+                <i class="fa-solid fa-trash-can"></i> Remove
+              </button>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Modal Footer -->
+      <div class="p-4 bg-slate-50 dark:bg-slate-800/90 border-t border-slate-200 dark:border-slate-700 flex flex-wrap items-center justify-between gap-2 shrink-0">
+        <span class="text-[11px] text-slate-400 font-mono hidden sm:inline">Settings saved to Local Storage</span>
+        <div class="flex items-center gap-2 ml-auto">
+          <button type="button" onclick="closeSettingsModal()" class="px-3.5 py-2 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-lg font-medium transition text-xs cursor-pointer">
+            Cancel
+          </button>
+          <button type="button" onclick="saveSettingsAndApply()" class="px-4 py-2 bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold rounded-lg shadow-sm transition text-xs flex items-center gap-1.5 cursor-pointer">
+            <i class="fa-solid fa-check"></i> Save & Apply to Case
+          </button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Export Destination & Filename Confirmation Dialog Modal -->
+  <div id="exportSaveModal" class="fixed inset-0 bg-slate-900/75 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl shadow-2xl max-w-lg w-full overflow-hidden transition-all animate-in fade-in zoom-in duration-200">
+      <div class="p-4 sm:p-5 border-b border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/90 flex items-center justify-between">
+        <div class="flex items-center space-x-3">
+          <div id="exportModalIconContainer" class="w-10 h-10 rounded-xl bg-blue-500/20 text-blue-600 dark:text-blue-400 flex items-center justify-center text-lg border border-blue-500/30 shrink-0">
+            <i id="exportModalIcon" class="fa-solid fa-file-word"></i>
+          </div>
+          <div>
+            <h3 id="exportModalTitle" class="font-bold text-base text-slate-900 dark:text-slate-100 flex items-center gap-2">
+              Export Word Document
+            </h3>
+            <p id="exportModalSub" class="text-xs text-slate-500 dark:text-slate-400">Confirm file name and target folder destination.</p>
+          </div>
+        </div>
+        <button onclick="closeExportSaveModal()" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 text-sm p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 transition cursor-pointer">
+          <i class="fa-solid fa-xmark text-base"></i>
+        </button>
+      </div>
+
+      <div class="p-5 space-y-4 text-xs">
+        <!-- Target Filename Input -->
+        <div>
+          <label class="font-bold text-slate-700 dark:text-slate-300 block mb-1 flex items-center justify-between">
+            <span>File Name</span>
+            <span class="text-[10px] text-slate-400 font-normal">Formatted per active Magistrate profile</span>
+          </label>
+          <div class="flex items-center gap-2">
+            <input type="text" id="exportModalFileNameInput" class="flex-1 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-lg p-2 font-mono font-semibold text-xs text-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-amber-500 outline-none">
+          </div>
+        </div>
+
+        <!-- Preferred Target Folder Card -->
+        <div class="bg-slate-50 dark:bg-slate-900/60 p-3.5 rounded-xl border border-slate-200 dark:border-slate-700 space-y-2">
+          <div class="flex items-center justify-between">
+            <span class="text-[10px] uppercase font-bold text-slate-500 dark:text-slate-400 flex items-center gap-1.5">
+              <i class="fa-solid fa-folder-tree text-amber-500"></i> Preferred Destination Folder
+            </span>
+            <button type="button" onclick="copyPreferredExportFolder()" class="px-2 py-0.5 bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded text-[10px] font-bold text-slate-700 dark:text-slate-300 transition flex items-center gap-1 cursor-pointer" title="Copy path to clipboard">
+              <i class="fa-regular fa-copy"></i> Copy Path
+            </button>
+          </div>
+          <div id="exportModalFolderPath" class="font-mono text-[11px] text-slate-800 dark:text-slate-200 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg p-2 select-all break-all">
+            C:\Court Documents\
+          </div>
+          <p class="text-[10px] text-slate-400">
+            Tip: You can customize folder destinations anytime in <button type="button" onclick="closeExportSaveModal(); openSettingsModal();" class="text-amber-600 dark:text-amber-400 underline font-semibold">Settings</button>.
+          </p>
+        </div>
+
+        <!-- Option to skip next time -->
+        <div class="pt-1 flex items-center gap-2">
+          <input type="checkbox" id="exportModalDontShowAgain" class="w-3.5 h-3.5 rounded text-amber-500 focus:ring-amber-500 border-slate-300 dark:border-slate-600">
+          <label for="exportModalDontShowAgain" class="text-[11px] text-slate-600 dark:text-slate-400 select-none cursor-pointer">
+            Always download directly without showing this confirmation
+          </label>
+        </div>
+      </div>
+
+      <div class="p-4 bg-slate-50 dark:bg-slate-800/90 border-t border-slate-200 dark:border-slate-700 flex flex-wrap items-center justify-between gap-2">
+        <button type="button" onclick="closeExportSaveModal()" class="px-3.5 py-2 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-lg font-medium transition text-xs cursor-pointer">
+          Cancel
+        </button>
+        <div class="flex items-center gap-2">
+          <button type="button" id="exportModalNativeSaveBtn" onclick="triggerNativeSavePicker()" class="hidden px-3.5 py-2 bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 text-slate-800 dark:text-slate-200 font-bold rounded-lg transition text-xs flex items-center gap-1.5 cursor-pointer">
+            <i class="fa-solid fa-folder-open"></i> Choose Folder & Save...
+          </button>
+          <button type="button" id="exportModalConfirmBtn" onclick="confirmAndExecuteExport()" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg shadow-sm transition text-xs flex items-center gap-1.5 cursor-pointer">
+            <i class="fa-solid fa-download"></i> Download File
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
     </div>
   </div>
 
@@ -826,8 +1634,13 @@
       document.getElementById('liveClock').innerText = now.toLocaleTimeString();
     }, 1000);
 
-    // Default Date Initialization
-    document.getElementById('hearingDate').valueAsDate = new Date();
+    // Default Date & Current Year Initialization
+    const initCurrentDate = new Date();
+    document.getElementById('hearingDate').valueAsDate = initCurrentDate;
+    const yearInput = document.getElementById('caseYearVal');
+    if (yearInput && !yearInput.value) {
+      yearInput.value = initCurrentDate.getFullYear();
+    }
 
     // Toggle Sidebar Drawer
     function toggleSidebar() {
@@ -837,8 +1650,375 @@
       sidebar.classList.toggle('collapsed');
       const isClosed = sidebar.classList.contains('collapsed');
       if (toggleBtnText) {
-        toggleBtnText.innerText = isClosed ? "Show Metadata" : "Slide Metadata";
+        toggleBtnText.innerText = isClosed ? "Show Case Ref." : "Slide Case Ref.";
       }
+    }
+
+    // ==========================================
+    // RICH TEXT FORMATTING ENGINE
+    // ==========================================
+    function formatDoc(cmd, value = null) {
+      const editor = document.getElementById('editor');
+      if (!editor) return;
+      editor.focus();
+      document.execCommand(cmd, false, value);
+      markDirty();
+      updatePagination();
+      checkTableFocus();
+    }
+
+    function formatBlock(tag) {
+      if (!tag) return;
+      const editor = document.getElementById('editor');
+      if (!editor) return;
+      editor.focus();
+      document.execCommand('formatBlock', false, tag);
+      markDirty();
+      updatePagination();
+    }
+
+    function toggleHighlight() {
+      const editor = document.getElementById('editor');
+      if (!editor) return;
+      editor.focus();
+      const sel = window.getSelection();
+      if (!sel.isCollapsed) {
+        document.execCommand('hiliteColor', false, '#fef08a');
+      } else {
+        showToast('Highlight: Select text first to highlight', 'info');
+      }
+      markDirty();
+    }
+
+    function insertPageBreak() {
+      const editor = document.getElementById('editor');
+      if (!editor) return;
+      editor.focus();
+
+      const p = document.createElement('div');
+      p.className = 'page-break-line my-6';
+      p.contentEditable = "false";
+      p.innerHTML = `<span class="page-break-label"><i class="fa-solid fa-file-circle-plus mr-1 text-amber-500"></i>Manual Page Break</span>`;
+
+      const sel = window.getSelection();
+      if (sel.rangeCount) {
+        const range = sel.getRangeAt(0);
+        range.collapse(false);
+        range.insertNode(p);
+
+        // Add empty paragraph right after page break
+        const nextP = document.createElement('p');
+        nextP.className = 'speech-line';
+        nextP.innerHTML = '<br>';
+        if (p.nextSibling) {
+          p.parentNode.insertBefore(nextP, p.nextSibling);
+        } else {
+          p.parentNode.appendChild(nextP);
+        }
+
+        const newRange = document.createRange();
+        newRange.setStart(nextP, 0);
+        newRange.collapse(true);
+        sel.removeAllRanges();
+        sel.addRange(newRange);
+      } else {
+        editor.appendChild(p);
+      }
+
+      markDirty();
+      updatePagination();
+      showToast('Page break inserted');
+    }
+
+    // Table UI Dropdown Toggle
+    function toggleTableMenu() {
+      const menu = document.getElementById('tableMenu');
+      if (menu) menu.classList.toggle('hidden');
+    }
+
+    // Close table menu when clicking outside
+    document.addEventListener('click', function(e) {
+      const container = document.getElementById('tableDropdownContainer');
+      const menu = document.getElementById('tableMenu');
+      if (container && menu && !container.contains(e.target)) {
+        menu.classList.add('hidden');
+      }
+    });
+
+    function insertCustomTable() {
+      const rows = parseInt(document.getElementById('tblRowsInput')?.value, 10) || 3;
+      const cols = parseInt(document.getElementById('tblColsInput')?.value, 10) || 3;
+      insertTableWithHeaders(rows, cols);
+      toggleTableMenu();
+    }
+
+    function insertPresetTable(preset) {
+      if (preset === 'exhibits') {
+        insertPresetCourtTable('Exhibit Schedule', ['No.', 'Exhibit Mark', 'Description of Exhibit / Document', 'Tendered By / Witness'], 4);
+      } else if (preset === 'charges') {
+        insertPresetCourtTable('Particulars of Charges', ['Charge No.', 'Statute & Section', 'Particulars of Offence / Value involved'], 3);
+      } else if (preset === 'bail') {
+        insertPresetCourtTable('Bail Terms & Conditions', ['Condition Item', 'Bail Sum & Sureties', 'Reporting / Passport Requirements'], 3);
+      }
+      toggleTableMenu();
+    }
+
+    function insertPresetCourtTable(title, headers, rowCount = 3) {
+      const editor = document.getElementById('editor');
+      if (!editor) return;
+      editor.focus();
+
+      let html = `<table class="nop-table"><thead><tr>`;
+      headers.forEach(h => {
+        html += `<th>${escapeHtml(h)}</th>`;
+      });
+      html += `</tr></thead><tbody>`;
+      for (let r = 1; r <= rowCount; r++) {
+        html += `<tr>`;
+        headers.forEach((_, c) => {
+          if (c === 0) {
+            html += `<td>${r}</td>`;
+          } else {
+            html += `<td><br></td>`;
+          }
+        });
+        html += `</tr>`;
+      }
+      html += `</tbody></table><p class="speech-line"><br></p>`;
+
+      document.execCommand('insertHTML', false, html);
+      markDirty();
+      updatePagination();
+      showToast(`Inserted ${title} table`);
+    }
+
+    function insertTableWithHeaders(rows = 3, cols = 3) {
+      const editor = document.getElementById('editor');
+      if (!editor) return;
+      editor.focus();
+
+      let html = `<table class="nop-table"><thead><tr>`;
+      for (let c = 1; c <= cols; c++) {
+        html += `<th>Column ${c}</th>`;
+      }
+      html += `</tr></thead><tbody>`;
+      for (let r = 1; r <= Math.max(1, rows - 1); r++) {
+        html += `<tr>`;
+        for (let c = 1; c <= cols; c++) {
+          html += `<td>Row ${r}, Col ${c}</td>`;
+        }
+        html += `</tr>`;
+      }
+      html += `</tbody></table><p class="speech-line"><br></p>`;
+
+      document.execCommand('insertHTML', false, html);
+      markDirty();
+      updatePagination();
+      showToast(`Inserted ${rows}x${cols} table`);
+    }
+
+    // Active Table Detection & Operations
+    function getActiveTableCell() {
+      const sel = window.getSelection();
+      if (!sel.rangeCount) return null;
+      let node = sel.anchorNode;
+      const editor = document.getElementById('editor');
+      while (node && node !== editor) {
+        if (node.nodeName === 'TD' || node.nodeName === 'TH') return node;
+        node = node.parentNode;
+      }
+      return null;
+    }
+
+    function checkTableFocus() {
+      const tools = document.getElementById('tableToolsGroup');
+      if (!tools) return;
+      const cell = getActiveTableCell();
+      if (cell) {
+        tools.classList.remove('hidden');
+        tools.classList.add('flex');
+      } else {
+        tools.classList.add('hidden');
+        tools.classList.remove('flex');
+      }
+    }
+
+    function addTableRow() {
+      const cell = getActiveTableCell();
+      if (!cell) {
+        showToast('Click inside a table cell first', 'info');
+        return;
+      }
+      const row = cell.parentElement;
+      const tbody = row.parentElement;
+      const colCount = row.children.length;
+      const newRow = document.createElement('tr');
+      for (let i = 0; i < colCount; i++) {
+        const newCell = document.createElement('td');
+        newCell.innerHTML = '<br>';
+        newRow.appendChild(newCell);
+      }
+      if (row.nextSibling) {
+        tbody.insertBefore(newRow, row.nextSibling);
+      } else {
+        tbody.appendChild(newRow);
+      }
+      markDirty();
+      updatePagination();
+      showToast('Row added below');
+    }
+
+    function deleteTableRow() {
+      const cell = getActiveTableCell();
+      if (!cell) return;
+      const row = cell.parentElement;
+      const tbody = row.parentElement;
+      if (tbody.querySelectorAll('tr').length > 1) {
+        row.remove();
+        markDirty();
+        updatePagination();
+        showToast('Row deleted');
+      } else {
+        showToast('Cannot delete the last row. Use Del Table instead.', 'info');
+      }
+    }
+
+    function addTableCol() {
+      const cell = getActiveTableCell();
+      if (!cell) {
+        showToast('Click inside a table cell first', 'info');
+        return;
+      }
+      const table = cell.closest('table');
+      const cellIndex = Array.from(cell.parentElement.children).indexOf(cell);
+      const rows = table.querySelectorAll('tr');
+      rows.forEach((r, idx) => {
+        const isHeader = r.parentElement.nodeName === 'THEAD' || (idx === 0 && r.querySelector('th'));
+        const newCell = document.createElement(isHeader ? 'th' : 'td');
+        newCell.innerHTML = isHeader ? `Col` : '<br>';
+        if (r.children[cellIndex] && r.children[cellIndex].nextSibling) {
+          r.insertBefore(newCell, r.children[cellIndex].nextSibling);
+        } else {
+          r.appendChild(newCell);
+        }
+      });
+      markDirty();
+      updatePagination();
+      showToast('Column added');
+    }
+
+    function deleteTableCol() {
+      const cell = getActiveTableCell();
+      if (!cell) return;
+      const table = cell.closest('table');
+      const cellIndex = Array.from(cell.parentElement.children).indexOf(cell);
+      const rows = table.querySelectorAll('tr');
+      if (rows[0].children.length <= 1) {
+        showToast('Cannot delete the last column.', 'info');
+        return;
+      }
+      rows.forEach(r => {
+        if (r.children[cellIndex]) {
+          r.children[cellIndex].remove();
+        }
+      });
+      markDirty();
+      updatePagination();
+      showToast('Column deleted');
+    }
+
+    function deleteActiveTable() {
+      const cell = getActiveTableCell();
+      if (!cell) return;
+      const table = cell.closest('table');
+      if (table) {
+        table.remove();
+        checkTableFocus();
+        markDirty();
+        updatePagination();
+        showToast('Table removed');
+      }
+    }
+
+    // ==========================================
+    // HIGH-PERFORMANCE DYNAMIC PAGINATION ENGINE
+    // ==========================================
+    const PAGE_A4_HEIGHT = 1123; // Standard A4 pixel height representation at 96 DPI
+    let lastRenderedPageCount = 1;
+    let paginationUpdateTimer = null;
+
+    function schedulePaginationUpdate(delay = 120) {
+      if (paginationUpdateTimer) clearTimeout(paginationUpdateTimer);
+      paginationUpdateTimer = setTimeout(() => {
+        updatePagination();
+      }, delay);
+    }
+
+    function updatePagination() {
+      const container = document.getElementById('editorContainer');
+      const editor = document.getElementById('editor');
+      if (!container || !editor) return;
+
+      // 1. Calculate content height and total pages
+      const totalContentHeight = container.scrollHeight;
+      const pageCount = Math.max(1, Math.ceil(totalContentHeight / PAGE_A4_HEIGHT));
+
+      // 2. Set dynamic min-height only if page count changes to prevent unnecessary DOM restyles
+      if (lastRenderedPageCount !== pageCount) {
+        container.style.minHeight = `${pageCount * PAGE_A4_HEIGHT}px`;
+        renderPageBreakIndicators(pageCount);
+        lastRenderedPageCount = pageCount;
+      }
+
+      // 3. Update current scroll page
+      updateCurrentPageNumber(pageCount);
+
+      // 4. Update word count using lightweight textContent (avoids full layout reflow)
+      const text = editor.textContent || '';
+      const words = text.trim() ? text.trim().split(/\s+/).filter(Boolean).length : 0;
+      const wordBadge = document.getElementById('wordCountBadge');
+      if (wordBadge) {
+        wordBadge.innerText = `${words.toLocaleString()} words`;
+      }
+    }
+
+    function updateCurrentPageNumber(totalPages) {
+      const scrollArea = document.getElementById('editorScrollArea');
+      const indicator = document.getElementById('pageIndicator');
+      if (!scrollArea || !indicator) return;
+
+      const scrollTop = scrollArea.scrollTop;
+      const currentPage = Math.min(totalPages, Math.max(1, Math.floor(scrollTop / PAGE_A4_HEIGHT) + 1));
+      indicator.innerHTML = `<i class="fa-regular fa-file-lines text-amber-500 text-xs mr-1.5"></i>Page ${currentPage} of ${totalPages}`;
+    }
+
+    function handleEditorScroll() {
+      const container = document.getElementById('editorContainer');
+      if (!container) return;
+      const totalPages = Math.max(1, Math.ceil(container.scrollHeight / PAGE_A4_HEIGHT));
+      updateCurrentPageNumber(totalPages);
+    }
+
+    function renderPageBreakIndicators(pageCount) {
+      const boundaryContainer = document.getElementById('pageBoundariesContainer');
+      if (!boundaryContainer) return;
+
+      boundaryContainer.innerHTML = '';
+      if (pageCount <= 1) return;
+
+      const frag = document.createDocumentFragment();
+      for (let p = 1; p < pageCount; p++) {
+        const topPx = p * PAGE_A4_HEIGHT;
+        const div = document.createElement('div');
+        div.className = 'dynamic-page-boundary';
+        div.style.top = `${topPx}px`;
+        div.innerHTML = `
+          <div class="dynamic-page-boundary-line"></div>
+          <span class="dynamic-page-boundary-tag">Page ${p + 1}</span>
+        `;
+        frag.appendChild(div);
+      }
+      boundaryContainer.appendChild(frag);
     }
 
     // Toggle Fast Tags Right-Side Slider Drawer
@@ -904,16 +2084,18 @@
       const type = document.getElementById('caseType')?.value || 'MCCT';
       const loc = document.getElementById('docketLoc')?.value || 'BANDAR SERI BEGAWAN';
       const nature = document.getElementById('hearingNature')?.value || 'Mention';
-      const no = document.getElementById('caseNoVal')?.value || '1';
-      const year = document.getElementById('caseYearVal')?.value || '2026';
+      const noInput = document.getElementById('caseNoVal')?.value?.trim();
+      const currentYear = new Date().getFullYear();
+      const year = document.getElementById('caseYearVal')?.value?.trim() || String(currentYear);
 
-      // Map Registry Station shorthand
+      // Map Registry Station shorthand (BSB, KB, TUT, TEMB)
       let locShort = 'BSB';
       if (loc === 'KUALA BELAIT') locShort = 'KB';
-      if (loc === 'TUTONG') locShort = 'TTG';
+      if (loc === 'TUTONG') locShort = 'TUT';
       if (loc === 'TEMBURONG') locShort = 'TEMB';
 
-      const formattedCaseNo = `${type}/${locShort}/${no}/${year}`;
+      const docketDisplayNo = noInput ? noInput : '[No]';
+      const formattedCaseNo = `${type}/${locShort}/${docketDisplayNo}/${year}`;
       const genCaseEl = document.getElementById('generatedCaseNo');
       if (genCaseEl) genCaseEl.innerText = formattedCaseNo;
       
@@ -932,14 +2114,24 @@
 
       // Date, Venue & Nature
       const rawDate = document.getElementById('hearingDate')?.value;
-      const formattedDate = rawDate ? new Date(rawDate).toLocaleDateString('en-GB') : 'N/A';
+      let formattedDate = 'N/A';
+      if (rawDate) {
+        const parts = rawDate.split('-');
+        if (parts.length === 3) {
+          const d = new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10));
+          formattedDate = d.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
+        } else {
+          formattedDate = new Date(rawDate).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
+        }
+      }
       const venue = document.getElementById('courtRoom')?.value || 'Court Room 1';
       const docDateVenue = document.getElementById('docDateVenue');
       if (docDateVenue) docDateVenue.innerText = `${formattedDate} | ${venue} (${nature})`;
 
       // Prosecution
       const docPros = document.getElementById('docProsecution');
-      if (docPros) docPros.innerText = document.getElementById('dppName')?.value || 'DPP / PO';
+      const dppVal = document.getElementById('dppName')?.value?.trim();
+      if (docPros) docPros.innerText = dppVal || '—';
 
       // Session Times
       const startTime = document.getElementById('startTime')?.value.trim() || '--:--';
@@ -1784,14 +2976,41 @@
       }
 
       // 4. Cmd / Ctrl Shortcuts
+      const isInsideEditor = document.activeElement === document.getElementById('editor') || document.getElementById('editor')?.contains(document.activeElement);
+
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'b') {
+        e.preventDefault();
+        if (isInsideEditor) {
+          formatDoc('bold');
+        } else {
+          toggleSidebar();
+        }
+        return;
+      }
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'i') {
+        if (isInsideEditor) {
+          e.preventDefault();
+          formatDoc('italic');
+          return;
+        }
+      }
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'u') {
+        if (isInsideEditor) {
+          e.preventDefault();
+          formatDoc('underline');
+          return;
+        }
+      }
+      if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
+        if (isInsideEditor) {
+          e.preventDefault();
+          insertPageBreak();
+          return;
+        }
+      }
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
         e.preventDefault();
         toggleFastTagsSlider();
-        return;
-      }
-      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'b') {
-        e.preventDefault();
-        toggleSidebar();
         return;
       }
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 's') {
@@ -1799,38 +3018,659 @@
         saveToLocalStorage(true);
         return;
       }
+
+      // 5. Enter Key handling inside #editor for Smart Speaker Transcript Indentation
+      if (isInsideEditor && e.key === 'Enter' && !e.altKey && !e.ctrlKey && !e.metaKey && !e.shiftKey) {
+        const sel = window.getSelection();
+        if (sel && sel.rangeCount > 0) {
+          const range = sel.getRangeAt(0);
+          let currentP = range.commonAncestorContainer;
+          const editor = document.getElementById('editor');
+          while (currentP && currentP !== editor && currentP.nodeName !== 'P' && currentP.nodeName !== 'LI') {
+            currentP = currentP.parentNode;
+          }
+
+          // If inside a list item or table cell, allow default browser list/cell behavior
+          if (currentP && (currentP.nodeName === 'LI' || currentP.nodeName === 'TD' || currentP.nodeName === 'TH')) {
+            return;
+          }
+
+          if (currentP && currentP.nodeName === 'P' && (currentP.classList.contains('speech-line') || currentP.classList.contains('speech-continuation') || currentP.querySelector('.speaker-tag'))) {
+            e.preventDefault();
+
+            // Extract content after cursor in current paragraph
+            const postRange = document.createRange();
+            postRange.setStart(range.endContainer, range.endOffset);
+            postRange.setEnd(currentP, currentP.childNodes.length);
+            const postFragment = postRange.extractContents();
+
+            // Ensure current paragraph retains <br> if it became empty so it takes up visible space
+            if (!currentP.hasChildNodes() || currentP.innerHTML.trim() === '') {
+              currentP.innerHTML = '<br>';
+            }
+
+            // Create new continuation paragraph with preserved speaker dialogue indent
+            const newP = document.createElement('p');
+            newP.className = 'speech-continuation';
+            if (!postFragment.textContent && !postFragment.querySelector('img, table, br')) {
+              newP.innerHTML = '<br>';
+            } else {
+              newP.appendChild(postFragment);
+              if (!newP.hasChildNodes() || newP.innerHTML.trim() === '') {
+                newP.innerHTML = '<br>';
+              }
+            }
+
+            currentP.parentNode.insertBefore(newP, currentP.nextSibling);
+
+            // Position cursor cleanly at start of new continuation line
+            const newRange = document.createRange();
+            if (newP.firstChild && newP.firstChild.nodeName === 'BR') {
+              newRange.setStartBefore(newP.firstChild);
+            } else {
+              newRange.setStart(newP, 0);
+            }
+            newRange.collapse(true);
+            sel.removeAllRanges();
+            sel.addRange(newRange);
+
+            markDirty();
+            schedulePaginationUpdate(300);
+            return;
+          }
+        }
+      }
+
+      // 6. Backspace handling inside speech-continuation in #editor
+      if (isInsideEditor && e.key === 'Backspace' && !e.altKey && !e.ctrlKey && !e.metaKey) {
+        const sel = window.getSelection();
+        if (sel && sel.rangeCount > 0 && sel.isCollapsed) {
+          const range = sel.getRangeAt(0);
+          let currentP = range.commonAncestorContainer;
+          const editor = document.getElementById('editor');
+          while (currentP && currentP !== editor && currentP.nodeName !== 'P') {
+            currentP = currentP.parentNode;
+          }
+
+          if (currentP && currentP.nodeName === 'P' && currentP.classList.contains('speech-continuation')) {
+            let isAtStart = false;
+            if (range.startOffset === 0) {
+              if (range.startContainer === currentP || range.startContainer === currentP.firstChild) {
+                isAtStart = true;
+              }
+            }
+
+            if (isAtStart) {
+              e.preventDefault();
+              const prev = currentP.previousElementSibling;
+              const isEmpty = currentP.innerText.trim() === '' || currentP.innerHTML.trim() === '<br>' || !currentP.hasChildNodes();
+              if (isEmpty) {
+                currentP.remove();
+                if (prev) {
+                  const newRange = document.createRange();
+                  newRange.selectNodeContents(prev);
+                  newRange.collapse(false);
+                  sel.removeAllRanges();
+                  sel.addRange(newRange);
+                }
+              } else if (prev && prev.nodeName === 'P') {
+                const prevLength = prev.childNodes.length;
+                if (prev.innerHTML.trim() === '<br>') {
+                  prev.innerHTML = '';
+                }
+                while (currentP.firstChild) {
+                  prev.appendChild(currentP.firstChild);
+                }
+                currentP.remove();
+                const newRange = document.createRange();
+                if (prev.childNodes[prevLength]) {
+                  newRange.setStart(prev.childNodes[prevLength], 0);
+                } else {
+                  newRange.selectNodeContents(prev);
+                  newRange.collapse(false);
+                }
+                sel.removeAllRanges();
+                sel.addRange(newRange);
+              } else {
+                currentP.remove();
+              }
+              markDirty();
+              schedulePaginationUpdate(300);
+              return;
+            }
+          }
+        }
+      }
     });
 
-    // Export MS Word Document
+    // ==========================================
+    // UNIFIED EXPORT CONTENT GENERATOR (Clean Line-by-Line Alignment)
+    // ==========================================
+    function generateExportBodyHtml(isWord = false) {
+      const editor = document.getElementById('editor');
+      if (!editor) return '';
+
+      const colorMap = {
+        'speaker-court': { color: '#1e3a8a', bg: '#dbeafe', border: '#bfdbfe' },
+        'speaker-prosecution': { color: '#991b1b', bg: '#fee2e2', border: '#fecaca' },
+        'speaker-defence': { color: '#065f46', bg: '#d1fae5', border: '#a7f3d0' },
+        'speaker-dc': { color: '#0f766e', bg: '#ccfbf1', border: '#99f6e4' },
+        'speaker-interp': { color: '#92400e', bg: '#fef3c7', border: '#fde68a' },
+        'speaker-witness': { color: '#4338ca', bg: '#e0e7ff', border: '#c7d2fe' },
+        'tag-order': { color: '#6b21a8', bg: '#f3e8ff', border: '#e9d5ff' },
+        'tag-timestamp': { color: '#475569', bg: '#f1f5f9', border: '#e2e8f0' }
+      };
+
+      let outputHtml = '';
+      const children = Array.from(editor.children);
+
+      if (children.length === 0) {
+        return editor.innerHTML;
+      }
+
+      let inWordTranscriptTable = false;
+
+      function openWordTranscriptTable() {
+        if (!isWord || inWordTranscriptTable) return;
+        inWordTranscriptTable = true;
+        outputHtml += `
+          <table cellpadding="0" cellspacing="0" border="0" style="width: 100%; border-collapse: collapse; margin-top: 8pt; margin-bottom: 14pt; border: none; table-layout: fixed; mso-table-lspace: 0pt; mso-table-rspace: 0pt;">
+            <colgroup>
+              <col width="120" style="width: 120pt;">
+              <col width="367" style="width: 367pt;">
+            </colgroup>
+            <tbody>
+        `;
+      }
+
+      function closeWordTranscriptTable() {
+        if (!isWord || !inWordTranscriptTable) return;
+        outputHtml += '</tbody></table>';
+        inWordTranscriptTable = false;
+      }
+
+      children.forEach(node => {
+        // 1. Manual Page Break
+        if (node.classList && (node.classList.contains('page-break-line') || node.querySelector?.('.page-break-line'))) {
+          closeWordTranscriptTable();
+          if (isWord) {
+            outputHtml += '<br clear="all" style="page-break-before: always; mso-special-character: line-break;" />';
+          } else {
+            outputHtml += '<div class="html2pdf__page-break" style="page-break-before: always; break-before: page; height: 0; margin: 0; padding: 0;"></div>';
+          }
+          return;
+        }
+
+        // 2. Speech Line with Speaker Badge
+        const tag = node.querySelector?.('.speaker-tag');
+        if (tag) {
+          let style = { color: '#0f172a', bg: '#f1f5f9', border: '#cbd5e1' };
+          for (const [cls, st] of Object.entries(colorMap)) {
+            if (tag.classList.contains(cls)) {
+              style = st;
+              break;
+            }
+          }
+
+          const tagText = tag.innerText.trim();
+          const nodeClone = node.cloneNode(true);
+          const tagInClone = nodeClone.querySelector('.speaker-tag');
+          if (tagInClone) tagInClone.remove();
+          const speechHtml = nodeClone.innerHTML.trim();
+
+          if (isWord) {
+            openWordTranscriptTable();
+            outputHtml += `
+              <tr>
+                <td style="width: 120pt; vertical-align: top; padding: 6pt 12pt 8pt 0; border: none;">
+                  <table cellpadding="0" cellspacing="0" border="0" style="width: 105pt; border-collapse: collapse; background-color: ${style.bg}; border: 1pt solid ${style.border}; mso-border-alt: solid ${style.border} 1.0pt; mso-shading: ${style.bg};">
+                    <tr>
+                      <td align="center" style="padding: 3.5pt 6pt; font-family: Arial, Helvetica, sans-serif; font-size: 8.5pt; font-weight: bold; color: ${style.color}; text-align: center; text-transform: uppercase; letter-spacing: 0.3pt;">
+                        ${escapeHtml(tagText)}
+                      </td>
+                    </tr>
+                  </table>
+                </td>
+                <td style="width: 367pt; vertical-align: top; padding: 6pt 0 8pt 0; border: none; font-family: 'Georgia', 'Times New Roman', serif; font-size: 11pt; line-height: 1.7; mso-line-height-rule: exactly; color: #0f172a;">
+                  ${speechHtml || '&nbsp;'}
+                </td>
+              </tr>
+            `;
+          } else {
+            // For PDF: output each speech line as a self-contained block
+            outputHtml += `
+              <div class="speech-line" style="display: table; width: 100%; table-layout: fixed; margin-bottom: 9px;">
+                <div style="display: table-cell; width: 125px; vertical-align: top; padding-right: 12px;">
+                  <div style="font-family: 'Inter', Arial, sans-serif; font-size: 11px; font-weight: 700; text-transform: uppercase; text-align: center; color: ${style.color}; background-color: ${style.bg}; border: 1px solid ${style.border}; padding: 2px 4px; border-radius: 4px; width: 100%; box-sizing: border-box; letter-spacing: 0.025em;">
+                    ${escapeHtml(tagText)}
+                  </div>
+                </div>
+                <div style="display: table-cell; vertical-align: top; font-family: 'Merriweather', Georgia, serif; font-size: 14.5px; line-height: 1.7; color: #0f172a; word-wrap: break-word;">
+                  ${speechHtml || '&nbsp;'}
+                </div>
+              </div>
+            `;
+          }
+          return;
+        }
+
+        // 3. Speech Continuation Paragraph (Follows Speaker Indent without Under-Tag Spill)
+        if (node.classList && node.classList.contains('speech-continuation')) {
+          const continuationHtml = node.innerHTML.trim();
+          const cleanHtml = (continuationHtml === '<br>' || !continuationHtml) ? '&nbsp;' : continuationHtml;
+          if (isWord) {
+            openWordTranscriptTable();
+            outputHtml += `
+              <tr>
+                <td style="width: 120pt; vertical-align: top; padding: 4pt 12pt 8pt 0; border: none;">&nbsp;</td>
+                <td style="width: 367pt; vertical-align: top; padding: 4pt 0 8pt 0; border: none; font-family: 'Georgia', 'Times New Roman', serif; font-size: 11pt; line-height: 1.7; mso-line-height-rule: exactly; color: #0f172a;">
+                  ${cleanHtml}
+                </td>
+              </tr>
+            `;
+          } else {
+            outputHtml += `
+              <div class="speech-continuation" style="display: table; width: 100%; table-layout: fixed; margin-bottom: 9px; min-height: 1.7em;">
+                <div style="display: table-cell; width: 125px; vertical-align: top; padding-right: 12px;"></div>
+                <div style="display: table-cell; vertical-align: top; font-family: 'Merriweather', Georgia, serif; font-size: 14.5px; line-height: 1.7; color: #0f172a; word-wrap: break-word;">
+                  ${cleanHtml}
+                </div>
+              </div>
+            `;
+          }
+          return;
+        }
+
+        // 3. For any non-speech element, close Word transcript table
+        closeWordTranscriptTable();
+
+        // Tables
+        if (node.nodeName === 'TABLE') {
+          const tblClone = node.cloneNode(true);
+          if (isWord) {
+            tblClone.setAttribute('border', '1');
+            tblClone.setAttribute('cellpadding', '7');
+            tblClone.setAttribute('cellspacing', '0');
+            tblClone.setAttribute('style', 'width: 100%; border-collapse: collapse; margin: 16pt 0; border: 1pt solid #cbd5e1; mso-table-lspace: 0pt; mso-table-rspace: 0pt;');
+            tblClone.querySelectorAll('th').forEach(th => {
+              th.setAttribute('style', 'background-color: #f8fafc; font-weight: bold; border: 1pt solid #cbd5e1; padding: 7pt 10pt; text-align: left; font-size: 9.5pt; font-family: Arial, sans-serif; color: #334155; mso-shading: #f8fafc;');
+            });
+            tblClone.querySelectorAll('td').forEach(td => {
+              td.setAttribute('style', 'border: 1pt solid #cbd5e1; padding: 7pt 10pt; text-align: left; font-size: 10pt; font-family: "Georgia", "Times New Roman", serif; color: #0f172a; vertical-align: top;');
+            });
+            outputHtml += tblClone.outerHTML;
+          } else {
+            tblClone.setAttribute('style', 'width: 100%; border-collapse: collapse; margin: 16px 0; border: 1px solid #cbd5e1; font-size: 13px;');
+            tblClone.querySelectorAll('th').forEach(th => {
+              th.setAttribute('style', 'background-color: #f8fafc; font-weight: 700; border: 1px solid #cbd5e1; padding: 8px 12px; font-family: "Inter", Arial, sans-serif; font-size: 12px; color: #334155; text-align: left;');
+            });
+            tblClone.querySelectorAll('td').forEach(td => {
+              td.setAttribute('style', 'border: 1px solid #cbd5e1; padding: 8px 12px; font-family: "Merriweather", Georgia, serif; font-size: 13px; color: #0f172a; vertical-align: top; word-wrap: break-word;');
+            });
+            outputHtml += tblClone.outerHTML;
+          }
+          return;
+        }
+
+        // Blockquotes
+        if (node.nodeName === 'BLOCKQUOTE') {
+          if (isWord) {
+            outputHtml += `<blockquote style="border-left: 3pt solid #f59e0b; padding-left: 12pt; margin: 12pt 0; font-style: italic; color: #64748b; font-family: 'Georgia', 'Times New Roman', serif; font-size: 11pt; line-height: 1.6;">${node.innerHTML}</blockquote>`;
+          } else {
+            outputHtml += `<blockquote style="border-left: 3px solid #f59e0b; padding-left: 14px; margin: 12px 0; font-style: italic; color: #64748b; font-family: 'Merriweather', Georgia, serif; font-size: 14px; line-height: 1.6;">${node.innerHTML}</blockquote>`;
+          }
+          return;
+        }
+
+        // Headings
+        if (node.nodeName === 'H1' || node.nodeName === 'H2') {
+          if (isWord) {
+            outputHtml += `<h2 style="font-size: 14pt; font-weight: bold; margin: 18pt 0 6pt 0; font-family: Arial, sans-serif; color: #0f172a;">${node.innerHTML}</h2>`;
+          } else {
+            outputHtml += `<h2 style="font-size: 18px; font-weight: 700; margin: 20px 0 8px 0; font-family: 'Inter', Arial, sans-serif; color: #0f172a;">${node.innerHTML}</h2>`;
+          }
+          return;
+        }
+        if (node.nodeName === 'H3') {
+          if (isWord) {
+            outputHtml += `<h3 style="font-size: 12pt; font-weight: bold; margin: 14pt 0 5pt 0; font-family: Arial, sans-serif; color: #0f172a;">${node.innerHTML}</h3>`;
+          } else {
+            outputHtml += `<h3 style="font-size: 16px; font-weight: 600; margin: 16px 0 6px 0; font-family: 'Inter', Arial, sans-serif; color: #0f172a;">${node.innerHTML}</h3>`;
+          }
+          return;
+        }
+
+        // Lists (Aligned with Speaker Transcript Column)
+        if (node.nodeName === 'UL') {
+          const ulClone = node.cloneNode(true);
+          const style = isWord ? 'list-style-type: disc; margin: 6pt 0 10pt 115pt; padding-left: 12pt;' : 'list-style-type: disc; margin: 8px 0 12px 137px; padding-left: 16px;';
+          ulClone.setAttribute('style', style);
+          ulClone.querySelectorAll('li').forEach(li => {
+            li.setAttribute('style', isWord ? 'margin-bottom: 4pt; line-height: 1.6; font-family: "Georgia", "Times New Roman", serif; font-size: 11pt; color: #0f172a;' : 'margin-bottom: 4px; line-height: 1.6; font-family: "Merriweather", Georgia, serif; font-size: 14.5px; color: #0f172a;');
+          });
+          outputHtml += ulClone.outerHTML;
+          return;
+        }
+        if (node.nodeName === 'OL') {
+          const olClone = node.cloneNode(true);
+          const style = isWord ? 'list-style-type: decimal; margin: 6pt 0 10pt 115pt; padding-left: 12pt;' : 'list-style-type: decimal; margin: 8px 0 12px 137px; padding-left: 16px;';
+          olClone.setAttribute('style', style);
+          olClone.querySelectorAll('li').forEach(li => {
+            li.setAttribute('style', isWord ? 'margin-bottom: 4pt; line-height: 1.6; font-family: "Georgia", "Times New Roman", serif; font-size: 11pt; color: #0f172a;' : 'margin-bottom: 4px; line-height: 1.6; font-family: "Merriweather", Georgia, serif; font-size: 14.5px; color: #0f172a;');
+          });
+          outputHtml += olClone.outerHTML;
+          return;
+        }
+
+        // Regular Paragraphs
+        if (isWord) {
+          outputHtml += `<p style="font-family: 'Georgia', 'Times New Roman', serif; font-size: 11pt; line-height: 1.65; margin: 0 0 9pt 0; color: #0f172a;">${node.innerHTML || '&nbsp;'}</p>`;
+        } else {
+          outputHtml += `<p style="font-family: 'Merriweather', Georgia, serif; font-size: 14.5px; line-height: 1.7; margin: 0 0 12px 0; color: #0f172a;">${node.innerHTML || '&nbsp;'}</p>`;
+        }
+      });
+
+      closeWordTranscriptTable();
+
+      return outputHtml;
+    }
+
+    // ==========================================
+    // EXPORT MS WORD DOCUMENT (Exact Visual Parity & Clean Formatting)
+    // ==========================================
+    let currentExportType = 'word'; // 'word' or 'pdf'
+
     function exportWord() {
+      const active = getActiveProfile();
+      const filename = getFormattedFilename('doc', active);
+
+      if (active.showExportDialog !== false) {
+        openExportSaveModal('word', filename, active.wordFolderPath || 'C:\\Court Documents\\Word Drafts\\');
+      } else {
+        executeExportWord(filename);
+      }
+    }
+
+    function executeExportWord(targetFilename) {
+      const caseNoText = document.getElementById('generatedCaseNo')?.innerText || 'MCCT/BSB/9/2026';
+      const fullCaseNoHdr = document.getElementById('docHdrCaseNo')?.innerText || `CASE NO: ${caseNoText}`;
+      const locText = document.getElementById('docHdrLoc')?.innerText || 'BANDAR SERI BEGAWAN';
+      const magistrateText = document.getElementById('docMagistrate')?.innerText || 'Magistrate';
+      const dateVenueText = document.getElementById('docDateVenue')?.innerText || '';
+      const prosecutionText = document.getElementById('docProsecution')?.innerText || '—';
+      const timingsText = document.getElementById('docTimings')?.innerText || '';
+      const defendantsText = document.getElementById('docDefendants')?.innerText || '';
+      const interpreterText = document.getElementById('docInterpreter')?.innerText || '';
+
+      const wordBodyHtml = generateExportBodyHtml(true);
+
       const css = `
-        body { font-family: 'Times New Roman', Times, serif; font-size: 11pt; color: #000000; background: #ffffff; margin: 0; padding: 20pt; }
-        .text-center { text-align: center; }
-        .font-bold { font-weight: bold; }
-        .uppercase { text-transform: uppercase; }
-        h1 { font-size: 14pt; margin-bottom: 4pt; }
-        p { margin: 0 0 8pt 0; line-height: 1.4; }
-        .header-block { text-align: center; border-bottom: 2px solid #000000; padding-bottom: 12pt; margin-bottom: 16pt; }
-        .case-no { font-family: 'Courier New', Courier, monospace; font-size: 12pt; font-weight: bold; color: #b45309; margin-top: 6pt; }
-        .metadata-table { width: 100%; border-collapse: collapse; margin-bottom: 20pt; background: #f8fafc; border: 1px solid #cbd5e1; }
-        .metadata-table td { padding: 8pt; vertical-align: top; border-bottom: 1px solid #cbd5e1; border-right: 1px solid #cbd5e1; font-size: 10pt; }
-        .meta-label { font-family: Arial, sans-serif; font-size: 8.5pt; font-weight: bold; color: #64748b; text-transform: uppercase; display: block; margin-bottom: 2pt; }
-        .meta-val { font-weight: 600; color: #1e293b; }
-        p.speech-line { margin-bottom: 8pt; padding-left: 90pt; text-indent: -90pt; font-family: 'Times New Roman', Times, serif; font-size: 11pt; }
-        .speaker-tag { font-weight: bold; width: 85pt; display: inline-block; color: #0f172a; }
-        .speaker-court { color: #1d4ed8; }
-        .speaker-prosecution { color: #b91c1c; }
-        .speaker-dc { color: #047857; }
-        .tag-timestamp { font-family: 'Courier New', Courier, monospace; font-size: 10pt; color: #d97706; }
-        .signature-section { margin-top: 40pt; text-align: right; }
-        .signature-box { display: inline-block; text-align: center; width: 220pt; }
-        .sig-line { border-top: 1px dashed #94a3b8; height: 30pt; padding-top: 4pt; font-style: italic; color: #94a3b8; font-size: 10pt; }
+        @page Section1 {
+          size: 595.3pt 841.9pt; /* Standard A4 */
+          margin: 45.0pt 52.0pt 48.0pt 52.0pt; /* Generous 0.72in margins */
+          mso-header-margin: 36.0pt;
+          mso-footer-margin: 36.0pt;
+          mso-paper-source: 0;
+        }
+        div.Section1 { page: Section1; }
+        body {
+          font-family: 'Georgia', 'Times New Roman', serif;
+          font-size: 11pt;
+          color: #0f172a;
+          background: #ffffff;
+          margin: 0;
+          padding: 0;
+        }
+        h1 {
+          font-family: 'Arial', Helvetica, sans-serif;
+          font-size: 14.5pt;
+          font-weight: bold;
+          text-align: center;
+          text-transform: uppercase;
+          margin: 0 0 4pt 0;
+          color: #0f172a;
+          letter-spacing: 1.2pt;
+          line-height: 1.35;
+        }
+        .loc-text {
+          font-family: 'Arial', Helvetica, sans-serif;
+          font-size: 9.5pt;
+          font-weight: bold;
+          text-align: center;
+          margin: 0 0 6pt 0;
+          color: #475569;
+          text-transform: uppercase;
+        }
+        .case-no-hdr {
+          font-family: 'Courier New', Courier, monospace;
+          font-size: 13.5pt;
+          font-weight: bold;
+          color: #d97706;
+          margin: 0;
+          text-align: center;
+          letter-spacing: 0.5pt;
+        }
+        table.court-header-table {
+          width: 100%;
+          border-collapse: collapse;
+          margin-bottom: 18pt;
+          border: none;
+          mso-table-lspace: 0pt;
+          mso-table-rspace: 0pt;
+        }
+        table.metadata-table {
+          width: 100%;
+          border-collapse: collapse;
+          margin-bottom: 22pt;
+          background-color: #f8fafc;
+          border: 1pt solid #cbd5e1;
+          mso-border-alt: solid #cbd5e1 1.0pt;
+          mso-shading: #f8fafc;
+          mso-table-lspace: 0pt;
+          mso-table-rspace: 0pt;
+        }
+        table.metadata-table td {
+          padding: 10pt 16pt;
+          vertical-align: top;
+          background-color: #f8fafc;
+          mso-shading: #f8fafc;
+        }
+        .meta-label {
+          font-family: 'Arial', Helvetica, sans-serif;
+          font-size: 8pt;
+          font-weight: bold;
+          color: #64748b;
+          text-transform: uppercase;
+          display: block;
+          margin-bottom: 3.5pt;
+          letter-spacing: 0.05em;
+        }
+        .meta-val {
+          font-weight: 600;
+          color: #0f172a;
+          font-family: 'Georgia', 'Times New Roman', serif;
+          font-size: 11pt;
+          line-height: 1.45;
+        }
+        .meta-val-mono {
+          font-family: 'Courier New', Courier, monospace;
+          font-size: 11pt;
+          font-weight: bold;
+          color: #0f172a;
+          line-height: 1.45;
+        }
+        table.transcript-table {
+          width: 100%;
+          border-collapse: collapse;
+          margin-top: 8pt;
+          margin-bottom: 14pt;
+          border: none;
+          mso-table-lspace: 0pt;
+          mso-table-rspace: 0pt;
+        }
+        table.nop-table {
+          width: 100%;
+          border-collapse: collapse;
+          margin: 16pt 0;
+          border: 1pt solid #cbd5e1;
+          mso-table-lspace: 0pt;
+          mso-table-rspace: 0pt;
+        }
+        table.nop-table th, table.nop-table td {
+          border: 1pt solid #cbd5e1;
+          padding: 8pt 12pt;
+          font-size: 10pt;
+        }
+        table.nop-table th {
+          background-color: #f8fafc;
+          font-weight: bold;
+          font-family: 'Arial', sans-serif;
+          color: #334155;
+          mso-shading: #f8fafc;
+          text-align: left;
+        }
+        table.nop-table td {
+          font-family: 'Georgia', 'Times New Roman', serif;
+          color: #0f172a;
+          text-align: left;
+        }
+        ul { list-style-type: disc; margin: 8pt 0 12pt 125pt; padding-left: 12pt; }
+        ol { list-style-type: decimal; margin: 8pt 0 12pt 125pt; padding-left: 12pt; }
+        li { margin-bottom: 5pt; line-height: 1.65; font-family: 'Georgia', 'Times New Roman', serif; font-size: 11pt; color: #0f172a; }
+        blockquote {
+          border-left: 3pt solid #f59e0b;
+          padding-left: 12pt;
+          margin: 12pt 0;
+          font-style: italic;
+          color: #64748b;
+          font-family: 'Georgia', 'Times New Roman', serif;
+          font-size: 11pt;
+          line-height: 1.6;
+        }
+        mark, .highlight {
+          background-color: #fef08a;
+          mso-highlight: yellow;
+          padding: 0 2pt;
+          color: #0f172a;
+        }
+        h2 { font-size: 14pt; font-weight: bold; margin: 18pt 0 8pt 0; font-family: 'Arial', sans-serif; color: #0f172a; }
+        h3 { font-size: 12pt; font-weight: bold; margin: 14pt 0 6pt 0; font-family: 'Arial', sans-serif; color: #0f172a; }
+        p { margin: 0 0 11pt 0; line-height: 1.65; font-family: 'Georgia', 'Times New Roman', serif; font-size: 11pt; color: #0f172a; }
       `;
 
-      const editorClone = document.getElementById('editor').cloneNode(true);
-      editorClone.removeAttribute('contenteditable');
+      const html = `
+        <html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
+        <head>
+          <meta charset="utf-8">
+          <title>Notes of Proceedings - ${escapeHtml(caseNoText)}</title>
+          <style>${css}</style>
+          <!--[if gte mso 9]>
+          <xml>
+            <w:WordDocument>
+              <w:View>Print</w:View>
+              <w:Zoom>100</w:Zoom>
+              <w:DoNotOptimizeForBrowser/>
+            </w:WordDocument>
+          </xml>
+          <![endif]-->
+        </head>
+        <body>
+          <div class="Section1">
+            <table align="center" cellpadding="0" cellspacing="0" style="width: 100%; border-collapse: collapse; border: none; mso-table-lspace: 0pt; mso-table-rspace: 0pt;">
+              <tr>
+                <td>
+                  <!-- Court Document Header with Guaranteed Solid Dividing Bar -->
+                  <table class="court-header-table" align="center" cellpadding="0" cellspacing="0">
+                    <tr>
+                      <td align="center" style="text-align: center; border-bottom: 2.25pt solid #0f172a; mso-border-bottom-alt: solid #0f172a 2.25pt; padding-bottom: 14pt; border-top: none; border-left: none; border-right: none;">
+                        <h1>IN THE MAGISTRATES' COURT OF BRUNEI DARUSSALAM</h1>
+                        <div class="loc-text">HOLDEN AT <span style="text-decoration: underline;">${escapeHtml(locText)}</span></div>
+                        <div class="case-no-hdr">${escapeHtml(fullCaseNoHdr)}</div>
+                      </td>
+                    </tr>
+                  </table>
 
-      const caseNoText = document.getElementById('generatedCaseNo')?.innerText || 'CASE NO: MCCT/BSB/9/2026';
+                  <!-- Metadata Grid Card Matching Screen & PDF Exactly -->
+                  <table class="metadata-table" cellpadding="0" cellspacing="0" style="width: 100%; border-collapse: collapse; table-layout: fixed; margin-bottom: 22pt; background-color: #f8fafc; border: 1pt solid #cbd5e1; mso-border-alt: solid #cbd5e1 1.0pt; mso-shading: #f8fafc;">
+                    <colgroup>
+                      <col width="50%" style="width: 50%;">
+                      <col width="50%" style="width: 50%;">
+                    </colgroup>
+                    <tbody>
+                      <tr>
+                        <td style="width: 50%; padding: 10pt 16pt; vertical-align: top; border-bottom: 1.0pt solid #e2e8f0; border-top: none; border-left: none; border-right: none; mso-border-bottom-alt: solid #e2e8f0 1.0pt; background-color: #f8fafc; mso-shading: #f8fafc;">
+                          <span class="meta-label">BEFORE:</span>
+                          <span class="meta-val">${escapeHtml(magistrateText)}</span>
+                        </td>
+                        <td style="width: 50%; padding: 10pt 16pt; vertical-align: top; border-bottom: 1.0pt solid #e2e8f0; border-top: none; border-left: none; border-right: none; mso-border-bottom-alt: solid #e2e8f0 1.0pt; background-color: #f8fafc; mso-shading: #f8fafc;">
+                          <span class="meta-label">DATE & VENUE:</span>
+                          <span class="meta-val">${escapeHtml(dateVenueText)}</span>
+                        </td>
+                      </tr>
+                      <tr>
+                        <td style="width: 50%; padding: 10pt 16pt; vertical-align: top; border-bottom: 1.0pt solid #e2e8f0; border-top: none; border-left: none; border-right: none; mso-border-bottom-alt: solid #e2e8f0 1.0pt; background-color: #f8fafc; mso-shading: #f8fafc;">
+                          <span class="meta-label">PROSECUTION:</span>
+                          <span class="meta-val">${escapeHtml(prosecutionText)}</span>
+                        </td>
+                        <td style="width: 50%; padding: 10pt 16pt; vertical-align: top; border-bottom: 1.0pt solid #e2e8f0; border-top: none; border-left: none; border-right: none; mso-border-bottom-alt: solid #e2e8f0 1.0pt; background-color: #f8fafc; mso-shading: #f8fafc;">
+                          <span class="meta-label">SESSION TIMINGS:</span>
+                          <span class="meta-val-mono">${escapeHtml(timingsText)}</span>
+                        </td>
+                      </tr>
+                      <tr>
+                        <td style="width: 50%; padding: 10pt 16pt; vertical-align: top; border: none; background-color: #f8fafc; mso-shading: #f8fafc;">
+                          <span class="meta-label">DEFENDANT(S) & COUNSEL:</span>
+                          <span class="meta-val" style="white-space: pre-line;">${escapeHtml(defendantsText)}</span>
+                        </td>
+                        <td style="width: 50%; padding: 10pt 16pt; vertical-align: top; border: none; background-color: #f8fafc; mso-shading: #f8fafc;">
+                          <span class="meta-label">INTERPRETER:</span>
+                          <span class="meta-val">${escapeHtml(interpreterText)}</span>
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+
+                  <!-- Notes of Proceedings Editor Body -->
+                  <div class="editor-body">
+                    ${wordBodyHtml}
+                  </div>
+                </td>
+              </tr>
+            </table>
+          </div>
+        </body>
+        </html>
+      `;
+
+      const finalName = targetFilename.endsWith('.doc') ? targetFilename : `${targetFilename}.doc`;
+      const blob = new Blob(['\ufeff', html], { type: 'application/msword;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = finalName;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      showToast(`Word document exported: ${finalName}`, 'success');
+    }
+
+    // ==========================================
+    // EXPORT PDF (High-Fidelity, Non-Blank & Perfectly Centered)
+    // ==========================================
+    function exportPDF() {
+      const active = getActiveProfile();
+      const filename = getFormattedFilename('pdf', active);
+
+      if (active.showExportDialog !== false) {
+        openExportSaveModal('pdf', filename, active.pdfFolderPath || 'C:\\Court Documents\\PDF Records\\');
+      } else {
+        executeExportPDF(filename);
+      }
+    }
+
+    function executeExportPDF(targetFilename) {
+      const caseNoText = document.getElementById('generatedCaseNo')?.innerText || 'MCCT/BSB/9/2026';
+      const fullCaseNoHdr = document.getElementById('docHdrCaseNo')?.innerText || `CASE NO: ${caseNoText}`;
       const locText = document.getElementById('docHdrLoc')?.innerText || 'BANDAR SERI BEGAWAN';
       const magistrateText = document.getElementById('docMagistrate')?.innerText || 'Magistrate';
       const dateVenueText = document.getElementById('docDateVenue')?.innerText || '';
@@ -1839,93 +3679,139 @@
       const defendantsText = document.getElementById('docDefendants')?.innerText || '';
       const interpreterText = document.getElementById('docInterpreter')?.innerText || '';
 
-      const html = `
-        <html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
-        <head>
-          <title>Notes of Proceedings</title>
-          <style>${css}</style>
-        </head>
-        <body>
-          <table align="center" width="650" cellpadding="0" cellspacing="0" style="margin: 0 auto; width: 650pt;">
-            <tr>
-              <td>
-                <div class="header-block">
-                  <h1 style="font-size:14pt; font-weight:bold; text-transform:uppercase; margin:0;">IN THE SUBORDINATE COURTS OF BRUNEI DARUSSALAM</h1>
-                  <p style="font-size:10pt; font-weight:bold; margin-top:4pt; margin-bottom:0;">HOLDEN AT <u>${locText}</u></p>
-                  <div class="case-no">${caseNoText}</div>
-                </div>
+      const finalName = targetFilename.endsWith('.pdf') ? targetFilename : `${targetFilename}.pdf`;
 
-                <table class="metadata-table" width="100%" cellpadding="0" cellspacing="0">
-                  <tr>
-                    <td style="width: 50%;">
-                      <span class="meta-label">Before:</span>
-                      <span class="meta-val">${magistrateText}</span>
-                    </td>
-                    <td style="width: 50%;">
-                      <span class="meta-label">Date & Venue:</span>
-                      <span class="meta-val">${dateVenueText}</span>
-                    </td>
-                  </tr>
-                  <tr>
-                    <td>
-                      <span class="meta-label">Prosecution:</span>
-                      <span class="meta-val">${prosecutionText}</span>
-                    </td>
-                    <td>
-                      <span class="meta-label">Session Timings:</span>
-                      <span class="meta-val" style="font-family: monospace;">${timingsText}</span>
-                    </td>
-                  </tr>
-                  <tr>
-                    <td colspan="2">
-                      <span class="meta-label">Defendant(s) & Counsel:</span>
-                      <span class="meta-val" style="white-space: pre-line;">${defendantsText}</span>
-                    </td>
-                  </tr>
-                  <tr>
-                    <td colspan="2">
-                      <span class="meta-label">Interpreter:</span>
-                      <span class="meta-val">${interpreterText}</span>
-                    </td>
-                  </tr>
-                </table>
+      // 1. Create a dedicated full-screen export overlay
+      const overlay = document.createElement('div');
+      overlay.id = 'pdfExportOverlay';
+      overlay.style.position = 'fixed';
+      overlay.style.top = '0';
+      overlay.style.left = '0';
+      overlay.style.width = '100vw';
+      overlay.style.height = '100vh';
+      overlay.style.backgroundColor = 'rgba(15, 23, 42, 0.88)';
+      overlay.style.zIndex = '99999';
+      overlay.style.display = 'flex';
+      overlay.style.flexDirection = 'column';
+      overlay.style.alignItems = 'center';
+      overlay.style.justifyContent = 'flex-start';
+      overlay.style.overflowY = 'auto';
+      overlay.style.padding = '24px 0';
+      overlay.style.boxSizing = 'border-box';
 
-                <div class="editor-body">
-                  ${editorClone.innerHTML}
-                </div>
+      // 2. Loading status pill
+      const statusPill = document.createElement('div');
+      statusPill.style.backgroundColor = '#1e293b';
+      statusPill.style.color = '#f8fafc';
+      statusPill.style.border = '1px solid #334155';
+      statusPill.style.borderRadius = '9999px';
+      statusPill.style.padding = '8px 20px';
+      statusPill.style.fontSize = '12px';
+      statusPill.style.fontWeight = 'bold';
+      statusPill.style.marginBottom = '16px';
+      statusPill.style.display = 'flex';
+      statusPill.style.alignItems = 'center';
+      statusPill.style.gap = '8px';
+      statusPill.style.boxShadow = '0 10px 25px -5px rgba(0,0,0,0.4)';
+      statusPill.innerHTML = `
+        <i class="fa-solid fa-spinner fa-spin text-amber-400"></i>
+        <span>Generating PDF document (please wait)...</span>
+      `;
+      overlay.appendChild(statusPill);
 
-                <div class="signature-section">
-                  <table align="right" cellpadding="0" cellspacing="0">
-                    <tr>
-                      <td style="text-align: center; width: 220pt;">
-                        <div class="sig-line">(Signed Digitally)</div>
-                        <div style="font-weight: bold; font-size: 11pt; margin-top: 4pt;">${magistrateText}</div>
-                        <div style="font-size: 9pt; color: #64748b;">Subordinate Courts, Brunei Darussalam</div>
-                      </td>
-                    </tr>
-                  </table>
-                </div>
-              </td>
-            </tr>
-          </table>
-        </body>
-        </html>
+      // 3. Exact A4 Document Sheet (Target for html2pdf)
+      const sheet = document.createElement('div');
+      sheet.id = 'pdfPrintableSheet';
+      sheet.style.width = '794px'; // 210mm standard A4 at 96 DPI
+      sheet.style.backgroundColor = '#ffffff';
+      sheet.style.color = '#0f172a';
+      sheet.style.fontFamily = "'Merriweather', Georgia, serif";
+      sheet.style.padding = '40px 48px'; // Symmetrical left & right margins (48px each side)
+      sheet.style.boxSizing = 'border-box';
+      sheet.style.boxShadow = '0 20px 25px -5px rgba(0,0,0,0.5)';
+      sheet.style.borderRadius = '2px';
+
+      const pdfBodyHtml = generateExportBodyHtml(false);
+
+      sheet.innerHTML = `
+        <!-- Court Document Header -->
+        <div style="text-align: center; border-bottom: 2.5px solid #0f172a; padding-bottom: 14px; margin-bottom: 20px;">
+          <h1 style="font-family: 'Inter', Arial, sans-serif; font-size: 19px; font-weight: 700; text-transform: uppercase; margin: 0 0 6px 0; color: #0f172a; letter-spacing: 1.5px; line-height: 1.3;">IN THE MAGISTRATES' COURT OF BRUNEI DARUSSALAM</h1>
+          <div style="font-family: 'Inter', Arial, sans-serif; font-size: 11.5px; font-weight: 700; text-transform: uppercase; color: #475569; margin: 0 0 8px 0;">HOLDEN AT <span style="text-decoration: underline;">${escapeHtml(locText)}</span></div>
+          <div style="font-family: 'Roboto Mono', 'Courier New', monospace; font-size: 16px; font-weight: 700; color: #d97706; margin: 0; letter-spacing: 0.5px;">${escapeHtml(fullCaseNoHdr)}</div>
+        </div>
+
+        <!-- Metadata Grid Card (2-column fixed table to guarantee 100% symmetry) -->
+        <table style="width: 100%; border-collapse: collapse; table-layout: fixed; margin-bottom: 24px; background-color: #f8fafc; border: 1px solid #cbd5e1; border-radius: 8px; overflow: hidden;">
+          <tr>
+            <td style="width: 50%; padding: 9px 14px; vertical-align: top; border-bottom: 1px solid #e2e8f0; border-right: none;">
+              <span style="font-family: 'Inter', Arial, sans-serif; font-size: 10px; font-weight: 700; color: #64748b; text-transform: uppercase; display: block; margin-bottom: 2px; letter-spacing: 0.05em;">BEFORE:</span>
+              <span style="font-family: 'Merriweather', Georgia, serif; font-size: 13.5px; font-weight: 600; color: #0f172a;">${escapeHtml(magistrateText)}</span>
+            </td>
+            <td style="width: 50%; padding: 9px 14px; vertical-align: top; border-bottom: 1px solid #e2e8f0;">
+              <span style="font-family: 'Inter', Arial, sans-serif; font-size: 10px; font-weight: 700; color: #64748b; text-transform: uppercase; display: block; margin-bottom: 2px; letter-spacing: 0.05em;">DATE & VENUE:</span>
+              <span style="font-family: 'Merriweather', Georgia, serif; font-size: 13.5px; font-weight: 600; color: #0f172a;">${escapeHtml(dateVenueText)}</span>
+            </td>
+          </tr>
+          <tr>
+            <td style="width: 50%; padding: 9px 14px; vertical-align: top; border-bottom: 1px solid #e2e8f0; border-right: none;">
+              <span style="font-family: 'Inter', Arial, sans-serif; font-size: 10px; font-weight: 700; color: #64748b; text-transform: uppercase; display: block; margin-bottom: 2px; letter-spacing: 0.05em;">PROSECUTION:</span>
+              <span style="font-family: 'Merriweather', Georgia, serif; font-size: 13.5px; font-weight: 600; color: #0f172a;">${escapeHtml(prosecutionText)}</span>
+            </td>
+            <td style="width: 50%; padding: 9px 14px; vertical-align: top; border-bottom: 1px solid #e2e8f0;">
+              <span style="font-family: 'Inter', Arial, sans-serif; font-size: 10px; font-weight: 700; color: #64748b; text-transform: uppercase; display: block; margin-bottom: 2px; letter-spacing: 0.05em;">SESSION TIMINGS:</span>
+              <span style="font-family: 'Roboto Mono', 'Courier New', monospace; font-size: 13px; font-weight: 700; color: #0f172a;">${escapeHtml(timingsText)}</span>
+            </td>
+          </tr>
+          <tr>
+            <td style="width: 50%; padding: 9px 14px; vertical-align: top; border: none;">
+              <span style="font-family: 'Inter', Arial, sans-serif; font-size: 10px; font-weight: 700; color: #64748b; text-transform: uppercase; display: block; margin-bottom: 2px; letter-spacing: 0.05em;">DEFENDANT(S) & COUNSEL:</span>
+              <span style="font-family: 'Merriweather', Georgia, serif; font-size: 13.5px; font-weight: 500; color: #0f172a; white-space: pre-line;">${escapeHtml(defendantsText)}</span>
+            </td>
+            <td style="width: 50%; padding: 9px 14px; vertical-align: top; border: none;">
+              <span style="font-family: 'Inter', Arial, sans-serif; font-size: 10px; font-weight: 700; color: #64748b; text-transform: uppercase; display: block; margin-bottom: 2px; letter-spacing: 0.05em;">INTERPRETER:</span>
+              <span style="font-family: 'Merriweather', Georgia, serif; font-size: 13.5px; font-weight: 500; color: #0f172a;">${escapeHtml(interpreterText)}</span>
+            </td>
+          </tr>
+        </table>
+
+        <!-- Notes of Proceedings Editor Body -->
+        <div style="font-family: 'Merriweather', Georgia, serif; font-size: 14.5px; line-height: 1.7; color: #0f172a;">
+          ${pdfBodyHtml}
+        </div>
       `;
 
-      const blob = new Blob(['\ufeff', html], { type: 'application/msword' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `${caseNoText.replace(/[:\/]/g, '_').replace(/\s+/g, '')}_NOP.doc`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      showToast('Word document exported successfully.');
-    }
+      overlay.appendChild(sheet);
+      document.body.appendChild(overlay);
 
-    // Export PDF / Print function
-    function exportPDF() {
-      window.print();
+      const opt = {
+        margin: [10, 0, 10, 0], // Symmetrical 10mm top/bottom, 0 left/right because sheet padding handles 48px left and 48px right
+        filename: finalName,
+        image: { type: 'jpeg', quality: 0.98 },
+        html2canvas: {
+          scale: 2,
+          useCORS: true,
+          letterRendering: true,
+          backgroundColor: '#ffffff',
+          scrollY: 0
+        },
+        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
+        pagebreak: { mode: 'legacy' }
+      };
+
+      if (typeof html2pdf !== 'undefined') {
+        html2pdf().set(opt).from(sheet).save().then(() => {
+          overlay.remove();
+          showToast(`PDF exported successfully: ${finalName}`, 'success');
+        }).catch(err => {
+          console.warn('html2pdf error:', err);
+          overlay.remove();
+          window.print();
+        });
+      } else {
+        overlay.remove();
+        window.print();
+      }
     }
 
     // ==========================================
@@ -1933,7 +3819,7 @@
     // ==========================================
 
     function markDirty() {
-      if (!hasInitialized) return;
+      if (!hasInitialized || isDirty) return;
       isDirty = true;
       const icon = document.getElementById('autoSaveIcon');
       const status = document.getElementById('autoSaveStatus');
@@ -2110,6 +3996,7 @@
       // Synchronize headers
       syncMetadata();
       checkSessionStateFromInputs();
+      updatePagination();
       isDirty = false;
 
       // Update badge
@@ -2211,10 +4098,585 @@
     function initListeners() {
       const editor = document.getElementById('editor');
       if (editor) {
-        editor.addEventListener('input', markDirty);
-        editor.addEventListener('keyup', markDirty);
-        editor.addEventListener('paste', markDirty);
+        editor.addEventListener('input', () => {
+          markDirty();
+          schedulePaginationUpdate(350);
+        });
+        editor.addEventListener('keyup', (e) => {
+          if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
+            checkTableFocus();
+          }
+        });
+        editor.addEventListener('mouseup', () => {
+          checkTableFocus();
+        });
+        editor.addEventListener('paste', () => {
+          markDirty();
+          schedulePaginationUpdate(100);
+          setTimeout(checkTableFocus, 60);
+        });
       }
+
+      window.addEventListener('resize', () => {
+        schedulePaginationUpdate(200);
+      });
+    }
+
+    // ==========================================
+    // MAGISTRATE PROFILE & SETTINGS MODULE
+    // ==========================================
+    const SETTINGS_KEY = 'subordinate_courts_bn_magistrate_settings_v1';
+
+    const defaultSettings = {
+      activeProfileId: 'profile_default',
+      profiles: {
+        'profile_default': {
+          id: 'profile_default',
+          name: 'Default Magistrate',
+          magistrateName: '',
+          courtLocation: 'BANDAR SERI BEGAWAN',
+          courtRoom: 'Court Room 1',
+          interpreterName: 'Malay / English Interpreter',
+          signatureDataUrl: '',
+          namingPreset: 'yymmdd_nature_caseno_spaces',
+          customNamingPattern: '{YYMMDD} - {Nature} - {CaseNoSpaces}',
+          pdfFolderPath: 'C:\\Court Documents\\PDF Records\\',
+          wordFolderPath: 'C:\\Court Documents\\Word Drafts\\',
+          showExportDialog: true
+        }
+      }
+    };
+
+    function loadSettings() {
+      try {
+        const raw = localStorage.getItem(SETTINGS_KEY);
+        if (!raw) return defaultSettings;
+        const parsed = JSON.parse(raw);
+        if (!parsed.profiles || !parsed.activeProfileId) return defaultSettings;
+        return parsed;
+      } catch (e) {
+        console.warn('Failed to load settings from storage:', e);
+        return defaultSettings;
+      }
+    }
+
+    function saveSettingsToStorage(settings) {
+      try {
+        localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
+      } catch (e) {
+        console.error('Failed to save settings:', e);
+      }
+    }
+
+    function getActiveProfile() {
+      const settings = loadSettings();
+      const activeId = settings.activeProfileId || Object.keys(settings.profiles)[0];
+      return settings.profiles[activeId] || Object.values(settings.profiles)[0] || defaultSettings.profiles['profile_default'];
+    }
+
+    // ==========================================
+    // PREFERRED FILE NAMING CONVENTION ENGINE
+    // ==========================================
+    function getFormattedFilename(format = 'doc', customProfile = null) {
+      const active = customProfile || getActiveProfile();
+      const preset = active.namingPreset || 'yymmdd_nature_caseno_spaces';
+      const customPattern = active.customNamingPattern || '{YYMMDD} - {Nature} - {CaseNoSpaces}';
+
+      // 1. Resolve Hearing Date tokens
+      const dateVal = document.getElementById('hearingDate')?.value;
+      let dateObj = dateVal ? new Date(dateVal + 'T00:00:00') : new Date();
+      if (isNaN(dateObj.getTime())) dateObj = new Date();
+
+      const yyyy = String(dateObj.getFullYear());
+      const yy = yyyy.slice(-2);
+      const mm = String(dateObj.getMonth() + 1).padStart(2, '0');
+      const dd = String(dateObj.getDate()).padStart(2, '0');
+
+      const yymmdd = `${yy}${mm}${dd}`;
+      const yyyymmdd = `${yyyy}${mm}${dd}`;
+      const yyyy_mm_dd = `${yyyy}-${mm}-${dd}`;
+
+      // 2. Resolve Case Info tokens
+      const nature = document.getElementById('hearingNature')?.value || 'Mention';
+      const caseType = document.getElementById('caseType')?.value || 'MCCT';
+      const docketLoc = document.getElementById('docketLoc')?.value || 'BANDAR SERI BEGAWAN';
+      const docketCode = docketLoc.includes('KUALA') ? 'KB' : docketLoc.includes('TUTONG') ? 'TUT' : docketLoc.includes('TEMBURONG') ? 'TEMB' : 'BSB';
+      const docketNo = document.getElementById('caseNoVal')?.value || '1';
+      const year = document.getElementById('caseYearVal')?.value || yyyy;
+      const magName = active.magistrateName || document.getElementById('magistrateName')?.value?.trim() || 'Magistrate';
+
+      // Case number representations
+      const caseNoUnderscores = `${caseType}_${docketCode}_${docketNo}_${year}`;
+      const caseNoSpaces = `${caseType} ${docketCode} ${docketNo} ${year}`;
+      const caseNoSlashes = `${caseType}/${docketCode}/${docketNo}/${year}`;
+
+      let baseFilename = '';
+
+      if (preset === 'yymmdd_nature_caseno_spaces') {
+        baseFilename = `${yymmdd} - ${nature} - ${caseNoSpaces}`;
+      } else if (preset === 'yymmdd_nature_caseno_underscores') {
+        baseFilename = `${yymmdd} - ${nature} - ${caseNoUnderscores}`;
+      } else if (preset === 'caseno_nop') {
+        baseFilename = `${caseNoUnderscores}_NOP`;
+      } else if (preset === 'yyyymmdd_magistrate_caseno') {
+        baseFilename = `${yyyy_mm_dd} - ${magName} - ${caseNoUnderscores}`;
+      } else if (preset === 'custom') {
+        baseFilename = customPattern
+          .replace(/{YYMMDD}/gi, yymmdd)
+          .replace(/{YYYYMMDD}/gi, yyyymmdd)
+          .replace(/{YYYY-MM-DD}/gi, yyyy_mm_dd)
+          .replace(/{YY}/gi, yy)
+          .replace(/{YYYY}/gi, yyyy)
+          .replace(/{MM}/gi, mm)
+          .replace(/{DD}/gi, dd)
+          .replace(/{Nature}/gi, nature)
+          .replace(/{Type}/gi, nature)
+          .replace(/{CaseNoSpaces}/gi, caseNoSpaces)
+          .replace(/{CaseNo}/gi, caseNoUnderscores)
+          .replace(/{CaseNoSlashes}/gi, caseNoSlashes)
+          .replace(/{DocketNo}/gi, docketNo)
+          .replace(/{Docket}/gi, docketNo)
+          .replace(/{Year}/gi, year)
+          .replace(/{Location}/gi, docketCode)
+          .replace(/{Magistrate}/gi, magName);
+      } else {
+        baseFilename = `${yymmdd} - ${nature} - ${caseNoSpaces}`;
+      }
+
+      // Sanitize illegal filesystem characters for Windows/macOS/Linux
+      const sanitized = baseFilename.replace(/[<>:"/\\|?*]/g, '_').trim();
+      const ext = format.toLowerCase().startsWith('.') ? format.toLowerCase() : `.${format.toLowerCase()}`;
+      
+      if (sanitized.toLowerCase().endsWith(ext)) {
+        return sanitized;
+      }
+      return `${sanitized}${ext}`;
+    }
+
+    function handleNamingPresetChange() {
+      const presetSelect = document.getElementById('settingNamingPreset');
+      const customBox = document.getElementById('customPatternBox');
+      if (!presetSelect) return;
+
+      if (presetSelect.value === 'custom') {
+        if (customBox) customBox.classList.remove('hidden');
+      } else {
+        if (customBox) customBox.classList.add('hidden');
+      }
+      updateNamingPreview();
+    }
+
+    function insertNamingToken(token) {
+      const input = document.getElementById('settingCustomNamingPattern');
+      if (!input) return;
+      const start = input.selectionStart || input.value.length;
+      const end = input.selectionEnd || input.value.length;
+      const text = input.value;
+      input.value = text.substring(0, start) + token + text.substring(end);
+      input.focus();
+      input.selectionStart = input.selectionEnd = start + token.length;
+      updateNamingPreview();
+    }
+
+    function updateNamingPreview() {
+      const presetSelect = document.getElementById('settingNamingPreset');
+      const customPatternInput = document.getElementById('settingCustomNamingPattern');
+      const previewWord = document.getElementById('settingNamingPreviewWord');
+      const previewPdf = document.getElementById('settingNamingPreviewPdf');
+
+      const tempProfile = {
+        namingPreset: presetSelect ? presetSelect.value : 'yymmdd_nature_caseno_spaces',
+        customNamingPattern: customPatternInput ? customPatternInput.value : '{YYMMDD} - {Nature} - {CaseNoSpaces}',
+        magistrateName: document.getElementById('settingMagistrateName')?.value || 'Magistrate'
+      };
+
+      const wordName = getFormattedFilename('doc', tempProfile);
+      const pdfName = getFormattedFilename('pdf', tempProfile);
+
+      if (previewWord) previewWord.innerText = wordName;
+      if (previewPdf) previewPdf.innerText = pdfName;
+    }
+
+    // ==========================================
+    // EXPORT CONFIRMATION DIALOG MODAL
+    // ==========================================
+    let currentExportModalType = 'word';
+
+    function openExportSaveModal(type, initialFileName, folderPath) {
+      currentExportModalType = type;
+      const modal = document.getElementById('exportSaveModal');
+      const title = document.getElementById('exportModalTitle');
+      const sub = document.getElementById('exportModalSub');
+      const iconContainer = document.getElementById('exportModalIconContainer');
+      const icon = document.getElementById('exportModalIcon');
+      const nameInput = document.getElementById('exportModalFileNameInput');
+      const folderEl = document.getElementById('exportModalFolderPath');
+      const confirmBtn = document.getElementById('exportModalConfirmBtn');
+      const nativeSaveBtn = document.getElementById('exportModalNativeSaveBtn');
+      const dontShowCheck = document.getElementById('exportModalDontShowAgain');
+
+      if (nameInput) nameInput.value = initialFileName;
+      if (folderEl) folderEl.innerText = folderPath || (type === 'word' ? 'C:\\Court Documents\\Word Drafts\\' : 'C:\\Court Documents\\PDF Records\\');
+      if (dontShowCheck) dontShowCheck.checked = false;
+
+      if (type === 'word') {
+        if (title) title.innerText = 'Export Word Document';
+        if (sub) sub.innerText = 'Save Microsoft Word (.doc) draft to judicial archive.';
+        if (iconContainer) iconContainer.className = 'w-10 h-10 rounded-xl bg-blue-500/20 text-blue-600 dark:text-blue-400 flex items-center justify-center text-lg border border-blue-500/30 shrink-0';
+        if (icon) icon.className = 'fa-solid fa-file-word';
+        if (confirmBtn) {
+          confirmBtn.className = 'px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg shadow-sm transition text-xs flex items-center gap-1.5 cursor-pointer';
+          confirmBtn.innerHTML = '<i class="fa-solid fa-download"></i> Download Word Document';
+        }
+      } else {
+        if (title) title.innerText = 'Export PDF Document';
+        if (sub) sub.innerText = 'Generate high-fidelity PDF proceedings document.';
+        if (iconContainer) iconContainer.className = 'w-10 h-10 rounded-xl bg-amber-500/20 text-amber-500 flex items-center justify-center text-lg border border-amber-500/30 shrink-0';
+        if (icon) icon.className = 'fa-solid fa-file-pdf';
+        if (confirmBtn) {
+          confirmBtn.className = 'px-4 py-2 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold rounded-lg shadow-sm transition text-xs flex items-center gap-1.5 cursor-pointer';
+          confirmBtn.innerHTML = '<i class="fa-solid fa-download"></i> Download PDF Document';
+        }
+      }
+
+      // Check if File System Access API is supported
+      if ('showSaveFilePicker' in window && nativeSaveBtn) {
+        nativeSaveBtn.classList.remove('hidden');
+      } else if (nativeSaveBtn) {
+        nativeSaveBtn.classList.add('hidden');
+      }
+
+      if (modal) modal.classList.remove('hidden');
+    }
+
+    function closeExportSaveModal() {
+      const modal = document.getElementById('exportSaveModal');
+      if (modal) modal.classList.add('hidden');
+    }
+
+    function copyPreferredExportFolder() {
+      const folderEl = document.getElementById('exportModalFolderPath');
+      if (!folderEl) return;
+      const pathText = folderEl.innerText.trim();
+      navigator.clipboard.writeText(pathText).then(() => {
+        showToast(`Folder path copied: ${pathText}`);
+      }).catch(() => {
+        showToast(`Path: ${pathText}`, 'info');
+      });
+    }
+
+    function confirmAndExecuteExport() {
+      const nameInput = document.getElementById('exportModalFileNameInput');
+      const dontShowCheck = document.getElementById('exportModalDontShowAgain');
+      let targetName = nameInput ? nameInput.value.trim() : '';
+      if (!targetName) {
+        targetName = getFormattedFilename(currentExportModalType === 'word' ? 'doc' : 'pdf');
+      }
+
+      // Update showExportDialog preference if requested
+      if (dontShowCheck && dontShowCheck.checked) {
+        const settings = loadSettings();
+        const active = settings.profiles[settings.activeProfileId];
+        if (active) {
+          active.showExportDialog = false;
+          saveSettingsToStorage(settings);
+        }
+      }
+
+      closeExportSaveModal();
+
+      if (currentExportModalType === 'word') {
+        executeExportWord(targetName);
+      } else {
+        executeExportPDF(targetName);
+      }
+    }
+
+    async function triggerNativeSavePicker() {
+      const nameInput = document.getElementById('exportModalFileNameInput');
+      let targetName = nameInput ? nameInput.value.trim() : '';
+      if (!targetName) {
+        targetName = getFormattedFilename(currentExportModalType === 'word' ? 'doc' : 'pdf');
+      }
+
+      closeExportSaveModal();
+
+      if (currentExportModalType === 'word') {
+        executeExportWord(targetName);
+      } else {
+        executeExportPDF(targetName);
+      }
+    }
+
+    function populateSettingsUI() {
+      const settings = loadSettings();
+      const select = document.getElementById('settingProfileSelect');
+      if (select) {
+        select.innerHTML = '';
+        Object.values(settings.profiles).forEach(p => {
+          const opt = document.createElement('option');
+          opt.value = p.id;
+          opt.textContent = p.name || p.magistrateName || 'Unnamed Profile';
+          if (p.id === settings.activeProfileId) opt.selected = true;
+          select.appendChild(opt);
+        });
+      }
+
+      const active = getActiveProfile();
+      if (!active) return;
+
+      const magNameInput = document.getElementById('settingMagistrateName');
+      const locSelect = document.getElementById('settingCourtLocation');
+      const roomSelect = document.getElementById('settingCourtRoom');
+      const interpInput = document.getElementById('settingInterpreterName');
+      const namingPresetSelect = document.getElementById('settingNamingPreset');
+      const customPatternInput = document.getElementById('settingCustomNamingPattern');
+      const pdfFolderInput = document.getElementById('settingPdfFolder');
+      const wordFolderInput = document.getElementById('settingWordFolder');
+      const showExportDialogCheck = document.getElementById('settingShowExportDialog');
+
+      if (magNameInput) magNameInput.value = active.magistrateName || '';
+      if (locSelect) locSelect.value = active.courtLocation || 'BANDAR SERI BEGAWAN';
+      if (roomSelect) roomSelect.value = active.courtRoom || 'Court Room 1';
+      if (interpInput) interpInput.value = active.interpreterName || 'Malay / English Interpreter';
+      if (namingPresetSelect) namingPresetSelect.value = active.namingPreset || 'yymmdd_nature_caseno_spaces';
+      if (customPatternInput) customPatternInput.value = active.customNamingPattern || '{YYMMDD} - {Nature} - {CaseNoSpaces}';
+      if (pdfFolderInput) pdfFolderInput.value = active.pdfFolderPath || 'C:\\Court Documents\\PDF Records\\';
+      if (wordFolderInput) wordFolderInput.value = active.wordFolderPath || 'C:\\Court Documents\\Word Drafts\\';
+      if (showExportDialogCheck) showExportDialogCheck.checked = active.showExportDialog !== false;
+
+      handleNamingPresetChange();
+      renderSignaturePreview(active.signatureDataUrl);
+    }
+
+    function renderSignaturePreview(dataUrl) {
+      const previewImg = document.getElementById('signaturePreviewImg');
+      const placeholder = document.getElementById('signaturePreviewPlaceholder');
+      const badge = document.getElementById('signatureStatusBadge');
+      const removeBtn = document.getElementById('removeSignatureBtn');
+
+      if (dataUrl) {
+        if (previewImg) {
+          previewImg.src = dataUrl;
+          previewImg.classList.remove('hidden');
+        }
+        if (placeholder) placeholder.classList.add('hidden');
+        if (badge) {
+          badge.className = 'text-[10px] font-mono text-emerald-600 dark:text-emerald-400 font-bold bg-emerald-500/10 border border-emerald-500/30 px-2 py-0.5 rounded flex items-center gap-1';
+          badge.innerHTML = '<i class="fa-solid fa-check text-[9px]"></i> Signature Loaded';
+        }
+        if (removeBtn) removeBtn.classList.remove('hidden');
+      } else {
+        if (previewImg) {
+          previewImg.src = '';
+          previewImg.classList.add('hidden');
+        }
+        if (placeholder) placeholder.classList.remove('hidden');
+        if (badge) {
+          badge.className = 'text-[10px] font-mono text-slate-400 font-bold bg-slate-100 dark:bg-slate-700 px-2 py-0.5 rounded';
+          badge.innerText = 'No signature uploaded';
+        }
+        if (removeBtn) removeBtn.classList.add('hidden');
+      }
+    }
+
+    function handleSignatureFileUpload(e) {
+      const file = e.target.files?.[0];
+      if (!file) return;
+
+      if (file.size > 2 * 1024 * 1024) {
+        showToast('Signature image is too large (max 2MB)', 'info');
+        return;
+      }
+
+      const reader = new FileReader();
+      reader.onload = function(evt) {
+        const dataUrl = evt.target?.result;
+        if (!dataUrl) return;
+
+        const settings = loadSettings();
+        const active = settings.profiles[settings.activeProfileId];
+        if (active) {
+          active.signatureDataUrl = dataUrl;
+          saveSettingsToStorage(settings);
+          renderSignaturePreview(dataUrl);
+          showToast('Digital signature uploaded and saved.', 'success');
+        }
+      };
+      reader.readAsDataURL(file);
+    }
+
+    function removeCurrentSignature() {
+      const settings = loadSettings();
+      const active = settings.profiles[settings.activeProfileId];
+      if (active) {
+        active.signatureDataUrl = '';
+        saveSettingsToStorage(settings);
+        renderSignaturePreview('');
+        showToast('Digital signature removed.', 'info');
+      }
+    }
+
+    function switchSettingsProfile(profileId) {
+      const settings = loadSettings();
+      if (!settings.profiles[profileId]) return;
+      settings.activeProfileId = profileId;
+      saveSettingsToStorage(settings);
+      populateSettingsUI();
+      applySettingsToCase(false);
+    }
+
+    function createNewProfilePrompt() {
+      const name = prompt('Enter a name for the new Magistrate Profile (e.g. Magistrate Ahmad):');
+      if (!name || !name.trim()) return;
+
+      const settings = loadSettings();
+      const id = 'profile_' + Date.now();
+      settings.profiles[id] = {
+        id: id,
+        name: name.trim(),
+        magistrateName: name.trim(),
+        courtLocation: 'BANDAR SERI BEGAWAN',
+        courtRoom: 'Court Room 1',
+        interpreterName: 'Malay / English Interpreter',
+        signatureDataUrl: '',
+        namingPreset: 'yymmdd_nature_caseno_spaces',
+        customNamingPattern: '{YYMMDD} - {Nature} - {CaseNoSpaces}',
+        pdfFolderPath: 'C:\\Court Documents\\PDF Records\\',
+        wordFolderPath: 'C:\\Court Documents\\Word Drafts\\',
+        showExportDialog: true
+      };
+      settings.activeProfileId = id;
+      saveSettingsToStorage(settings);
+      populateSettingsUI();
+      applySettingsToCase(true);
+      showToast(`Created profile: ${name.trim()}`);
+    }
+
+    function deleteCurrentProfile() {
+      const settings = loadSettings();
+      const keys = Object.keys(settings.profiles);
+      if (keys.length <= 1) {
+        showToast('Cannot delete the only remaining profile.', 'info');
+        return;
+      }
+
+      const activeId = settings.activeProfileId;
+      const profileName = settings.profiles[activeId]?.name || 'this profile';
+      if (!confirm(`Are you sure you want to delete profile "${profileName}"?`)) return;
+
+      delete settings.profiles[activeId];
+      settings.activeProfileId = Object.keys(settings.profiles)[0];
+      saveSettingsToStorage(settings);
+      populateSettingsUI();
+      applySettingsToCase(true);
+      showToast('Profile deleted.');
+    }
+
+    function saveSettingsAndApply() {
+      const settings = loadSettings();
+      const active = settings.profiles[settings.activeProfileId];
+      if (!active) return;
+
+      const magName = document.getElementById('settingMagistrateName')?.value?.trim() || '';
+      const courtLoc = document.getElementById('settingCourtLocation')?.value || 'BANDAR SERI BEGAWAN';
+      const courtRoom = document.getElementById('settingCourtRoom')?.value || 'Court Room 1';
+      const interpreter = document.getElementById('settingInterpreterName')?.value?.trim() || 'Malay / English Interpreter';
+      const namingPreset = document.getElementById('settingNamingPreset')?.value || 'yymmdd_nature_caseno_spaces';
+      const customPattern = document.getElementById('settingCustomNamingPattern')?.value?.trim() || '{YYMMDD} - {Nature} - {CaseNoSpaces}';
+      const pdfFolder = document.getElementById('settingPdfFolder')?.value?.trim() || 'C:\\Court Documents\\PDF Records\\';
+      const wordFolder = document.getElementById('settingWordFolder')?.value?.trim() || 'C:\\Court Documents\\Word Drafts\\';
+      const showExportDialog = document.getElementById('settingShowExportDialog')?.checked !== false;
+
+      active.magistrateName = magName;
+      active.courtLocation = courtLoc;
+      active.courtRoom = courtRoom;
+      active.interpreterName = interpreter;
+      active.name = magName || active.name || 'Magistrate Profile';
+      active.namingPreset = namingPreset;
+      active.customNamingPattern = customPattern;
+      active.pdfFolderPath = pdfFolder;
+      active.wordFolderPath = wordFolder;
+      active.showExportDialog = showExportDialog;
+
+      saveSettingsToStorage(settings);
+      applySettingsToCase(true);
+      closeSettingsModal();
+      showToast('Settings saved & applied to case reference.');
+    }
+
+    function applySettingsToCase(notify = false) {
+      const active = getActiveProfile();
+      if (!active) return;
+
+      const magInput = document.getElementById('magistrateName');
+      const locSelect = document.getElementById('docketLoc');
+      const roomSelect = document.getElementById('courtRoom');
+      const interpInput = document.getElementById('interpreterName');
+
+      if (magInput && active.magistrateName) magInput.value = active.magistrateName;
+      if (locSelect && active.courtLocation) {
+        locSelect.value = active.courtLocation;
+      }
+      if (roomSelect && active.courtRoom) roomSelect.value = active.courtRoom;
+      if (interpInput && active.interpreterName) interpInput.value = active.interpreterName;
+
+      syncMetadata();
+      if (notify) {
+        showToast(`Autofilled settings for ${active.magistrateName || active.name}`);
+      }
+    }
+
+    function openSettingsModal() {
+      populateSettingsUI();
+      const modal = document.getElementById('settingsModal');
+      if (modal) modal.classList.remove('hidden');
+    }
+
+    function closeSettingsModal() {
+      const modal = document.getElementById('settingsModal');
+      if (modal) modal.classList.add('hidden');
+    }
+
+    function insertMagistrateSignature() {
+      const active = getActiveProfile();
+      const sigData = active?.signatureDataUrl;
+      const magName = active?.magistrateName || document.getElementById('magistrateName')?.value?.trim() || 'Magistrate';
+
+      if (!sigData) {
+        openSettingsModal();
+        showToast('Please upload a digital signature image in Settings first.', 'info');
+        return;
+      }
+
+      const editor = document.getElementById('editor');
+      if (!editor) return;
+
+      const sigBlock = document.createElement('div');
+      sigBlock.className = 'signature-block my-6 pt-4 text-right inline-block float-right';
+      sigBlock.setAttribute('style', 'text-align: right; margin-top: 24px; min-width: 220px; float: right;');
+      sigBlock.innerHTML = `
+        <img src="${sigData}" style="max-height: 70px; max-width: 220px; display: block; margin-left: auto; margin-bottom: 6px;" alt="Magistrate Signature">
+        <div style="border-top: 1.5px solid #0f172a; padding-top: 4px; font-weight: 700; font-family: 'Inter', Arial, sans-serif; font-size: 13px;">
+          (${escapeHtml(magName)})
+        </div>
+        <div style="font-size: 11px; color: #475569; font-family: 'Inter', Arial, sans-serif;">
+          Magistrate, Subordinate Courts<br>Brunei Darussalam
+        </div>
+      `;
+
+      const clearDiv = document.createElement('div');
+      clearDiv.style.clear = 'both';
+      const endP = document.createElement('p');
+      endP.innerHTML = '<br>';
+
+      editor.appendChild(sigBlock);
+      editor.appendChild(clearDiv);
+      editor.appendChild(endP);
+
+      markDirty();
+      updatePagination();
+      showToast('Digital signature block inserted into proceedings.');
     }
 
     // Run initial sync on load
@@ -2223,9 +4685,17 @@
       if (container && container.querySelectorAll('.def-entry').length === 0) {
         addDefendant('', false, '');
       }
+      
+      // Autofill from active judicial settings if empty
+      const magInput = document.getElementById('magistrateName');
+      if (!magInput || !magInput.value) {
+        applySettingsToCase(false);
+      }
+
       syncMetadata();
       checkSessionStateFromInputs();
       initListeners();
+      updatePagination();
       hasInitialized = true;
       checkForSavedDraftOnLoad();
     };
