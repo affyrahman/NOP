@@ -22,14 +22,24 @@
     }
   </script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  <!-- html2pdf for direct pixel-perfect PDF export -->
+  <!-- High-fidelity HTML to Canvas & jsPDF engines for direct, guaranteed non-blank PDF exports -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
   <style>
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Merriweather:ital,wght@0,300;0,400;0,700;1,300&family=Roboto+Mono:wght@400;500;700&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;500;700&display=swap');
     
-    body { font-family: 'Inter', sans-serif; }
-    .serif-font { font-family: 'Merriweather', serif; }
-    .mono-font { font-family: 'Roboto Mono', monospace; }
+    body { font-family: Arial, Helvetica, sans-serif; }
+    .serif-font, .court-font { font-family: Arial, Helvetica, sans-serif; }
+    .mono-font { font-family: 'Roboto Mono', Courier, monospace; }
+    
+    /* Ensure uniform Arial font in editor */
+    #editor, #editor * {
+      font-family: Arial, Helvetica, sans-serif !important;
+    }
+    #editor .mono-font, #editor .tag-timestamp, #editor .page-break-label, #editor [style*="Roboto Mono"], #editor [style*="monospace"] {
+      font-family: 'Roboto Mono', Courier, monospace !important;
+    }
     
     /* Custom Scrollbar */
     ::-webkit-scrollbar { width: 6px; height: 6px; }
@@ -41,6 +51,7 @@
     #editor {
       min-height: 600px;
       outline: none;
+      font-family: Arial, Helvetica, sans-serif;
     }
 
     /* World-Standard Hanging Indent for Transcript Dialogue */
@@ -671,16 +682,9 @@
           <!-- Hotkeys Cheat Sheet Button -->
           <button type="button" onclick="toggleShortcutsModal()" class="px-2.5 py-1.5 bg-slate-50 hover:bg-slate-100 dark:bg-slate-700/60 dark:hover:bg-slate-700 border border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-200 rounded-xl font-bold text-xs transition flex items-center gap-1.5 shadow-2xs cursor-pointer" title="View All Hotkeys & Defendant Shortcuts">
             <i class="fa-solid fa-keyboard text-amber-500 text-xs"></i>
-            <span class="hidden md:inline">Hotkeys</span>
+            <span class="hidden md:inline">Hotkeys & @ Shortcuts</span>
           </button>
         </div>
-
-        <!-- Fast Tags Slider Toggle Button -->
-        <button type="button" onclick="toggleFastTagsSlider()" class="p-1.5 px-3 bg-amber-500 hover:bg-amber-400 text-slate-950 rounded-xl font-bold text-xs transition flex items-center gap-1.5 shrink-0 shadow-sm ml-auto cursor-pointer" title="Slide Fast Tags Panel (Alt + S / Cmd + K)">
-          <i class="fa-solid fa-tags text-xs"></i>
-          <span>Fast Tags Slider</span>
-          <i class="fa-solid fa-angles-right text-[10px]"></i>
-        </button>
       </div>
 
       <!-- Rich Text Formatting Toolbar -->
@@ -842,16 +846,13 @@
           </button>
         </div>
 
-        <!-- Right pagination & document statistics -->
+        <!-- Right pagination indicator -->
         <div class="flex items-center gap-2 font-mono text-xs">
           <!-- Dynamic Live Page Indicator -->
           <div id="pageIndicator" class="px-2.5 py-1 bg-amber-500/10 text-amber-700 dark:text-amber-400 font-mono font-bold text-xs rounded-lg border border-amber-500/20 flex items-center gap-1.5 shadow-2xs">
             <i class="fa-regular fa-file-lines text-amber-500 text-xs"></i>
             <span>Page 1 of 1</span>
           </div>
-
-          <!-- Word count badge -->
-          <span id="wordCountBadge" class="text-slate-400 dark:text-slate-500 font-mono text-[11px] hidden sm:inline">0 words</span>
         </div>
 
       </div>
@@ -865,7 +866,7 @@
 
           <div>
             <!-- Court Document Header Block -->
-            <div class="text-center border-b-2 border-slate-900 dark:border-slate-100 pb-4 mb-6">
+            <div class="text-center border-b-2 border-slate-900 dark:border-slate-100 pb-4 mb-6" style="font-family: Arial, Helvetica, sans-serif;">
               <h1 class="font-bold text-lg md:text-xl tracking-wider text-slate-900 dark:text-slate-100 uppercase">IN THE MAGISTRATES' COURT OF BRUNEI DARUSSALAM</h1>
               <p class="text-xs font-bold text-slate-600 dark:text-slate-300 mt-1">HOLDEN AT <span id="docHdrLoc" class="underline">BANDAR SERI BEGAWAN</span></p>
               <div class="mt-2 font-mono font-bold text-base md:text-lg text-amber-600 dark:text-amber-400" id="docHdrCaseNo">
@@ -874,25 +875,25 @@
             </div>
 
             <!-- World Standard Court Metadata Grid Block -->
-            <div id="docMetadataBlock" class="mb-6 p-4 bg-slate-50 dark:bg-slate-900/60 rounded-lg border border-slate-200 dark:border-slate-700 text-xs font-serif text-slate-800 dark:text-slate-200 space-y-2">
+            <div id="docMetadataBlock" class="mb-6 p-4 bg-slate-50 dark:bg-slate-900/60 rounded-lg border border-slate-200 dark:border-slate-700 text-xs text-slate-800 dark:text-slate-200 space-y-2" style="font-family: Arial, Helvetica, sans-serif;">
               <div class="grid grid-cols-2 gap-4 border-b pb-2 dark:border-slate-700">
-                <div><strong class="font-sans text-slate-500 uppercase text-[10px] block">BEFORE:</strong> <span id="docMagistrate" class="font-semibold">Magistrate</span></div>
-                <div><strong class="font-sans text-slate-500 uppercase text-[10px] block">DATE & VENUE:</strong> <span id="docDateVenue">6 October 2026 | Court Room 1</span></div>
+                <div><strong class="text-slate-500 uppercase text-[10px] block font-bold">BEFORE:</strong> <span id="docMagistrate" class="font-semibold text-slate-900 dark:text-slate-100">Magistrate</span></div>
+                <div><strong class="text-slate-500 uppercase text-[10px] block font-bold">DATE & VENUE:</strong> <span id="docDateVenue" class="font-semibold text-slate-900 dark:text-slate-100">6 October 2026 | Court Room 1</span></div>
               </div>
 
               <div class="grid grid-cols-2 gap-4 border-b pb-2 dark:border-slate-700">
-                <div><strong class="font-sans text-slate-500 uppercase text-[10px] block">PROSECUTION:</strong> <span id="docProsecution">—</span></div>
-                <div><strong class="font-sans text-slate-500 uppercase text-[10px] block">SESSION TIMINGS:</strong> <span id="docTimings" class="font-mono">09:15 AM - 10:45 AM</span></div>
+                <div><strong class="text-slate-500 uppercase text-[10px] block font-bold">PROSECUTION:</strong> <span id="docProsecution" class="font-semibold text-slate-900 dark:text-slate-100">—</span></div>
+                <div><strong class="text-slate-500 uppercase text-[10px] block font-bold">SESSION TIMINGS:</strong> <span id="docTimings" class="font-mono font-bold text-slate-900 dark:text-slate-100">09:15 AM - 10:45 AM</span></div>
               </div>
 
               <div class="grid grid-cols-2 gap-4">
-                <div><strong class="font-sans text-slate-500 uppercase text-[10px] block">DEFENDANT(S) & COUNSEL:</strong> <span id="docDefendants" class="whitespace-pre-line font-medium">D1: Defendant 1 [Present] (Unrepresented)</span></div>
-                <div><strong class="font-sans text-slate-500 uppercase text-[10px] block">INTERPRETER:</strong> <span id="docInterpreter">Malay / English Interpreter</span></div>
+                <div><strong class="text-slate-500 uppercase text-[10px] block font-bold">DEFENDANT(S) & COUNSEL:</strong> <span id="docDefendants" class="whitespace-pre-line font-medium text-slate-900 dark:text-slate-100">D1: Defendant 1 [Present] (Unrepresented)</span></div>
+                <div><strong class="text-slate-500 uppercase text-[10px] block font-bold">INTERPRETER:</strong> <span id="docInterpreter" class="font-semibold text-slate-900 dark:text-slate-100">Malay / English Interpreter</span></div>
               </div>
             </div>
 
             <!-- Notes of Proceedings Editor Body -->
-            <div id="editor" contenteditable="true" class="serif-font text-sm md:text-base text-slate-800 dark:text-slate-100 focus:outline-none min-h-[450px]">
+            <div id="editor" contenteditable="true" class="text-sm md:text-base text-slate-800 dark:text-slate-100 focus:outline-none min-h-[450px]" style="font-family: Arial, Helvetica, sans-serif;">
               <p><br></p>
             </div>
           </div>
@@ -1089,7 +1090,7 @@
           <span class="text-[10px] uppercase font-bold text-slate-400 block mb-1 flex items-center gap-1">
             <i class="fa-solid fa-align-left text-amber-500"></i> Transcript Preview
           </span>
-          <div id="modalDraftPreview" class="p-3 bg-slate-100 dark:bg-slate-950 rounded-lg text-slate-700 dark:text-slate-300 font-serif text-xs max-h-32 overflow-y-auto border border-slate-200 dark:border-slate-800 leading-relaxed whitespace-pre-wrap select-text">
+          <div id="modalDraftPreview" class="p-3 bg-slate-100 dark:bg-slate-950 rounded-lg text-slate-700 dark:text-slate-300 text-xs max-h-32 overflow-y-auto border border-slate-200 dark:border-slate-800 leading-relaxed whitespace-pre-wrap select-text" style="font-family: Arial, Helvetica, sans-serif;">
             ...
           </div>
         </div>
@@ -1153,6 +1154,57 @@
       </div>
 
       <div class="p-5 space-y-4 text-xs max-h-[75vh] overflow-y-auto">
+        <!-- In-Editor Typing Shortcuts (@ Shortcuts) -->
+        <div class="bg-amber-50/60 dark:bg-amber-950/20 border border-amber-300/80 dark:border-amber-800/60 rounded-xl p-3.5 space-y-2">
+          <div class="flex items-center justify-between">
+            <span class="font-bold text-amber-800 dark:text-amber-300 uppercase tracking-wider text-[11px] flex items-center gap-1.5">
+              <i class="fa-solid fa-at text-amber-500"></i> Typing Shortcuts (Instant Speaker Tag Insertion)
+            </span>
+            <span class="text-[9px] font-mono bg-amber-200/90 dark:bg-amber-900 text-amber-900 dark:text-amber-200 px-1.5 py-0.5 rounded font-bold">New & Fast</span>
+          </div>
+          <p class="text-[11px] text-slate-600 dark:text-slate-400 leading-relaxed">
+            Type <kbd class="px-1 py-0.5 bg-white dark:bg-slate-800 border rounded font-mono text-[10px] text-amber-600 font-bold">@c</kbd>, <kbd class="px-1 py-0.5 bg-white dark:bg-slate-800 border rounded font-mono text-[10px] text-amber-600 font-bold">@p</kbd>, or <kbd class="px-1 py-0.5 bg-white dark:bg-slate-800 border rounded font-mono text-[10px] text-amber-600 font-bold">@d1</kbd> followed by <kbd class="px-1 py-0.5 bg-white dark:bg-slate-800 border rounded font-mono text-[10px]">Space</kbd> or <kbd class="px-1 py-0.5 bg-white dark:bg-slate-800 border rounded font-mono text-[10px]">Enter</kbd> to automatically generate the speaker tag and immediately start typing:
+          </p>
+          <div class="grid grid-cols-2 sm:grid-cols-3 gap-2 pt-1 font-mono text-[11px]">
+            <div class="p-2 rounded-lg bg-white dark:bg-slate-800 border border-amber-200/80 dark:border-amber-800/80 flex items-center justify-between">
+              <span class="font-bold text-blue-700 dark:text-blue-300">@c &rarr; COURT:</span>
+              <span class="text-[10px] text-slate-400 font-sans">Court</span>
+            </div>
+            <div class="p-2 rounded-lg bg-white dark:bg-slate-800 border border-amber-200/80 dark:border-amber-800/80 flex items-center justify-between">
+              <span class="font-bold text-red-700 dark:text-red-300">@p &rarr; PROSECUTION:</span>
+              <span class="text-[10px] text-slate-400 font-sans">Prosecution</span>
+            </div>
+            <div class="p-2 rounded-lg bg-white dark:bg-slate-800 border border-amber-200/80 dark:border-amber-800/80 flex items-center justify-between">
+              <span class="font-bold text-emerald-700 dark:text-emerald-300">@d1 &rarr; D1:</span>
+              <span class="text-[10px] text-slate-400 font-sans">Defendant 1</span>
+            </div>
+            <div class="p-2 rounded-lg bg-white dark:bg-slate-800 border border-amber-200/80 dark:border-amber-800/80 flex items-center justify-between">
+              <span class="font-bold text-emerald-700 dark:text-emerald-300">@d2 &rarr; D2:</span>
+              <span class="text-[10px] text-slate-400 font-sans">Defendant 2</span>
+            </div>
+            <div class="p-2 rounded-lg bg-white dark:bg-slate-800 border border-amber-200/80 dark:border-amber-800/80 flex items-center justify-between">
+              <span class="font-bold text-teal-700 dark:text-teal-300">@dc &rarr; DC:</span>
+              <span class="text-[10px] text-slate-400 font-sans">Defense Counsel</span>
+            </div>
+            <div class="p-2 rounded-lg bg-white dark:bg-slate-800 border border-amber-200/80 dark:border-amber-800/80 flex items-center justify-between">
+              <span class="font-bold text-amber-700 dark:text-amber-300">@i &rarr; INTERP:</span>
+              <span class="text-[10px] text-slate-400 font-sans">Interpreter</span>
+            </div>
+            <div class="p-2 rounded-lg bg-white dark:bg-slate-800 border border-amber-200/80 dark:border-amber-800/80 flex items-center justify-between">
+              <span class="font-bold text-indigo-700 dark:text-indigo-300">@w &rarr; WITNESS:</span>
+              <span class="text-[10px] text-slate-400 font-sans">Witness</span>
+            </div>
+            <div class="p-2 rounded-lg bg-white dark:bg-slate-800 border border-amber-200/80 dark:border-amber-800/80 flex items-center justify-between">
+              <span class="font-bold text-purple-700 dark:text-purple-300">@o &rarr; ORDER:</span>
+              <span class="text-[10px] text-slate-400 font-sans">Court Order</span>
+            </div>
+            <div class="p-2 rounded-lg bg-white dark:bg-slate-800 border border-amber-200/80 dark:border-amber-800/80 flex items-center justify-between">
+              <span class="font-bold text-slate-700 dark:text-slate-300">@t &rarr; [HH:MM]</span>
+              <span class="text-[10px] text-slate-400 font-sans">Timestamp</span>
+            </div>
+          </div>
+        </div>
+
         <!-- Multi-Defendant Hotkeys -->
         <div class="bg-emerald-50/50 dark:bg-emerald-950/20 border border-emerald-200 dark:border-emerald-800/60 rounded-xl p-3.5 space-y-2">
           <div class="flex items-center justify-between">
@@ -1407,10 +1459,10 @@
           </div>
         </div>
 
-        <!-- Export File Naming & Target Folders Section -->
+        <!-- Export File Naming Section -->
         <div class="space-y-3.5 border-t pt-3.5 border-slate-200 dark:border-slate-700">
           <span class="font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider text-[11px] block border-b pb-1.5 border-slate-200 dark:border-slate-700 flex items-center gap-1.5">
-            <i class="fa-solid fa-file-signature text-amber-500"></i> Export File Naming & Folder Preferences
+            <i class="fa-solid fa-file-signature text-amber-500"></i> Preferred File Naming Convention
           </span>
 
           <!-- Preferred Naming Convention Preset -->
@@ -1460,31 +1512,15 @@
             </div>
           </div>
 
-          <!-- Separate Preferred Destination Folders -->
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+          <!-- Manual Laptop Save As Info Card -->
+          <div class="bg-amber-500/10 border border-amber-500/20 rounded-xl p-3 flex items-start gap-2.5 text-slate-700 dark:text-slate-300 text-xs">
+            <i class="fa-solid fa-folder-open text-amber-500 mt-0.5 text-sm shrink-0"></i>
             <div>
-              <label class="font-bold text-slate-700 dark:text-slate-300 block mb-1 flex items-center gap-1">
-                <i class="fa-solid fa-folder text-amber-500"></i> Preferred PDF Folder Path
-              </label>
-              <input type="text" id="settingPdfFolder" placeholder="e.g. C:\Court Documents\PDF Records\" class="w-full bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-lg p-2 font-mono text-slate-800 dark:text-slate-100 text-xs focus:ring-2 focus:ring-amber-500 outline-none">
-              <span class="text-[10px] text-slate-400 mt-1 block">Displayed in export dialog for quick reference & copying.</span>
+              <span class="font-bold block text-slate-800 dark:text-slate-100 mb-0.5">Manual Folder Choice on Your Laptop</span>
+              <p class="text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed">
+                When exporting Word or PDF files, your laptop's native <strong>Save As</strong> file explorer window will open directly, allowing each magistrate to manually choose their preferred folder (or separate folders for Word and PDF) on their machine.
+              </p>
             </div>
-
-            <div>
-              <label class="font-bold text-slate-700 dark:text-slate-300 block mb-1 flex items-center gap-1">
-                <i class="fa-solid fa-folder text-blue-500"></i> Preferred WORD Folder Path
-              </label>
-              <input type="text" id="settingWordFolder" placeholder="e.g. C:\Court Documents\Word Drafts\" class="w-full bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-lg p-2 font-mono text-slate-800 dark:text-slate-100 text-xs focus:ring-2 focus:ring-amber-500 outline-none">
-              <span class="text-[10px] text-slate-400 mt-1 block">Displayed in export dialog for separate Word archiving.</span>
-            </div>
-          </div>
-
-          <!-- Export Dialog Toggle -->
-          <div class="pt-1 flex items-center gap-2">
-            <input type="checkbox" id="settingShowExportDialog" checked class="w-4 h-4 rounded text-amber-500 focus:ring-amber-500 border-slate-300 dark:border-slate-600">
-            <label for="settingShowExportDialog" class="font-medium text-slate-700 dark:text-slate-300 text-xs cursor-pointer select-none">
-              Show Save Confirmation Dialog on export (displays target folder reminder & editable filename)
-            </label>
           </div>
         </div>
 
@@ -1540,84 +1576,6 @@
           </button>
         </div>
       </div>
-
-    </div>
-  </div>
-
-  <!-- Export Destination & Filename Confirmation Dialog Modal -->
-  <div id="exportSaveModal" class="fixed inset-0 bg-slate-900/75 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
-    <div class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl shadow-2xl max-w-lg w-full overflow-hidden transition-all animate-in fade-in zoom-in duration-200">
-      <div class="p-4 sm:p-5 border-b border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/90 flex items-center justify-between">
-        <div class="flex items-center space-x-3">
-          <div id="exportModalIconContainer" class="w-10 h-10 rounded-xl bg-blue-500/20 text-blue-600 dark:text-blue-400 flex items-center justify-center text-lg border border-blue-500/30 shrink-0">
-            <i id="exportModalIcon" class="fa-solid fa-file-word"></i>
-          </div>
-          <div>
-            <h3 id="exportModalTitle" class="font-bold text-base text-slate-900 dark:text-slate-100 flex items-center gap-2">
-              Export Word Document
-            </h3>
-            <p id="exportModalSub" class="text-xs text-slate-500 dark:text-slate-400">Confirm file name and target folder destination.</p>
-          </div>
-        </div>
-        <button onclick="closeExportSaveModal()" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 text-sm p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 transition cursor-pointer">
-          <i class="fa-solid fa-xmark text-base"></i>
-        </button>
-      </div>
-
-      <div class="p-5 space-y-4 text-xs">
-        <!-- Target Filename Input -->
-        <div>
-          <label class="font-bold text-slate-700 dark:text-slate-300 block mb-1 flex items-center justify-between">
-            <span>File Name</span>
-            <span class="text-[10px] text-slate-400 font-normal">Formatted per active Magistrate profile</span>
-          </label>
-          <div class="flex items-center gap-2">
-            <input type="text" id="exportModalFileNameInput" class="flex-1 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-lg p-2 font-mono font-semibold text-xs text-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-amber-500 outline-none">
-          </div>
-        </div>
-
-        <!-- Preferred Target Folder Card -->
-        <div class="bg-slate-50 dark:bg-slate-900/60 p-3.5 rounded-xl border border-slate-200 dark:border-slate-700 space-y-2">
-          <div class="flex items-center justify-between">
-            <span class="text-[10px] uppercase font-bold text-slate-500 dark:text-slate-400 flex items-center gap-1.5">
-              <i class="fa-solid fa-folder-tree text-amber-500"></i> Preferred Destination Folder
-            </span>
-            <button type="button" onclick="copyPreferredExportFolder()" class="px-2 py-0.5 bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded text-[10px] font-bold text-slate-700 dark:text-slate-300 transition flex items-center gap-1 cursor-pointer" title="Copy path to clipboard">
-              <i class="fa-regular fa-copy"></i> Copy Path
-            </button>
-          </div>
-          <div id="exportModalFolderPath" class="font-mono text-[11px] text-slate-800 dark:text-slate-200 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg p-2 select-all break-all">
-            C:\Court Documents\
-          </div>
-          <p class="text-[10px] text-slate-400">
-            Tip: You can customize folder destinations anytime in <button type="button" onclick="closeExportSaveModal(); openSettingsModal();" class="text-amber-600 dark:text-amber-400 underline font-semibold">Settings</button>.
-          </p>
-        </div>
-
-        <!-- Option to skip next time -->
-        <div class="pt-1 flex items-center gap-2">
-          <input type="checkbox" id="exportModalDontShowAgain" class="w-3.5 h-3.5 rounded text-amber-500 focus:ring-amber-500 border-slate-300 dark:border-slate-600">
-          <label for="exportModalDontShowAgain" class="text-[11px] text-slate-600 dark:text-slate-400 select-none cursor-pointer">
-            Always download directly without showing this confirmation
-          </label>
-        </div>
-      </div>
-
-      <div class="p-4 bg-slate-50 dark:bg-slate-800/90 border-t border-slate-200 dark:border-slate-700 flex flex-wrap items-center justify-between gap-2">
-        <button type="button" onclick="closeExportSaveModal()" class="px-3.5 py-2 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-lg font-medium transition text-xs cursor-pointer">
-          Cancel
-        </button>
-        <div class="flex items-center gap-2">
-          <button type="button" id="exportModalNativeSaveBtn" onclick="triggerNativeSavePicker()" class="hidden px-3.5 py-2 bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 text-slate-800 dark:text-slate-200 font-bold rounded-lg transition text-xs flex items-center gap-1.5 cursor-pointer">
-            <i class="fa-solid fa-folder-open"></i> Choose Folder & Save...
-          </button>
-          <button type="button" id="exportModalConfirmBtn" onclick="confirmAndExecuteExport()" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg shadow-sm transition text-xs flex items-center gap-1.5 cursor-pointer">
-            <i class="fa-solid fa-download"></i> Download File
-          </button>
-        </div>
-      </div>
-    </div>
-  </div>
 
     </div>
   </div>
@@ -1972,14 +1930,6 @@
 
       // 3. Update current scroll page
       updateCurrentPageNumber(pageCount);
-
-      // 4. Update word count using lightweight textContent (avoids full layout reflow)
-      const text = editor.textContent || '';
-      const words = text.trim() ? text.trim().split(/\s+/).filter(Boolean).length : 0;
-      const wordBadge = document.getElementById('wordCountBadge');
-      if (wordBadge) {
-        wordBadge.innerText = `${words.toLocaleString()} words`;
-      }
     }
 
     function updateCurrentPageNumber(totalPages) {
@@ -2908,6 +2858,169 @@
       insertSpeaker(timeStr, 'tag-timestamp');
     }
 
+    // ==========================================
+    // INSTANT TYPING SHORTCUTS FOR SPEAKER TAGS (@c, @p, @d1, @d2, etc.)
+    // ==========================================
+    function escapeRegExp(str) {
+      return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    }
+
+    function resolveSpeakerShortcut(rawShortcut) {
+      const s = rawShortcut.toLowerCase().replace(/:$/, '').trim();
+      if (s === '@c' || s === '@court') {
+        return { text: 'Court:', className: 'speaker-court', name: 'Court' };
+      }
+      if (s === '@p' || s === '@pros' || s === '@prosecution' || s === '@dpp') {
+        return { text: 'Prosecution:', className: 'speaker-prosecution', name: 'Prosecution' };
+      }
+      if (s === '@d' || s === '@d1') {
+        return { text: 'D1:', className: 'speaker-defence', defNum: 1, name: 'Defendant 1' };
+      }
+      if (/^@d[2-9]$/.test(s)) {
+        const num = parseInt(s.replace('@d', ''), 10);
+        return { text: `D${num}:`, className: 'speaker-defence', defNum: num, name: `Defendant ${num}` };
+      }
+      if (s === '@dc' || s === '@dc1') {
+        return { text: 'DC for D1:', className: 'speaker-dc', name: 'Defence Counsel (D1)' };
+      }
+      if (/^@dc[2-9]$/.test(s)) {
+        const num = parseInt(s.replace('@dc', ''), 10);
+        return { text: `DC for D${num}:`, className: 'speaker-dc', name: `Defence Counsel (D${num})` };
+      }
+      if (s === '@i' || s === '@int' || s === '@interp') {
+        return { text: 'Interpreter:', className: 'speaker-interp', name: 'Interpreter' };
+      }
+      if (s === '@w' || s === '@wit' || s === '@witness') {
+        return { text: 'Witness:', className: 'speaker-witness', name: 'Witness' };
+      }
+      if (s === '@o' || s === '@order') {
+        return { text: 'ORDER:', className: 'tag-order', name: 'Order' };
+      }
+      if (s === '@t' || s === '@time') {
+        const now = new Date();
+        const timeStr = `[${now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}]`;
+        return { text: timeStr, className: 'tag-timestamp', name: 'Timestamp' };
+      }
+      return null;
+    }
+
+    function tryExpandSpeakerShortcut(isSpaceOrEnterKey = false) {
+      const editor = document.getElementById('editor');
+      if (!editor) return false;
+
+      const sel = window.getSelection();
+      if (!sel.rangeCount || !sel.isCollapsed) return false;
+
+      // ULTRA-FAST ZERO-LATENCY BAILOUT: If focused text node has no '@', exit immediately in 0.0001ms
+      const focusText = sel.focusNode?.textContent || '';
+      if (!focusText.includes('@')) return false;
+
+      const range = sel.getRangeAt(0);
+      let currentP = range.commonAncestorContainer;
+      while (currentP && currentP !== editor && currentP.nodeName !== 'P') {
+        currentP = currentP.parentNode;
+      }
+      if (!currentP || currentP.nodeName !== 'P') return false;
+
+      // Extract text from start of current paragraph up to cursor
+      const preRange = document.createRange();
+      preRange.selectNodeContents(currentP);
+      preRange.setEnd(range.endContainer, range.endOffset);
+      const textBefore = preRange.toString();
+
+      // Check regex for @shortcut
+      // When Space, Enter, or Tab is pressed, match any completed @tag
+      // When typing directly in input, match exact completed triggers (@c, @p, @d1..@d9, @dc, @i, @w, @o, @t)
+      const regex = isSpaceOrEnterKey
+        ? /(?:^|\s)(@(c|court|p|pros|prosecution|dpp|d[1-9]?|dc[1-9]?|i|int|interp|w|wit|witness|o|order|t|time):?)$/i
+        : /(?:^|\s)(@(c|court|p|pros|prosecution|dpp|d[1-9]|dc[1-9]?|i|int|interp|w|wit|witness|o|order|t|time):?)\s?$/i;
+
+      const match = textBefore.match(regex);
+      if (!match) return false;
+
+      const fullTrigger = match[1];
+      const resolved = resolveSpeakerShortcut(fullTrigger);
+      if (!resolved) return false;
+
+      // If it's a defendant, check if on docket / marked absent
+      if (resolved.defNum) {
+        const entries = document.querySelectorAll('.def-entry');
+        const entry = entries[resolved.defNum - 1];
+        if (entry && entry.dataset.attendance === 'absent') {
+          const name = entry.querySelector('.def-name')?.value.trim() || `Defendant ${resolved.defNum}`;
+          const reason = getDefendantAbsentReason(entry);
+          showToast(`D${resolved.defNum} (${name}) is marked NOT PRESENT on docket (${reason}).`, 'info');
+          return false;
+        }
+      }
+
+      // Extract remaining text after cursor
+      const postRange = document.createRange();
+      postRange.setStart(range.endContainer, range.endOffset);
+      postRange.setEnd(currentP, currentP.childNodes.length);
+      const textAfter = postRange.toString().trim();
+
+      // Check if current paragraph only contained the trigger
+      const pText = currentP.innerText.trim();
+      const isOnlyTrigger = pText === fullTrigger || pText === `${fullTrigger} ` || pText.replace(/\s+/g, '') === fullTrigger.replace(/\s+/g, '');
+
+      if (isOnlyTrigger) {
+        currentP.className = 'speech-line';
+        currentP.innerHTML = '';
+
+        const tagSpan = document.createElement('span');
+        tagSpan.className = `speaker-tag ${resolved.className}`;
+        tagSpan.contentEditable = "false";
+        tagSpan.innerText = resolved.text;
+
+        currentP.appendChild(tagSpan);
+        const spaceNode = document.createTextNode(textAfter ? `\u00A0${textAfter}` : '\u00A0');
+        currentP.appendChild(spaceNode);
+
+        const newRange = document.createRange();
+        newRange.setStart(spaceNode, 1);
+        newRange.collapse(true);
+        sel.removeAllRanges();
+        sel.addRange(newRange);
+      } else {
+        // Remove trigger from current paragraph
+        currentP.innerHTML = currentP.innerHTML.replace(new RegExp(`(?:^|\\s)${escapeRegExp(fullTrigger)}\\s?$`), '');
+        if (!currentP.hasChildNodes() || currentP.innerHTML.trim() === '') {
+          currentP.innerHTML = '<br>';
+        }
+
+        const newP = document.createElement('p');
+        newP.className = 'speech-line';
+
+        const tagSpan = document.createElement('span');
+        tagSpan.className = `speaker-tag ${resolved.className}`;
+        tagSpan.contentEditable = "false";
+        tagSpan.innerText = resolved.text;
+
+        newP.appendChild(tagSpan);
+        const spaceNode = document.createTextNode(textAfter ? `\u00A0${textAfter}` : '\u00A0');
+        newP.appendChild(spaceNode);
+
+        if (currentP.nextSibling) {
+          currentP.parentNode.insertBefore(newP, currentP.nextSibling);
+        } else {
+          currentP.parentNode.appendChild(newP);
+        }
+
+        const newRange = document.createRange();
+        newRange.setStart(spaceNode, 1);
+        newRange.collapse(true);
+        sel.removeAllRanges();
+        sel.addRange(newRange);
+      }
+
+      editor.focus();
+      markDirty();
+      schedulePaginationUpdate(200);
+      showToast(`Speaker tag inserted: ${resolved.text}`, 'success');
+      return true;
+    }
+
     // Hotkey Listener (Alt+1..6, Alt+7..0, Alt+Shift+1..9, Alt+Shift+S, Alt+O, Alt+R, Alt+T, Alt+S, Cmd/Ctrl+K, Cmd/Ctrl+B, Cmd/Ctrl+S)
     document.addEventListener('keydown', function(e) {
       // 1. Session Toggle: Alt + Shift + S
@@ -2975,8 +3088,12 @@
         if (e.key === '?' || e.key === '/') { e.preventDefault(); toggleShortcutsModal(); return; }
       }
 
-      // 4. Cmd / Ctrl Shortcuts
-      const isInsideEditor = document.activeElement === document.getElementById('editor') || document.getElementById('editor')?.contains(document.activeElement);
+      // 4. Action Keys & Shortcuts
+      const isActionKey = e.metaKey || e.ctrlKey || e.key === ' ' || e.key === 'Enter' || e.key === 'Tab' || e.key === ':' || e.key === 'Backspace';
+      if (!isActionKey) return;
+
+      const editor = document.getElementById('editor');
+      const isInsideEditor = editor && (document.activeElement === editor || editor.contains(document.activeElement));
 
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'b') {
         e.preventDefault();
@@ -3019,7 +3136,15 @@
         return;
       }
 
-      // 5. Enter Key handling inside #editor for Smart Speaker Transcript Indentation
+      // 5. In-Editor Typing Shortcuts (@c, @p, @d1, @d2, etc. + Space or Enter or Tab or Colon)
+      if (isInsideEditor && (e.key === ' ' || e.key === 'Enter' || e.key === 'Tab' || e.key === ':') && !e.altKey && !e.ctrlKey && !e.metaKey) {
+        if (tryExpandSpeakerShortcut(true)) {
+          e.preventDefault();
+          return;
+        }
+      }
+
+      // 6. Enter Key handling inside #editor for Smart Speaker Transcript Indentation
       if (isInsideEditor && e.key === 'Enter' && !e.altKey && !e.ctrlKey && !e.metaKey && !e.shiftKey) {
         const sel = window.getSelection();
         if (sel && sel.rangeCount > 0) {
@@ -3143,6 +3268,8 @@
       }
     });
 
+    // (Consolidated editor input handling is in initListeners)
+
     // ==========================================
     // UNIFIED EXPORT CONTENT GENERATOR (Clean Line-by-Line Alignment)
     // ==========================================
@@ -3174,10 +3301,10 @@
         if (!isWord || inWordTranscriptTable) return;
         inWordTranscriptTable = true;
         outputHtml += `
-          <table cellpadding="0" cellspacing="0" border="0" style="width: 100%; border-collapse: collapse; margin-top: 8pt; margin-bottom: 14pt; border: none; table-layout: fixed; mso-table-lspace: 0pt; mso-table-rspace: 0pt;">
+          <table cellpadding="0" cellspacing="0" border="0" style="width: 100%; border-collapse: collapse; margin-top: 3pt; margin-bottom: 6pt; border: none; table-layout: fixed; mso-table-lspace: 0pt; mso-table-rspace: 0pt;">
             <colgroup>
-              <col width="120" style="width: 120pt;">
-              <col width="367" style="width: 367pt;">
+              <col width="100" style="width: 100pt;">
+              <col width="415" style="width: 415pt;">
             </colgroup>
             <tbody>
         `;
@@ -3222,30 +3349,30 @@
             openWordTranscriptTable();
             outputHtml += `
               <tr>
-                <td style="width: 120pt; vertical-align: top; padding: 6pt 12pt 8pt 0; border: none;">
-                  <table cellpadding="0" cellspacing="0" border="0" style="width: 105pt; border-collapse: collapse; background-color: ${style.bg}; border: 1pt solid ${style.border}; mso-border-alt: solid ${style.border} 1.0pt; mso-shading: ${style.bg};">
+                <td style="width: 95pt; min-width: 95pt; vertical-align: top; padding: 2pt 6pt 3pt 0; border: none;">
+                  <table cellpadding="0" cellspacing="0" border="0" style="width: 88pt; border-collapse: collapse; background-color: ${style.bg}; border: 1pt solid ${style.border}; mso-border-alt: solid ${style.border} 1.0pt; mso-shading: ${style.bg}; border-radius: 3pt;">
                     <tr>
-                      <td align="center" style="padding: 3.5pt 6pt; font-family: Arial, Helvetica, sans-serif; font-size: 8.5pt; font-weight: bold; color: ${style.color}; text-align: center; text-transform: uppercase; letter-spacing: 0.3pt;">
+                      <td align="center" style="padding: 1.5pt 3pt; font-family: Arial, Helvetica, sans-serif; font-size: 8pt; font-weight: bold; color: ${style.color}; text-align: center; text-transform: uppercase;">
                         ${escapeHtml(tagText)}
                       </td>
                     </tr>
                   </table>
                 </td>
-                <td style="width: 367pt; vertical-align: top; padding: 6pt 0 8pt 0; border: none; font-family: 'Georgia', 'Times New Roman', serif; font-size: 11pt; line-height: 1.7; mso-line-height-rule: exactly; color: #0f172a;">
+                <td style="width: 420pt; vertical-align: top; padding: 2pt 0 3pt 0; border: none; font-family: Arial, Helvetica, sans-serif; font-size: 10pt; line-height: 14pt; mso-line-height-rule: exactly; color: #0f172a; word-wrap: break-word;">
                   ${speechHtml || '&nbsp;'}
                 </td>
               </tr>
             `;
           } else {
-            // For PDF: output each speech line as a self-contained block
+            // For PDF: output each speech line as a self-contained block in clean Arial with page break protection
             outputHtml += `
-              <div class="speech-line" style="display: table; width: 100%; table-layout: fixed; margin-bottom: 9px;">
-                <div style="display: table-cell; width: 125px; vertical-align: top; padding-right: 12px;">
-                  <div style="font-family: 'Inter', Arial, sans-serif; font-size: 11px; font-weight: 700; text-transform: uppercase; text-align: center; color: ${style.color}; background-color: ${style.bg}; border: 1px solid ${style.border}; padding: 2px 4px; border-radius: 4px; width: 100%; box-sizing: border-box; letter-spacing: 0.025em;">
+              <div class="speech-line" style="display: table; width: 100%; table-layout: fixed; margin-bottom: 8px; font-family: Arial, Helvetica, sans-serif; page-break-inside: avoid; break-inside: avoid;">
+                <div style="display: table-cell; width: 120px; vertical-align: top; padding-right: 10px;">
+                  <div style="font-family: Arial, Helvetica, sans-serif; font-size: 11px; font-weight: 700; text-transform: uppercase; text-align: center; color: ${style.color}; background-color: ${style.bg}; border: 1px solid ${style.border}; padding: 3px 5px; border-radius: 4px; width: 100%; box-sizing: border-box; letter-spacing: 0.025em;">
                     ${escapeHtml(tagText)}
                   </div>
                 </div>
-                <div style="display: table-cell; vertical-align: top; font-family: 'Merriweather', Georgia, serif; font-size: 14.5px; line-height: 1.7; color: #0f172a; word-wrap: break-word;">
+                <div style="display: table-cell; vertical-align: top; font-family: Arial, Helvetica, sans-serif; font-size: 13.5px; line-height: 1.55; color: #0f172a; word-wrap: break-word;">
                   ${speechHtml || '&nbsp;'}
                 </div>
               </div>
@@ -3262,17 +3389,17 @@
             openWordTranscriptTable();
             outputHtml += `
               <tr>
-                <td style="width: 120pt; vertical-align: top; padding: 4pt 12pt 8pt 0; border: none;">&nbsp;</td>
-                <td style="width: 367pt; vertical-align: top; padding: 4pt 0 8pt 0; border: none; font-family: 'Georgia', 'Times New Roman', serif; font-size: 11pt; line-height: 1.7; mso-line-height-rule: exactly; color: #0f172a;">
+                <td style="width: 95pt; min-width: 95pt; vertical-align: top; padding: 1pt 6pt 2.5pt 0; border: none;">&nbsp;</td>
+                <td style="width: 420pt; vertical-align: top; padding: 1pt 0 2.5pt 0; border: none; font-family: Arial, Helvetica, sans-serif; font-size: 10pt; line-height: 14pt; mso-line-height-rule: exactly; color: #0f172a; word-wrap: break-word;">
                   ${cleanHtml}
                 </td>
               </tr>
             `;
           } else {
             outputHtml += `
-              <div class="speech-continuation" style="display: table; width: 100%; table-layout: fixed; margin-bottom: 9px; min-height: 1.7em;">
-                <div style="display: table-cell; width: 125px; vertical-align: top; padding-right: 12px;"></div>
-                <div style="display: table-cell; vertical-align: top; font-family: 'Merriweather', Georgia, serif; font-size: 14.5px; line-height: 1.7; color: #0f172a; word-wrap: break-word;">
+              <div class="speech-continuation" style="display: table; width: 100%; table-layout: fixed; margin-bottom: 8px; min-height: 1.55em; font-family: Arial, Helvetica, sans-serif; page-break-inside: avoid; break-inside: avoid;">
+                <div style="display: table-cell; width: 120px; vertical-align: top; padding-right: 10px;"></div>
+                <div style="display: table-cell; vertical-align: top; font-family: Arial, Helvetica, sans-serif; font-size: 13.5px; line-height: 1.55; color: #0f172a; word-wrap: break-word;">
                   ${cleanHtml}
                 </div>
               </div>
@@ -3289,23 +3416,23 @@
           const tblClone = node.cloneNode(true);
           if (isWord) {
             tblClone.setAttribute('border', '1');
-            tblClone.setAttribute('cellpadding', '7');
+            tblClone.setAttribute('cellpadding', '5');
             tblClone.setAttribute('cellspacing', '0');
-            tblClone.setAttribute('style', 'width: 100%; border-collapse: collapse; margin: 16pt 0; border: 1pt solid #cbd5e1; mso-table-lspace: 0pt; mso-table-rspace: 0pt;');
+            tblClone.setAttribute('style', 'width: 100%; border-collapse: collapse; margin: 10pt 0; border: 1pt solid #cbd5e1; mso-table-lspace: 0pt; mso-table-rspace: 0pt; font-family: Arial, Helvetica, sans-serif;');
             tblClone.querySelectorAll('th').forEach(th => {
-              th.setAttribute('style', 'background-color: #f8fafc; font-weight: bold; border: 1pt solid #cbd5e1; padding: 7pt 10pt; text-align: left; font-size: 9.5pt; font-family: Arial, sans-serif; color: #334155; mso-shading: #f8fafc;');
+              th.setAttribute('style', 'background-color: #f8fafc; font-weight: bold; border: 1pt solid #cbd5e1; padding: 4pt 8pt; text-align: left; font-size: 9pt; font-family: Arial, Helvetica, sans-serif; color: #334155; mso-shading: #f8fafc;');
             });
             tblClone.querySelectorAll('td').forEach(td => {
-              td.setAttribute('style', 'border: 1pt solid #cbd5e1; padding: 7pt 10pt; text-align: left; font-size: 10pt; font-family: "Georgia", "Times New Roman", serif; color: #0f172a; vertical-align: top;');
+              td.setAttribute('style', 'border: 1pt solid #cbd5e1; padding: 4pt 8pt; text-align: left; font-size: 9.5pt; font-family: Arial, Helvetica, sans-serif; color: #0f172a; vertical-align: top;');
             });
             outputHtml += tblClone.outerHTML;
           } else {
-            tblClone.setAttribute('style', 'width: 100%; border-collapse: collapse; margin: 16px 0; border: 1px solid #cbd5e1; font-size: 13px;');
+            tblClone.setAttribute('style', 'width: 100%; border-collapse: collapse; margin: 12px 0; border: 1px solid #cbd5e1; font-size: 13px; font-family: Arial, Helvetica, sans-serif;');
             tblClone.querySelectorAll('th').forEach(th => {
-              th.setAttribute('style', 'background-color: #f8fafc; font-weight: 700; border: 1px solid #cbd5e1; padding: 8px 12px; font-family: "Inter", Arial, sans-serif; font-size: 12px; color: #334155; text-align: left;');
+              th.setAttribute('style', 'background-color: #f8fafc; font-weight: 700; border: 1px solid #cbd5e1; padding: 6px 10px; font-family: Arial, Helvetica, sans-serif; font-size: 12px; color: #334155; text-align: left;');
             });
             tblClone.querySelectorAll('td').forEach(td => {
-              td.setAttribute('style', 'border: 1px solid #cbd5e1; padding: 8px 12px; font-family: "Merriweather", Georgia, serif; font-size: 13px; color: #0f172a; vertical-align: top; word-wrap: break-word;');
+              td.setAttribute('style', 'border: 1px solid #cbd5e1; padding: 6px 10px; font-family: Arial, Helvetica, sans-serif; font-size: 13px; color: #0f172a; vertical-align: top; word-wrap: break-word;');
             });
             outputHtml += tblClone.outerHTML;
           }
@@ -3315,9 +3442,9 @@
         // Blockquotes
         if (node.nodeName === 'BLOCKQUOTE') {
           if (isWord) {
-            outputHtml += `<blockquote style="border-left: 3pt solid #f59e0b; padding-left: 12pt; margin: 12pt 0; font-style: italic; color: #64748b; font-family: 'Georgia', 'Times New Roman', serif; font-size: 11pt; line-height: 1.6;">${node.innerHTML}</blockquote>`;
+            outputHtml += `<blockquote style="border-left: 2.5pt solid #f59e0b; padding-left: 8pt; margin: 6pt 0; font-style: italic; color: #64748b; font-family: Arial, Helvetica, sans-serif; font-size: 9.5pt; line-height: 14pt;">${node.innerHTML}</blockquote>`;
           } else {
-            outputHtml += `<blockquote style="border-left: 3px solid #f59e0b; padding-left: 14px; margin: 12px 0; font-style: italic; color: #64748b; font-family: 'Merriweather', Georgia, serif; font-size: 14px; line-height: 1.6;">${node.innerHTML}</blockquote>`;
+            outputHtml += `<blockquote style="border-left: 3px solid #f59e0b; padding-left: 12px; margin: 10px 0; font-style: italic; color: #64748b; font-family: Arial, Helvetica, sans-serif; font-size: 13px; line-height: 1.55;">${node.innerHTML}</blockquote>`;
           }
           return;
         }
@@ -3325,17 +3452,17 @@
         // Headings
         if (node.nodeName === 'H1' || node.nodeName === 'H2') {
           if (isWord) {
-            outputHtml += `<h2 style="font-size: 14pt; font-weight: bold; margin: 18pt 0 6pt 0; font-family: Arial, sans-serif; color: #0f172a;">${node.innerHTML}</h2>`;
+            outputHtml += `<h2 style="font-size: 12pt; font-weight: bold; margin: 10pt 0 4pt 0; font-family: Arial, Helvetica, sans-serif; color: #0f172a;">${node.innerHTML}</h2>`;
           } else {
-            outputHtml += `<h2 style="font-size: 18px; font-weight: 700; margin: 20px 0 8px 0; font-family: 'Inter', Arial, sans-serif; color: #0f172a;">${node.innerHTML}</h2>`;
+            outputHtml += `<h2 style="font-size: 16px; font-weight: 700; margin: 14px 0 6px 0; font-family: Arial, Helvetica, sans-serif; color: #0f172a;">${node.innerHTML}</h2>`;
           }
           return;
         }
         if (node.nodeName === 'H3') {
           if (isWord) {
-            outputHtml += `<h3 style="font-size: 12pt; font-weight: bold; margin: 14pt 0 5pt 0; font-family: Arial, sans-serif; color: #0f172a;">${node.innerHTML}</h3>`;
+            outputHtml += `<h3 style="font-size: 10.5pt; font-weight: bold; margin: 8pt 0 3pt 0; font-family: Arial, Helvetica, sans-serif; color: #0f172a;">${node.innerHTML}</h3>`;
           } else {
-            outputHtml += `<h3 style="font-size: 16px; font-weight: 600; margin: 16px 0 6px 0; font-family: 'Inter', Arial, sans-serif; color: #0f172a;">${node.innerHTML}</h3>`;
+            outputHtml += `<h3 style="font-size: 14px; font-weight: 600; margin: 10px 0 4px 0; font-family: Arial, Helvetica, sans-serif; color: #0f172a;">${node.innerHTML}</h3>`;
           }
           return;
         }
@@ -3343,20 +3470,20 @@
         // Lists (Aligned with Speaker Transcript Column)
         if (node.nodeName === 'UL') {
           const ulClone = node.cloneNode(true);
-          const style = isWord ? 'list-style-type: disc; margin: 6pt 0 10pt 115pt; padding-left: 12pt;' : 'list-style-type: disc; margin: 8px 0 12px 137px; padding-left: 16px;';
+          const style = isWord ? 'list-style-type: disc; margin: 4pt 0 6pt 95pt; padding-left: 10pt; font-family: Arial, Helvetica, sans-serif;' : 'list-style-type: disc; margin: 6px 0 10px 130px; padding-left: 14px; font-family: Arial, Helvetica, sans-serif;';
           ulClone.setAttribute('style', style);
           ulClone.querySelectorAll('li').forEach(li => {
-            li.setAttribute('style', isWord ? 'margin-bottom: 4pt; line-height: 1.6; font-family: "Georgia", "Times New Roman", serif; font-size: 11pt; color: #0f172a;' : 'margin-bottom: 4px; line-height: 1.6; font-family: "Merriweather", Georgia, serif; font-size: 14.5px; color: #0f172a;');
+            li.setAttribute('style', isWord ? 'margin-bottom: 2pt; line-height: 14pt; font-family: Arial, Helvetica, sans-serif; font-size: 10pt; color: #0f172a;' : 'margin-bottom: 3px; line-height: 1.55; font-family: Arial, Helvetica, sans-serif; font-size: 13.5px; color: #0f172a;');
           });
           outputHtml += ulClone.outerHTML;
           return;
         }
         if (node.nodeName === 'OL') {
           const olClone = node.cloneNode(true);
-          const style = isWord ? 'list-style-type: decimal; margin: 6pt 0 10pt 115pt; padding-left: 12pt;' : 'list-style-type: decimal; margin: 8px 0 12px 137px; padding-left: 16px;';
+          const style = isWord ? 'list-style-type: decimal; margin: 4pt 0 6pt 95pt; padding-left: 10pt; font-family: Arial, Helvetica, sans-serif;' : 'list-style-type: decimal; margin: 6px 0 10px 130px; padding-left: 14px; font-family: Arial, Helvetica, sans-serif;';
           olClone.setAttribute('style', style);
           olClone.querySelectorAll('li').forEach(li => {
-            li.setAttribute('style', isWord ? 'margin-bottom: 4pt; line-height: 1.6; font-family: "Georgia", "Times New Roman", serif; font-size: 11pt; color: #0f172a;' : 'margin-bottom: 4px; line-height: 1.6; font-family: "Merriweather", Georgia, serif; font-size: 14.5px; color: #0f172a;');
+            li.setAttribute('style', isWord ? 'margin-bottom: 2pt; line-height: 14pt; font-family: Arial, Helvetica, sans-serif; font-size: 10pt; color: #0f172a;' : 'margin-bottom: 3px; line-height: 1.55; font-family: Arial, Helvetica, sans-serif; font-size: 13.5px; color: #0f172a;');
           });
           outputHtml += olClone.outerHTML;
           return;
@@ -3364,9 +3491,9 @@
 
         // Regular Paragraphs
         if (isWord) {
-          outputHtml += `<p style="font-family: 'Georgia', 'Times New Roman', serif; font-size: 11pt; line-height: 1.65; margin: 0 0 9pt 0; color: #0f172a;">${node.innerHTML || '&nbsp;'}</p>`;
+          outputHtml += `<p style="font-family: Arial, Helvetica, sans-serif; font-size: 10pt; line-height: 14pt; margin: 0 0 5pt 0; color: #0f172a;">${node.innerHTML || '&nbsp;'}</p>`;
         } else {
-          outputHtml += `<p style="font-family: 'Merriweather', Georgia, serif; font-size: 14.5px; line-height: 1.7; margin: 0 0 12px 0; color: #0f172a;">${node.innerHTML || '&nbsp;'}</p>`;
+          outputHtml += `<p style="font-family: Arial, Helvetica, sans-serif; font-size: 13.5px; line-height: 1.55; margin: 0 0 8px 0; color: #0f172a;">${node.innerHTML || '&nbsp;'}</p>`;
         }
       });
 
@@ -3376,22 +3503,9 @@
     }
 
     // ==========================================
-    // EXPORT MS WORD DOCUMENT (Exact Visual Parity & Clean Formatting)
+    // EXPORT MS WORD DOCUMENT (Exact Visual Parity, Consistent Arial Font & 1-Click Download)
     // ==========================================
-    let currentExportType = 'word'; // 'word' or 'pdf'
-
-    function exportWord() {
-      const active = getActiveProfile();
-      const filename = getFormattedFilename('doc', active);
-
-      if (active.showExportDialog !== false) {
-        openExportSaveModal('word', filename, active.wordFolderPath || 'C:\\Court Documents\\Word Drafts\\');
-      } else {
-        executeExportWord(filename);
-      }
-    }
-
-    function executeExportWord(targetFilename) {
+    function generateWordHtmlDocument() {
       const caseNoText = document.getElementById('generatedCaseNo')?.innerText || 'MCCT/BSB/9/2026';
       const fullCaseNoHdr = document.getElementById('docHdrCaseNo')?.innerText || `CASE NO: ${caseNoText}`;
       const locText = document.getElementById('docHdrLoc')?.innerText || 'BANDAR SERI BEGAWAN';
@@ -3407,43 +3521,44 @@
       const css = `
         @page Section1 {
           size: 595.3pt 841.9pt; /* Standard A4 */
-          margin: 45.0pt 52.0pt 48.0pt 52.0pt; /* Generous 0.72in margins */
-          mso-header-margin: 36.0pt;
-          mso-footer-margin: 36.0pt;
+          margin: 36.0pt 36.0pt 36.0pt 36.0pt; /* Clean compact court margins */
+          mso-header-margin: 24.0pt;
+          mso-footer-margin: 24.0pt;
           mso-paper-source: 0;
         }
         div.Section1 { page: Section1; }
         body {
-          font-family: 'Georgia', 'Times New Roman', serif;
-          font-size: 11pt;
+          font-family: Arial, Helvetica, sans-serif;
+          font-size: 10pt;
           color: #0f172a;
           background: #ffffff;
           margin: 0;
           padding: 0;
+          line-height: 1.35;
         }
         h1 {
-          font-family: 'Arial', Helvetica, sans-serif;
-          font-size: 14.5pt;
+          font-family: Arial, Helvetica, sans-serif;
+          font-size: 13pt;
           font-weight: bold;
           text-align: center;
           text-transform: uppercase;
-          margin: 0 0 4pt 0;
+          margin: 0 0 3pt 0;
           color: #0f172a;
-          letter-spacing: 1.2pt;
-          line-height: 1.35;
+          letter-spacing: 0.8pt;
+          line-height: 1.25;
         }
         .loc-text {
-          font-family: 'Arial', Helvetica, sans-serif;
-          font-size: 9.5pt;
+          font-family: Arial, Helvetica, sans-serif;
+          font-size: 8pt;
           font-weight: bold;
           text-align: center;
-          margin: 0 0 6pt 0;
+          margin: 0 0 4pt 0;
           color: #475569;
           text-transform: uppercase;
         }
         .case-no-hdr {
           font-family: 'Courier New', Courier, monospace;
-          font-size: 13.5pt;
+          font-size: 12pt;
           font-weight: bold;
           color: #d97706;
           margin: 0;
@@ -3453,7 +3568,7 @@
         table.court-header-table {
           width: 100%;
           border-collapse: collapse;
-          margin-bottom: 18pt;
+          margin-bottom: 2pt;
           border: none;
           mso-table-lspace: 0pt;
           mso-table-rspace: 0pt;
@@ -3461,7 +3576,7 @@
         table.metadata-table {
           width: 100%;
           border-collapse: collapse;
-          margin-bottom: 22pt;
+          margin-bottom: 10pt;
           background-color: #f8fafc;
           border: 1pt solid #cbd5e1;
           mso-border-alt: solid #cbd5e1 1.0pt;
@@ -3470,40 +3585,40 @@
           mso-table-rspace: 0pt;
         }
         table.metadata-table td {
-          padding: 10pt 16pt;
+          padding: 4pt 8pt;
           vertical-align: top;
           background-color: #f8fafc;
           mso-shading: #f8fafc;
         }
         .meta-label {
-          font-family: 'Arial', Helvetica, sans-serif;
-          font-size: 8pt;
+          font-family: Arial, Helvetica, sans-serif;
+          font-size: 7.5pt;
           font-weight: bold;
           color: #64748b;
           text-transform: uppercase;
           display: block;
-          margin-bottom: 3.5pt;
-          letter-spacing: 0.05em;
+          margin-bottom: 1.5pt;
+          letter-spacing: 0.04em;
         }
         .meta-val {
           font-weight: 600;
           color: #0f172a;
-          font-family: 'Georgia', 'Times New Roman', serif;
-          font-size: 11pt;
-          line-height: 1.45;
+          font-family: Arial, Helvetica, sans-serif;
+          font-size: 9.5pt;
+          line-height: 1.25;
         }
         .meta-val-mono {
           font-family: 'Courier New', Courier, monospace;
-          font-size: 11pt;
+          font-size: 9.5pt;
           font-weight: bold;
           color: #0f172a;
-          line-height: 1.45;
+          line-height: 1.25;
         }
         table.transcript-table {
           width: 100%;
           border-collapse: collapse;
-          margin-top: 8pt;
-          margin-bottom: 14pt;
+          margin-top: 3pt;
+          margin-bottom: 6pt;
           border: none;
           mso-table-lspace: 0pt;
           mso-table-rspace: 0pt;
@@ -3511,41 +3626,41 @@
         table.nop-table {
           width: 100%;
           border-collapse: collapse;
-          margin: 16pt 0;
+          margin: 10pt 0;
           border: 1pt solid #cbd5e1;
           mso-table-lspace: 0pt;
           mso-table-rspace: 0pt;
         }
         table.nop-table th, table.nop-table td {
           border: 1pt solid #cbd5e1;
-          padding: 8pt 12pt;
-          font-size: 10pt;
+          padding: 4pt 8pt;
+          font-size: 9.5pt;
         }
         table.nop-table th {
           background-color: #f8fafc;
           font-weight: bold;
-          font-family: 'Arial', sans-serif;
+          font-family: Arial, Helvetica, sans-serif;
           color: #334155;
           mso-shading: #f8fafc;
           text-align: left;
         }
         table.nop-table td {
-          font-family: 'Georgia', 'Times New Roman', serif;
+          font-family: Arial, Helvetica, sans-serif;
           color: #0f172a;
           text-align: left;
         }
-        ul { list-style-type: disc; margin: 8pt 0 12pt 125pt; padding-left: 12pt; }
-        ol { list-style-type: decimal; margin: 8pt 0 12pt 125pt; padding-left: 12pt; }
-        li { margin-bottom: 5pt; line-height: 1.65; font-family: 'Georgia', 'Times New Roman', serif; font-size: 11pt; color: #0f172a; }
+        ul { list-style-type: disc; margin: 4pt 0 6pt 95pt; padding-left: 10pt; }
+        ol { list-style-type: decimal; margin: 4pt 0 6pt 95pt; padding-left: 10pt; }
+        li { margin-bottom: 2pt; line-height: 14pt; font-family: Arial, Helvetica, sans-serif; font-size: 10pt; color: #0f172a; }
         blockquote {
-          border-left: 3pt solid #f59e0b;
-          padding-left: 12pt;
-          margin: 12pt 0;
+          border-left: 2.5pt solid #f59e0b;
+          padding-left: 8pt;
+          margin: 6pt 0;
           font-style: italic;
           color: #64748b;
-          font-family: 'Georgia', 'Times New Roman', serif;
-          font-size: 11pt;
-          line-height: 1.6;
+          font-family: Arial, Helvetica, sans-serif;
+          font-size: 9.5pt;
+          line-height: 14pt;
         }
         mark, .highlight {
           background-color: #fef08a;
@@ -3553,12 +3668,12 @@
           padding: 0 2pt;
           color: #0f172a;
         }
-        h2 { font-size: 14pt; font-weight: bold; margin: 18pt 0 8pt 0; font-family: 'Arial', sans-serif; color: #0f172a; }
-        h3 { font-size: 12pt; font-weight: bold; margin: 14pt 0 6pt 0; font-family: 'Arial', sans-serif; color: #0f172a; }
-        p { margin: 0 0 11pt 0; line-height: 1.65; font-family: 'Georgia', 'Times New Roman', serif; font-size: 11pt; color: #0f172a; }
+        h2 { font-size: 12pt; font-weight: bold; margin: 10pt 0 4pt 0; font-family: Arial, Helvetica, sans-serif; color: #0f172a; }
+        h3 { font-size: 10.5pt; font-weight: bold; margin: 8pt 0 3pt 0; font-family: Arial, Helvetica, sans-serif; color: #0f172a; }
+        p { margin: 0 0 5pt 0; line-height: 14pt; font-family: Arial, Helvetica, sans-serif; font-size: 10pt; color: #0f172a; }
       `;
 
-      const html = `
+      return `
         <html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
         <head>
           <meta charset="utf-8">
@@ -3579,10 +3694,10 @@
             <table align="center" cellpadding="0" cellspacing="0" style="width: 100%; border-collapse: collapse; border: none; mso-table-lspace: 0pt; mso-table-rspace: 0pt;">
               <tr>
                 <td>
-                  <!-- Court Document Header with Guaranteed Solid Dividing Bar -->
-                  <table class="court-header-table" align="center" cellpadding="0" cellspacing="0">
+                  <!-- Court Document Header -->
+                  <table class="court-header-table" align="center" cellpadding="0" cellspacing="0" style="width: 100%; border-collapse: collapse; margin-bottom: 2pt; border: none; mso-table-lspace: 0pt; mso-table-rspace: 0pt;">
                     <tr>
-                      <td align="center" style="text-align: center; border-bottom: 2.25pt solid #0f172a; mso-border-bottom-alt: solid #0f172a 2.25pt; padding-bottom: 14pt; border-top: none; border-left: none; border-right: none;">
+                      <td align="center" style="text-align: center; border: none; padding-bottom: 2pt;">
                         <h1>IN THE MAGISTRATES' COURT OF BRUNEI DARUSSALAM</h1>
                         <div class="loc-text">HOLDEN AT <span style="text-decoration: underline;">${escapeHtml(locText)}</span></div>
                         <div class="case-no-hdr">${escapeHtml(fullCaseNoHdr)}</div>
@@ -3590,47 +3705,54 @@
                     </tr>
                   </table>
 
+                  <!-- Solid Horizontal Dividing Bar -->
+                  <table cellpadding="0" cellspacing="0" border="0" style="width: 100%; border-collapse: collapse; margin-top: 3pt; margin-bottom: 8pt; border: none; mso-table-lspace: 0pt; mso-table-rspace: 0pt;">
+                    <tr>
+                      <td style="border-top: 2.0pt solid #0f172a; mso-border-top-alt: solid #0f172a 2.0pt; height: 1pt; font-size: 1pt; line-height: 1pt;">&nbsp;</td>
+                    </tr>
+                  </table>
+
                   <!-- Metadata Grid Card Matching Screen & PDF Exactly -->
-                  <table class="metadata-table" cellpadding="0" cellspacing="0" style="width: 100%; border-collapse: collapse; table-layout: fixed; margin-bottom: 22pt; background-color: #f8fafc; border: 1pt solid #cbd5e1; mso-border-alt: solid #cbd5e1 1.0pt; mso-shading: #f8fafc;">
+                  <table class="metadata-table" cellpadding="0" cellspacing="0" style="width: 100%; border-collapse: collapse; table-layout: fixed; margin-bottom: 10pt; background-color: #f8fafc; border: 1pt solid #cbd5e1; mso-border-alt: solid #cbd5e1 1.0pt; mso-shading: #f8fafc;">
                     <colgroup>
                       <col width="50%" style="width: 50%;">
                       <col width="50%" style="width: 50%;">
                     </colgroup>
                     <tbody>
                       <tr>
-                        <td style="width: 50%; padding: 10pt 16pt; vertical-align: top; border-bottom: 1.0pt solid #e2e8f0; border-top: none; border-left: none; border-right: none; mso-border-bottom-alt: solid #e2e8f0 1.0pt; background-color: #f8fafc; mso-shading: #f8fafc;">
-                          <span class="meta-label">BEFORE:</span>
-                          <span class="meta-val">${escapeHtml(magistrateText)}</span>
+                        <td style="width: 50%; padding: 4pt 8pt; vertical-align: top; border-bottom: 1.0pt solid #e2e8f0; border-top: none; border-left: none; border-right: none; mso-border-bottom-alt: solid #e2e8f0 1.0pt; background-color: #f8fafc; mso-shading: #f8fafc;">
+                          <div class="meta-label">BEFORE:</div>
+                          <div class="meta-val">${escapeHtml(magistrateText)}</div>
                         </td>
-                        <td style="width: 50%; padding: 10pt 16pt; vertical-align: top; border-bottom: 1.0pt solid #e2e8f0; border-top: none; border-left: none; border-right: none; mso-border-bottom-alt: solid #e2e8f0 1.0pt; background-color: #f8fafc; mso-shading: #f8fafc;">
-                          <span class="meta-label">DATE & VENUE:</span>
-                          <span class="meta-val">${escapeHtml(dateVenueText)}</span>
-                        </td>
-                      </tr>
-                      <tr>
-                        <td style="width: 50%; padding: 10pt 16pt; vertical-align: top; border-bottom: 1.0pt solid #e2e8f0; border-top: none; border-left: none; border-right: none; mso-border-bottom-alt: solid #e2e8f0 1.0pt; background-color: #f8fafc; mso-shading: #f8fafc;">
-                          <span class="meta-label">PROSECUTION:</span>
-                          <span class="meta-val">${escapeHtml(prosecutionText)}</span>
-                        </td>
-                        <td style="width: 50%; padding: 10pt 16pt; vertical-align: top; border-bottom: 1.0pt solid #e2e8f0; border-top: none; border-left: none; border-right: none; mso-border-bottom-alt: solid #e2e8f0 1.0pt; background-color: #f8fafc; mso-shading: #f8fafc;">
-                          <span class="meta-label">SESSION TIMINGS:</span>
-                          <span class="meta-val-mono">${escapeHtml(timingsText)}</span>
+                        <td style="width: 50%; padding: 4pt 8pt; vertical-align: top; border-bottom: 1.0pt solid #e2e8f0; border-top: none; border-left: none; border-right: none; mso-border-bottom-alt: solid #e2e8f0 1.0pt; background-color: #f8fafc; mso-shading: #f8fafc;">
+                          <div class="meta-label">DATE & VENUE:</div>
+                          <div class="meta-val">${escapeHtml(dateVenueText)}</div>
                         </td>
                       </tr>
                       <tr>
-                        <td style="width: 50%; padding: 10pt 16pt; vertical-align: top; border: none; background-color: #f8fafc; mso-shading: #f8fafc;">
-                          <span class="meta-label">DEFENDANT(S) & COUNSEL:</span>
-                          <span class="meta-val" style="white-space: pre-line;">${escapeHtml(defendantsText)}</span>
+                        <td style="width: 50%; padding: 4pt 8pt; vertical-align: top; border-bottom: 1.0pt solid #e2e8f0; border-top: none; border-left: none; border-right: none; mso-border-bottom-alt: solid #e2e8f0 1.0pt; background-color: #f8fafc; mso-shading: #f8fafc;">
+                          <div class="meta-label">PROSECUTION:</div>
+                          <div class="meta-val">${escapeHtml(prosecutionText)}</div>
                         </td>
-                        <td style="width: 50%; padding: 10pt 16pt; vertical-align: top; border: none; background-color: #f8fafc; mso-shading: #f8fafc;">
-                          <span class="meta-label">INTERPRETER:</span>
-                          <span class="meta-val">${escapeHtml(interpreterText)}</span>
+                        <td style="width: 50%; padding: 4pt 8pt; vertical-align: top; border-bottom: 1.0pt solid #e2e8f0; border-top: none; border-left: none; border-right: none; mso-border-bottom-alt: solid #e2e8f0 1.0pt; background-color: #f8fafc; mso-shading: #f8fafc;">
+                          <div class="meta-label">SESSION TIMINGS:</div>
+                          <div class="meta-val-mono">${escapeHtml(timingsText)}</div>
+                        </td>
+                      </tr>
+                      <tr>
+                        <td style="width: 50%; padding: 4pt 8pt; vertical-align: top; border: none; background-color: #f8fafc; mso-shading: #f8fafc;">
+                          <div class="meta-label">DEFENDANT(S) & COUNSEL:</div>
+                          <div class="meta-val" style="white-space: pre-line; font-weight: 500;">${escapeHtml(defendantsText)}</div>
+                        </td>
+                        <td style="width: 50%; padding: 4pt 8pt; vertical-align: top; border: none; background-color: #f8fafc; mso-shading: #f8fafc;">
+                          <div class="meta-label">INTERPRETER:</div>
+                          <div class="meta-val" style="font-weight: 500;">${escapeHtml(interpreterText)}</div>
                         </td>
                       </tr>
                     </tbody>
                   </table>
 
-                  <!-- Notes of Proceedings Editor Body -->
+                  <!-- Notes of Proceedings Editor Body in Arial -->
                   <div class="editor-body">
                     ${wordBodyHtml}
                   </div>
@@ -3641,8 +3763,15 @@
         </body>
         </html>
       `;
+    }
 
-      const finalName = targetFilename.endsWith('.doc') ? targetFilename : `${targetFilename}.doc`;
+    // Direct 1-Click Export Word
+    function exportWord() {
+      const active = getActiveProfile();
+      const filename = getFormattedFilename('doc', active);
+      const finalName = filename.endsWith('.doc') ? filename : `${filename}.doc`;
+
+      const html = generateWordHtmlDocument();
       const blob = new Blob(['\ufeff', html], { type: 'application/msword;charset=utf-8' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
@@ -3651,165 +3780,204 @@
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
+      setTimeout(() => URL.revokeObjectURL(url), 2000);
       showToast(`Word document exported: ${finalName}`, 'success');
     }
 
-    // ==========================================
-    // EXPORT PDF (High-Fidelity, Non-Blank & Perfectly Centered)
-    // ==========================================
-    function exportPDF() {
+    // Direct 1-Click Export PDF (Guaranteed non-blank, high-fidelity render with html2canvas & jsPDF)
+    async function exportPDF() {
       const active = getActiveProfile();
       const filename = getFormattedFilename('pdf', active);
+      const finalName = filename.endsWith('.pdf') ? filename : `${filename}.pdf`;
 
-      if (active.showExportDialog !== false) {
-        openExportSaveModal('pdf', filename, active.pdfFolderPath || 'C:\\Court Documents\\PDF Records\\');
-      } else {
-        executeExportPDF(filename);
-      }
-    }
-
-    function executeExportPDF(targetFilename) {
       const caseNoText = document.getElementById('generatedCaseNo')?.innerText || 'MCCT/BSB/9/2026';
       const fullCaseNoHdr = document.getElementById('docHdrCaseNo')?.innerText || `CASE NO: ${caseNoText}`;
       const locText = document.getElementById('docHdrLoc')?.innerText || 'BANDAR SERI BEGAWAN';
       const magistrateText = document.getElementById('docMagistrate')?.innerText || 'Magistrate';
       const dateVenueText = document.getElementById('docDateVenue')?.innerText || '';
-      const prosecutionText = document.getElementById('docProsecution')?.innerText || '';
+      const prosecutionText = document.getElementById('docProsecution')?.innerText || '—';
       const timingsText = document.getElementById('docTimings')?.innerText || '';
       const defendantsText = document.getElementById('docDefendants')?.innerText || '';
       const interpreterText = document.getElementById('docInterpreter')?.innerText || '';
 
-      const finalName = targetFilename.endsWith('.pdf') ? targetFilename : `${targetFilename}.pdf`;
-
-      // 1. Create a dedicated full-screen export overlay
-      const overlay = document.createElement('div');
-      overlay.id = 'pdfExportOverlay';
-      overlay.style.position = 'fixed';
-      overlay.style.top = '0';
-      overlay.style.left = '0';
-      overlay.style.width = '100vw';
-      overlay.style.height = '100vh';
-      overlay.style.backgroundColor = 'rgba(15, 23, 42, 0.88)';
-      overlay.style.zIndex = '99999';
-      overlay.style.display = 'flex';
-      overlay.style.flexDirection = 'column';
-      overlay.style.alignItems = 'center';
-      overlay.style.justifyContent = 'flex-start';
-      overlay.style.overflowY = 'auto';
-      overlay.style.padding = '24px 0';
-      overlay.style.boxSizing = 'border-box';
-
-      // 2. Loading status pill
-      const statusPill = document.createElement('div');
-      statusPill.style.backgroundColor = '#1e293b';
-      statusPill.style.color = '#f8fafc';
-      statusPill.style.border = '1px solid #334155';
-      statusPill.style.borderRadius = '9999px';
-      statusPill.style.padding = '8px 20px';
-      statusPill.style.fontSize = '12px';
-      statusPill.style.fontWeight = 'bold';
-      statusPill.style.marginBottom = '16px';
-      statusPill.style.display = 'flex';
-      statusPill.style.alignItems = 'center';
-      statusPill.style.gap = '8px';
-      statusPill.style.boxShadow = '0 10px 25px -5px rgba(0,0,0,0.4)';
-      statusPill.innerHTML = `
-        <i class="fa-solid fa-spinner fa-spin text-amber-400"></i>
-        <span>Generating PDF document (please wait)...</span>
+      // Create visual loading indicator
+      const loadingOverlay = document.createElement('div');
+      loadingOverlay.id = 'pdfExportLoadingOverlay';
+      loadingOverlay.style.cssText = 'position: fixed; inset: 0; background: rgba(15, 23, 42, 0.8); z-index: 999999; display: flex; flex-direction: column; align-items: center; justify-content: center; color: white; font-family: Arial, sans-serif; backdrop-filter: blur(2px);';
+      loadingOverlay.innerHTML = `
+        <div style="width: 44px; height: 44px; border: 4px solid #f59e0b; border-top-color: transparent; border-radius: 50%; animation: spin 0.8s linear infinite; margin-bottom: 12px;"></div>
+        <div style="font-weight: 700; font-size: 15px; letter-spacing: 0.3px;">Generating Official PDF Document...</div>
+        <div style="font-size: 12px; color: #cbd5e1; margin-top: 4px;">Direct 1-click download to your downloads folder</div>
+        <style>@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }</style>
       `;
-      overlay.appendChild(statusPill);
+      document.body.appendChild(loadingOverlay);
 
-      // 3. Exact A4 Document Sheet (Target for html2pdf)
+      // Wrapper container in normal flow with positive layout dimensions
+      const wrapper = document.createElement('div');
+      wrapper.id = 'pdfExportWrapper';
+      wrapper.style.cssText = 'position: absolute; left: 0; top: 0; width: 794px; background: #ffffff; z-index: 10000; overflow: visible;';
+
       const sheet = document.createElement('div');
-      sheet.id = 'pdfPrintableSheet';
-      sheet.style.width = '794px'; // 210mm standard A4 at 96 DPI
-      sheet.style.backgroundColor = '#ffffff';
-      sheet.style.color = '#0f172a';
-      sheet.style.fontFamily = "'Merriweather', Georgia, serif";
-      sheet.style.padding = '40px 48px'; // Symmetrical left & right margins (48px each side)
-      sheet.style.boxSizing = 'border-box';
-      sheet.style.boxShadow = '0 20px 25px -5px rgba(0,0,0,0.5)';
-      sheet.style.borderRadius = '2px';
+      sheet.id = 'pdfExportCleanSheet';
+      sheet.style.cssText = 'width: 794px; min-height: 400px; background: #ffffff; color: #0f172a; font-family: Arial, Helvetica, sans-serif; padding: 28px 36px; box-sizing: border-box;';
 
       const pdfBodyHtml = generateExportBodyHtml(false);
 
       sheet.innerHTML = `
         <!-- Court Document Header -->
-        <div style="text-align: center; border-bottom: 2.5px solid #0f172a; padding-bottom: 14px; margin-bottom: 20px;">
-          <h1 style="font-family: 'Inter', Arial, sans-serif; font-size: 19px; font-weight: 700; text-transform: uppercase; margin: 0 0 6px 0; color: #0f172a; letter-spacing: 1.5px; line-height: 1.3;">IN THE MAGISTRATES' COURT OF BRUNEI DARUSSALAM</h1>
-          <div style="font-family: 'Inter', Arial, sans-serif; font-size: 11.5px; font-weight: 700; text-transform: uppercase; color: #475569; margin: 0 0 8px 0;">HOLDEN AT <span style="text-decoration: underline;">${escapeHtml(locText)}</span></div>
-          <div style="font-family: 'Roboto Mono', 'Courier New', monospace; font-size: 16px; font-weight: 700; color: #d97706; margin: 0; letter-spacing: 0.5px;">${escapeHtml(fullCaseNoHdr)}</div>
+        <div style="text-align: center; border-bottom: 2px solid #0f172a; padding-bottom: 10px; margin-bottom: 12px; font-family: Arial, Helvetica, sans-serif;">
+          <h1 style="font-family: Arial, Helvetica, sans-serif; font-size: 17px; font-weight: 700; text-transform: uppercase; margin: 0 0 5px 0; color: #0f172a; letter-spacing: 1px; line-height: 1.25;">IN THE MAGISTRATES' COURT OF BRUNEI DARUSSALAM</h1>
+          <div style="font-family: Arial, Helvetica, sans-serif; font-size: 10.5px; font-weight: 700; text-transform: uppercase; color: #475569; margin: 0 0 6px 0;">HOLDEN AT <span style="text-decoration: underline;">${escapeHtml(locText)}</span></div>
+          <div style="font-family: 'Roboto Mono', Courier, monospace; font-size: 14px; font-weight: 700; color: #d97706; margin: 0; letter-spacing: 0.5px;">${escapeHtml(fullCaseNoHdr)}</div>
         </div>
 
-        <!-- Metadata Grid Card (2-column fixed table to guarantee 100% symmetry) -->
-        <table style="width: 100%; border-collapse: collapse; table-layout: fixed; margin-bottom: 24px; background-color: #f8fafc; border: 1px solid #cbd5e1; border-radius: 8px; overflow: hidden;">
-          <tr>
-            <td style="width: 50%; padding: 9px 14px; vertical-align: top; border-bottom: 1px solid #e2e8f0; border-right: none;">
-              <span style="font-family: 'Inter', Arial, sans-serif; font-size: 10px; font-weight: 700; color: #64748b; text-transform: uppercase; display: block; margin-bottom: 2px; letter-spacing: 0.05em;">BEFORE:</span>
-              <span style="font-family: 'Merriweather', Georgia, serif; font-size: 13.5px; font-weight: 600; color: #0f172a;">${escapeHtml(magistrateText)}</span>
-            </td>
-            <td style="width: 50%; padding: 9px 14px; vertical-align: top; border-bottom: 1px solid #e2e8f0;">
-              <span style="font-family: 'Inter', Arial, sans-serif; font-size: 10px; font-weight: 700; color: #64748b; text-transform: uppercase; display: block; margin-bottom: 2px; letter-spacing: 0.05em;">DATE & VENUE:</span>
-              <span style="font-family: 'Merriweather', Georgia, serif; font-size: 13.5px; font-weight: 600; color: #0f172a;">${escapeHtml(dateVenueText)}</span>
-            </td>
-          </tr>
-          <tr>
-            <td style="width: 50%; padding: 9px 14px; vertical-align: top; border-bottom: 1px solid #e2e8f0; border-right: none;">
-              <span style="font-family: 'Inter', Arial, sans-serif; font-size: 10px; font-weight: 700; color: #64748b; text-transform: uppercase; display: block; margin-bottom: 2px; letter-spacing: 0.05em;">PROSECUTION:</span>
-              <span style="font-family: 'Merriweather', Georgia, serif; font-size: 13.5px; font-weight: 600; color: #0f172a;">${escapeHtml(prosecutionText)}</span>
-            </td>
-            <td style="width: 50%; padding: 9px 14px; vertical-align: top; border-bottom: 1px solid #e2e8f0;">
-              <span style="font-family: 'Inter', Arial, sans-serif; font-size: 10px; font-weight: 700; color: #64748b; text-transform: uppercase; display: block; margin-bottom: 2px; letter-spacing: 0.05em;">SESSION TIMINGS:</span>
-              <span style="font-family: 'Roboto Mono', 'Courier New', monospace; font-size: 13px; font-weight: 700; color: #0f172a;">${escapeHtml(timingsText)}</span>
-            </td>
-          </tr>
-          <tr>
-            <td style="width: 50%; padding: 9px 14px; vertical-align: top; border: none;">
-              <span style="font-family: 'Inter', Arial, sans-serif; font-size: 10px; font-weight: 700; color: #64748b; text-transform: uppercase; display: block; margin-bottom: 2px; letter-spacing: 0.05em;">DEFENDANT(S) & COUNSEL:</span>
-              <span style="font-family: 'Merriweather', Georgia, serif; font-size: 13.5px; font-weight: 500; color: #0f172a; white-space: pre-line;">${escapeHtml(defendantsText)}</span>
-            </td>
-            <td style="width: 50%; padding: 9px 14px; vertical-align: top; border: none;">
-              <span style="font-family: 'Inter', Arial, sans-serif; font-size: 10px; font-weight: 700; color: #64748b; text-transform: uppercase; display: block; margin-bottom: 2px; letter-spacing: 0.05em;">INTERPRETER:</span>
-              <span style="font-family: 'Merriweather', Georgia, serif; font-size: 13.5px; font-weight: 500; color: #0f172a;">${escapeHtml(interpreterText)}</span>
-            </td>
-          </tr>
+        <!-- Metadata Grid Card Matching Screen Exactly -->
+        <table style="width: 100%; border-collapse: collapse; table-layout: fixed; margin-bottom: 16px; background-color: #f8fafc; border: 1px solid #cbd5e1; border-radius: 6px; overflow: hidden; font-family: Arial, Helvetica, sans-serif;">
+          <colgroup>
+            <col width="50%" style="width: 50%;">
+            <col width="50%" style="width: 50%;">
+          </colgroup>
+          <tbody>
+            <tr>
+              <td style="width: 50%; padding: 6px 12px; vertical-align: top; border-bottom: 1px solid #e2e8f0; background-color: #f8fafc;">
+                <span style="font-size: 9px; font-weight: 700; color: #64748b; text-transform: uppercase; display: block; margin-bottom: 2px;">BEFORE:</span>
+                <span style="font-size: 12.5px; font-weight: 600; color: #0f172a;">${escapeHtml(magistrateText)}</span>
+              </td>
+              <td style="width: 50%; padding: 6px 12px; vertical-align: top; border-bottom: 1px solid #e2e8f0; background-color: #f8fafc;">
+                <span style="font-size: 9px; font-weight: 700; color: #64748b; text-transform: uppercase; display: block; margin-bottom: 2px;">DATE & VENUE:</span>
+                <span style="font-size: 12.5px; font-weight: 600; color: #0f172a;">${escapeHtml(dateVenueText)}</span>
+              </td>
+            </tr>
+            <tr>
+              <td style="width: 50%; padding: 6px 12px; vertical-align: top; border-bottom: 1px solid #e2e8f0; background-color: #f8fafc;">
+                <span style="font-size: 9px; font-weight: 700; color: #64748b; text-transform: uppercase; display: block; margin-bottom: 2px;">PROSECUTION:</span>
+                <span style="font-size: 12.5px; font-weight: 600; color: #0f172a;">${escapeHtml(prosecutionText)}</span>
+              </td>
+              <td style="width: 50%; padding: 6px 12px; vertical-align: top; border-bottom: 1px solid #e2e8f0; background-color: #f8fafc;">
+                <span style="font-size: 9px; font-weight: 700; color: #64748b; text-transform: uppercase; display: block; margin-bottom: 2px;">SESSION TIMINGS:</span>
+                <span style="font-family: 'Roboto Mono', Courier, monospace; font-size: 12px; font-weight: 700; color: #0f172a;">${escapeHtml(timingsText)}</span>
+              </td>
+            </tr>
+            <tr>
+              <td style="width: 50%; padding: 6px 12px; vertical-align: top; border: none; background-color: #f8fafc;">
+                <span style="font-size: 9px; font-weight: 700; color: #64748b; text-transform: uppercase; display: block; margin-bottom: 2px;">DEFENDANT(S) & COUNSEL:</span>
+                <span style="font-size: 12.5px; font-weight: 500; color: #0f172a; white-space: pre-line;">${escapeHtml(defendantsText)}</span>
+              </td>
+              <td style="width: 50%; padding: 6px 12px; vertical-align: top; border: none; background-color: #f8fafc;">
+                <span style="font-size: 9px; font-weight: 700; color: #64748b; text-transform: uppercase; display: block; margin-bottom: 2px;">INTERPRETER:</span>
+                <span style="font-size: 12.5px; font-weight: 500; color: #0f172a;">${escapeHtml(interpreterText)}</span>
+              </td>
+            </tr>
+          </tbody>
         </table>
 
-        <!-- Notes of Proceedings Editor Body -->
-        <div style="font-family: 'Merriweather', Georgia, serif; font-size: 14.5px; line-height: 1.7; color: #0f172a;">
+        <!-- Notes of Proceedings Editor Body in Arial -->
+        <div style="font-family: Arial, Helvetica, sans-serif; font-size: 13.5px; line-height: 1.55; color: #0f172a;">
           ${pdfBodyHtml}
         </div>
       `;
 
-      overlay.appendChild(sheet);
-      document.body.appendChild(overlay);
+      wrapper.appendChild(sheet);
+      document.body.appendChild(wrapper);
 
-      const opt = {
-        margin: [10, 0, 10, 0], // Symmetrical 10mm top/bottom, 0 left/right because sheet padding handles 48px left and 48px right
-        filename: finalName,
-        image: { type: 'jpeg', quality: 0.98 },
-        html2canvas: {
-          scale: 2,
-          useCORS: true,
-          letterRendering: true,
-          backgroundColor: '#ffffff',
-          scrollY: 0
-        },
-        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
-        pagebreak: { mode: 'legacy' }
-      };
+      function cleanupPdfExport() {
+        if (wrapper && wrapper.parentNode) wrapper.remove();
+        if (loadingOverlay && loadingOverlay.parentNode) loadingOverlay.remove();
+      }
 
-      if (typeof html2pdf !== 'undefined') {
-        html2pdf().set(opt).from(sheet).save().then(() => {
-          overlay.remove();
-          showToast(`PDF exported successfully: ${finalName}`, 'success');
-        }).catch(err => {
-          console.warn('html2pdf error:', err);
-          overlay.remove();
-          window.print();
-        });
-      } else {
-        overlay.remove();
+      try {
+        // Wait 100ms for browser layout to fully compute
+        await new Promise(resolve => setTimeout(resolve, 100));
+
+        const jsPdfLib = window.jspdf?.jsPDF || window.jsPDF;
+        const html2canvasLib = window.html2canvas;
+
+        if (html2canvasLib && jsPdfLib) {
+          const canvas = await html2canvasLib(sheet, {
+            scale: 2,
+            useCORS: true,
+            backgroundColor: '#ffffff',
+            logging: false,
+            windowWidth: 794
+          });
+
+          if (!canvas || canvas.width === 0 || canvas.height === 0) {
+            throw new Error('Canvas was empty');
+          }
+
+          const pdf = new jsPdfLib({
+            orientation: 'portrait',
+            unit: 'mm',
+            format: 'a4'
+          });
+
+          const pageWidthMm = 210;
+          const pageHeightMm = 297;
+          const marginMm = 10;
+          const printableWidthMm = pageWidthMm - (marginMm * 2); // 190mm
+          const printableHeightMm = pageHeightMm - (marginMm * 2); // 277mm
+
+          const pxPerMm = canvas.width / printableWidthMm;
+          const pageHeightPx = Math.floor(printableHeightMm * pxPerMm);
+
+          let renderedHeight = 0;
+          let pageIndex = 0;
+
+          while (renderedHeight < canvas.height) {
+            const currentChunkPx = Math.min(pageHeightPx, canvas.height - renderedHeight);
+
+            const pageCanvas = document.createElement('canvas');
+            pageCanvas.width = canvas.width;
+            pageCanvas.height = currentChunkPx;
+            const ctx = pageCanvas.getContext('2d');
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(0, 0, pageCanvas.width, pageCanvas.height);
+            ctx.drawImage(
+              canvas,
+              0, renderedHeight, canvas.width, currentChunkPx,
+              0, 0, canvas.width, currentChunkPx
+            );
+
+            const chunkDataUrl = pageCanvas.toDataURL('image/jpeg', 0.98);
+            const chunkHeightMm = currentChunkPx / pxPerMm;
+
+            if (pageIndex > 0) {
+              pdf.addPage();
+            }
+
+            pdf.addImage(chunkDataUrl, 'JPEG', marginMm, marginMm, printableWidthMm, chunkHeightMm);
+
+            renderedHeight += pageHeightPx;
+            pageIndex++;
+          }
+
+          pdf.save(finalName);
+          cleanupPdfExport();
+          showToast(`PDF exported: ${finalName}`, 'success');
+          return;
+        }
+
+        // Fallback to html2pdf if jsPDF/html2canvas globals not found
+        if (typeof html2pdf !== 'undefined') {
+          const opt = {
+            margin: [10, 10, 10, 10],
+            filename: finalName,
+            image: { type: 'jpeg', quality: 0.98 },
+            html2canvas: { scale: 2, useCORS: true, backgroundColor: '#ffffff' },
+            jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
+            pagebreak: { mode: ['css', 'legacy'] }
+          };
+          await html2pdf().set(opt).from(sheet).save();
+          cleanupPdfExport();
+          showToast(`PDF exported: ${finalName}`, 'success');
+          return;
+        }
+
+        throw new Error('No PDF engine available');
+      } catch (err) {
+        console.warn('Direct PDF export error:', err);
+        cleanupPdfExport();
+        showToast('Direct PDF export encountered an issue, opening print dialog.', 'info');
         window.print();
       }
     }
@@ -3892,19 +4060,17 @@
       }
     }
 
-    // Auto-save every 3 seconds if dirty
-    setInterval(() => {
-      if (isDirty) {
-        const icon = document.getElementById('autoSaveIcon');
-        const status = document.getElementById('autoSaveStatus');
-        if (icon) icon.className = 'fa-solid fa-arrows-rotate fa-spin text-amber-400 text-xs';
-        if (status) status.innerText = 'Saving...';
-
-        setTimeout(() => {
+    // High-performance debounced auto-save: Saves 2.5s AFTER user stops typing (never blocks keystrokes)
+    let autoSaveDebounceTimer = null;
+    function scheduleAutoSave(delay = 2500) {
+      markDirty();
+      if (autoSaveDebounceTimer) clearTimeout(autoSaveDebounceTimer);
+      autoSaveDebounceTimer = setTimeout(() => {
+        if (isDirty) {
           saveToLocalStorage(false);
-        }, 200);
-      }
-    }, 3000);
+        }
+      }, delay);
+    }
 
     // Save on beforeunload
     window.addEventListener('beforeunload', () => {
@@ -4099,8 +4265,9 @@
       const editor = document.getElementById('editor');
       if (editor) {
         editor.addEventListener('input', () => {
-          markDirty();
-          schedulePaginationUpdate(350);
+          tryExpandSpeakerShortcut(false);
+          scheduleAutoSave(2500);
+          schedulePaginationUpdate(750);
         });
         editor.addEventListener('keyup', (e) => {
           if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
@@ -4139,10 +4306,7 @@
           interpreterName: 'Malay / English Interpreter',
           signatureDataUrl: '',
           namingPreset: 'yymmdd_nature_caseno_spaces',
-          customNamingPattern: '{YYMMDD} - {Nature} - {CaseNoSpaces}',
-          pdfFolderPath: 'C:\\Court Documents\\PDF Records\\',
-          wordFolderPath: 'C:\\Court Documents\\Word Drafts\\',
-          showExportDialog: true
+          customNamingPattern: '{YYMMDD} - {Nature} - {CaseNoSpaces}'
         }
       }
     };
@@ -4297,117 +4461,6 @@
       if (previewPdf) previewPdf.innerText = pdfName;
     }
 
-    // ==========================================
-    // EXPORT CONFIRMATION DIALOG MODAL
-    // ==========================================
-    let currentExportModalType = 'word';
-
-    function openExportSaveModal(type, initialFileName, folderPath) {
-      currentExportModalType = type;
-      const modal = document.getElementById('exportSaveModal');
-      const title = document.getElementById('exportModalTitle');
-      const sub = document.getElementById('exportModalSub');
-      const iconContainer = document.getElementById('exportModalIconContainer');
-      const icon = document.getElementById('exportModalIcon');
-      const nameInput = document.getElementById('exportModalFileNameInput');
-      const folderEl = document.getElementById('exportModalFolderPath');
-      const confirmBtn = document.getElementById('exportModalConfirmBtn');
-      const nativeSaveBtn = document.getElementById('exportModalNativeSaveBtn');
-      const dontShowCheck = document.getElementById('exportModalDontShowAgain');
-
-      if (nameInput) nameInput.value = initialFileName;
-      if (folderEl) folderEl.innerText = folderPath || (type === 'word' ? 'C:\\Court Documents\\Word Drafts\\' : 'C:\\Court Documents\\PDF Records\\');
-      if (dontShowCheck) dontShowCheck.checked = false;
-
-      if (type === 'word') {
-        if (title) title.innerText = 'Export Word Document';
-        if (sub) sub.innerText = 'Save Microsoft Word (.doc) draft to judicial archive.';
-        if (iconContainer) iconContainer.className = 'w-10 h-10 rounded-xl bg-blue-500/20 text-blue-600 dark:text-blue-400 flex items-center justify-center text-lg border border-blue-500/30 shrink-0';
-        if (icon) icon.className = 'fa-solid fa-file-word';
-        if (confirmBtn) {
-          confirmBtn.className = 'px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg shadow-sm transition text-xs flex items-center gap-1.5 cursor-pointer';
-          confirmBtn.innerHTML = '<i class="fa-solid fa-download"></i> Download Word Document';
-        }
-      } else {
-        if (title) title.innerText = 'Export PDF Document';
-        if (sub) sub.innerText = 'Generate high-fidelity PDF proceedings document.';
-        if (iconContainer) iconContainer.className = 'w-10 h-10 rounded-xl bg-amber-500/20 text-amber-500 flex items-center justify-center text-lg border border-amber-500/30 shrink-0';
-        if (icon) icon.className = 'fa-solid fa-file-pdf';
-        if (confirmBtn) {
-          confirmBtn.className = 'px-4 py-2 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold rounded-lg shadow-sm transition text-xs flex items-center gap-1.5 cursor-pointer';
-          confirmBtn.innerHTML = '<i class="fa-solid fa-download"></i> Download PDF Document';
-        }
-      }
-
-      // Check if File System Access API is supported
-      if ('showSaveFilePicker' in window && nativeSaveBtn) {
-        nativeSaveBtn.classList.remove('hidden');
-      } else if (nativeSaveBtn) {
-        nativeSaveBtn.classList.add('hidden');
-      }
-
-      if (modal) modal.classList.remove('hidden');
-    }
-
-    function closeExportSaveModal() {
-      const modal = document.getElementById('exportSaveModal');
-      if (modal) modal.classList.add('hidden');
-    }
-
-    function copyPreferredExportFolder() {
-      const folderEl = document.getElementById('exportModalFolderPath');
-      if (!folderEl) return;
-      const pathText = folderEl.innerText.trim();
-      navigator.clipboard.writeText(pathText).then(() => {
-        showToast(`Folder path copied: ${pathText}`);
-      }).catch(() => {
-        showToast(`Path: ${pathText}`, 'info');
-      });
-    }
-
-    function confirmAndExecuteExport() {
-      const nameInput = document.getElementById('exportModalFileNameInput');
-      const dontShowCheck = document.getElementById('exportModalDontShowAgain');
-      let targetName = nameInput ? nameInput.value.trim() : '';
-      if (!targetName) {
-        targetName = getFormattedFilename(currentExportModalType === 'word' ? 'doc' : 'pdf');
-      }
-
-      // Update showExportDialog preference if requested
-      if (dontShowCheck && dontShowCheck.checked) {
-        const settings = loadSettings();
-        const active = settings.profiles[settings.activeProfileId];
-        if (active) {
-          active.showExportDialog = false;
-          saveSettingsToStorage(settings);
-        }
-      }
-
-      closeExportSaveModal();
-
-      if (currentExportModalType === 'word') {
-        executeExportWord(targetName);
-      } else {
-        executeExportPDF(targetName);
-      }
-    }
-
-    async function triggerNativeSavePicker() {
-      const nameInput = document.getElementById('exportModalFileNameInput');
-      let targetName = nameInput ? nameInput.value.trim() : '';
-      if (!targetName) {
-        targetName = getFormattedFilename(currentExportModalType === 'word' ? 'doc' : 'pdf');
-      }
-
-      closeExportSaveModal();
-
-      if (currentExportModalType === 'word') {
-        executeExportWord(targetName);
-      } else {
-        executeExportPDF(targetName);
-      }
-    }
-
     function populateSettingsUI() {
       const settings = loadSettings();
       const select = document.getElementById('settingProfileSelect');
@@ -4431,9 +4484,6 @@
       const interpInput = document.getElementById('settingInterpreterName');
       const namingPresetSelect = document.getElementById('settingNamingPreset');
       const customPatternInput = document.getElementById('settingCustomNamingPattern');
-      const pdfFolderInput = document.getElementById('settingPdfFolder');
-      const wordFolderInput = document.getElementById('settingWordFolder');
-      const showExportDialogCheck = document.getElementById('settingShowExportDialog');
 
       if (magNameInput) magNameInput.value = active.magistrateName || '';
       if (locSelect) locSelect.value = active.courtLocation || 'BANDAR SERI BEGAWAN';
@@ -4441,9 +4491,6 @@
       if (interpInput) interpInput.value = active.interpreterName || 'Malay / English Interpreter';
       if (namingPresetSelect) namingPresetSelect.value = active.namingPreset || 'yymmdd_nature_caseno_spaces';
       if (customPatternInput) customPatternInput.value = active.customNamingPattern || '{YYMMDD} - {Nature} - {CaseNoSpaces}';
-      if (pdfFolderInput) pdfFolderInput.value = active.pdfFolderPath || 'C:\\Court Documents\\PDF Records\\';
-      if (wordFolderInput) wordFolderInput.value = active.wordFolderPath || 'C:\\Court Documents\\Word Drafts\\';
-      if (showExportDialogCheck) showExportDialogCheck.checked = active.showExportDialog !== false;
 
       handleNamingPresetChange();
       renderSignaturePreview(active.signatureDataUrl);
@@ -4541,10 +4588,7 @@
         interpreterName: 'Malay / English Interpreter',
         signatureDataUrl: '',
         namingPreset: 'yymmdd_nature_caseno_spaces',
-        customNamingPattern: '{YYMMDD} - {Nature} - {CaseNoSpaces}',
-        pdfFolderPath: 'C:\\Court Documents\\PDF Records\\',
-        wordFolderPath: 'C:\\Court Documents\\Word Drafts\\',
-        showExportDialog: true
+        customNamingPattern: '{YYMMDD} - {Nature} - {CaseNoSpaces}'
       };
       settings.activeProfileId = id;
       saveSettingsToStorage(settings);
@@ -4584,9 +4628,6 @@
       const interpreter = document.getElementById('settingInterpreterName')?.value?.trim() || 'Malay / English Interpreter';
       const namingPreset = document.getElementById('settingNamingPreset')?.value || 'yymmdd_nature_caseno_spaces';
       const customPattern = document.getElementById('settingCustomNamingPattern')?.value?.trim() || '{YYMMDD} - {Nature} - {CaseNoSpaces}';
-      const pdfFolder = document.getElementById('settingPdfFolder')?.value?.trim() || 'C:\\Court Documents\\PDF Records\\';
-      const wordFolder = document.getElementById('settingWordFolder')?.value?.trim() || 'C:\\Court Documents\\Word Drafts\\';
-      const showExportDialog = document.getElementById('settingShowExportDialog')?.checked !== false;
 
       active.magistrateName = magName;
       active.courtLocation = courtLoc;
@@ -4595,9 +4636,6 @@
       active.name = magName || active.name || 'Magistrate Profile';
       active.namingPreset = namingPreset;
       active.customNamingPattern = customPattern;
-      active.pdfFolderPath = pdfFolder;
-      active.wordFolderPath = wordFolder;
-      active.showExportDialog = showExportDialog;
 
       saveSettingsToStorage(settings);
       applySettingsToCase(true);
