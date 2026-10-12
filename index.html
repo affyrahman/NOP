@@ -382,6 +382,10 @@
       pointer-events: none;
     }
 
+    .print-running-footer {
+      display: none;
+    }
+
     /* Print Formatting Rules - 100% Identical to Editor */
     @page {
       size: A4 portrait;
@@ -491,6 +495,22 @@
         visibility: hidden;
         height: 0;
         margin: 0;
+      }
+      .print-running-footer {
+        display: flex !important;
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        border-top: 1px solid #cbd5e1;
+        padding-top: 4px;
+        padding-bottom: 2px;
+        font-family: Arial, Helvetica, sans-serif;
+        font-size: 8pt;
+        color: #94a3b8;
+        justify-content: space-between;
+        background: #ffffff;
+        z-index: 9999;
       }
     }
   </style>
@@ -1047,7 +1067,7 @@
               <h1 class="font-bold text-lg md:text-xl tracking-wider text-slate-900 dark:text-slate-100 uppercase">IN THE MAGISTRATES' COURT OF BRUNEI DARUSSALAM</h1>
               <p class="text-xs font-bold text-slate-600 dark:text-slate-300 mt-1">HOLDEN AT <span id="docHdrLoc" class="underline">BANDAR SERI BEGAWAN</span></p>
               <div class="mt-2 font-mono font-bold text-base md:text-lg text-amber-600 dark:text-amber-400" id="docHdrCaseNo">
-                CASE NO: MCCT/BSB/9/2026
+                CASE NO: MCCT/BSB/X/2026
               </div>
             </div>
 
@@ -1074,6 +1094,11 @@
               <p><br></p>
             </div>
 
+            <!-- Print Running Footer (Only visible when printing or in print preview) -->
+            <div id="printRunningFooter" class="print-running-footer">
+              <span id="printFooterCaseNo">MCCT/BSB/X/2026</span>
+              <span id="printFooterDocTitle">Notes of Proceedings</span>
+            </div>
 
           </div>
 
@@ -1606,7 +1631,7 @@
               <h3 class="font-bold text-base text-slate-900 dark:text-slate-100">
                 Adjournment & Google Calendar Sync
               </h3>
-              <span id="adjournmentModalCaseNo" class="font-mono text-xs px-2 py-0.5 rounded font-bold bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20">MCCT/BSB/9/2026</span>
+              <span id="adjournmentModalCaseNo" class="font-mono text-xs px-2 py-0.5 rounded font-bold bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20">MCCT/BSB/X/2026</span>
             </div>
             <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
               Target Calendar: <span id="adjournmentModalCalName" class="font-medium text-slate-700 dark:text-slate-300">Primary Judicial Calendar</span>
@@ -1634,7 +1659,7 @@
           <div class="flex items-center gap-2">
             <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md font-mono text-[11px] font-bold bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20">
               <i class="fa-solid fa-folder-closed text-[10px]"></i>
-              <span id="adjournmentContextCaseNo">MCCT/BSB/9/2026</span>
+              <span id="adjournmentContextCaseNo">MCCT/BSB/X/2026</span>
             </span>
             <span class="text-slate-400 dark:text-slate-500">•</span>
             <span class="text-slate-600 dark:text-slate-300 flex items-center gap-1.5">
@@ -1840,7 +1865,7 @@
                 <span class="font-bold text-emerald-800 dark:text-emerald-300 flex items-center gap-1.5">
                   <i class="fa-solid fa-circle-check text-emerald-600 dark:text-emerald-400"></i> Event Created on Google Calendar!
                 </span>
-                <span id="syncSuccessEventTitle" class="font-mono text-[10px] text-emerald-700 dark:text-emerald-400 font-bold">FM: MCCT/BSB/1/2026</span>
+                <span id="syncSuccessEventTitle" class="font-mono text-[10px] text-emerald-700 dark:text-emerald-400 font-bold">FM: MCCT/BSB/X/2026</span>
               </div>
               <div class="flex items-center justify-between text-[11px] pt-1">
                 <span id="syncSuccessTimeInfo" class="text-slate-600 dark:text-slate-300 font-mono">15 Oct 2026 at 09:30 AM</span>
@@ -2924,6 +2949,23 @@
       markDirty();
     }
 
+    function resolveCleanCaseRef() {
+      const type = document.getElementById('caseType')?.value?.trim() || 'MCCT';
+      const loc = document.getElementById('docketLoc')?.value || 'BANDAR SERI BEGAWAN';
+      let locShort = 'BSB';
+      if (loc.includes('KUALA')) locShort = 'KB';
+      else if (loc.includes('TUTONG')) locShort = 'TUT';
+      else if (loc.includes('TEMBURONG')) locShort = 'TEMB';
+
+      const noInput = document.getElementById('caseNoVal')?.value?.trim();
+      const currentYear = new Date().getFullYear();
+      const yearInput = document.getElementById('caseYearVal')?.value?.trim();
+      const year = (yearInput && !isNaN(parseInt(yearInput, 10))) ? yearInput : String(currentYear);
+
+      const docketNo = (noInput && noInput !== '[No]') ? noInput : 'X';
+      return `${type}/${locShort}/${docketNo}/${year}`;
+    }
+
     function syncMetadata() {
       const tier = "Magistrate's Court";
       const type = document.getElementById('caseType')?.value || 'MCCT';
@@ -2946,6 +2988,10 @@
       
       const docHdrCaseNo = document.getElementById('docHdrCaseNo');
       if (docHdrCaseNo) docHdrCaseNo.innerText = `CASE NO: ${formattedCaseNo}`;
+
+      const cleanCaseRef = resolveCleanCaseRef();
+      const printFooterCaseNo = document.getElementById('printFooterCaseNo');
+      if (printFooterCaseNo) printFooterCaseNo.innerText = cleanCaseRef;
       
       const docHdrLoc = document.getElementById('docHdrLoc');
       if (docHdrLoc) docHdrLoc.innerText = loc;
@@ -4827,8 +4873,9 @@
     // EXPORT MS WORD DOCUMENT (Exact Visual Parity, Consistent Arial Font & 1-Click Download)
     // ==========================================
     function generateWordHtmlDocument() {
-      const caseNoText = document.getElementById('generatedCaseNo')?.innerText || 'MCCT/BSB/9/2026';
-      const fullCaseNoHdr = document.getElementById('docHdrCaseNo')?.innerText || `CASE NO: ${caseNoText}`;
+      const caseNoText = resolveCleanCaseRef();
+      const rawDocHdr = document.getElementById('docHdrCaseNo')?.innerText?.trim();
+      const fullCaseNoHdr = (rawDocHdr && !rawDocHdr.includes('[No]')) ? rawDocHdr : `CASE NO: ${caseNoText}`;
       const locText = document.getElementById('docHdrLoc')?.innerText || 'BANDAR SERI BEGAWAN';
       const magistrateText = document.getElementById('docMagistrate')?.innerText || 'Magistrate';
       const dateVenueText = document.getElementById('docDateVenue')?.innerText || '';
@@ -4848,9 +4895,24 @@
           margin: 36.0pt 36.0pt 36.0pt 36.0pt; /* Clean compact court margins */
           mso-header-margin: 24.0pt;
           mso-footer-margin: 24.0pt;
+          mso-footer: f1;
           mso-paper-source: 0;
         }
         div.Section1 { page: Section1; }
+        table#hrdftrtbl {
+          margin: 0in 0in 0in 900in;
+          width: 1px;
+          height: 1px;
+          overflow: hidden;
+        }
+        p.MsoFooter, div.MsoFooter {
+          margin: 0in;
+          margin-bottom: .0001pt;
+          mso-pagination: widow-orphan;
+          font-size: 8.0pt;
+          font-family: Arial, Helvetica, sans-serif;
+          color: #94a3b8;
+        }
         body {
           font-family: Arial, Helvetica, sans-serif;
           font-size: 10pt;
@@ -5084,6 +5146,28 @@
               </tr>
             </table>
           </div>
+
+          <!-- Hidden Off-Page Table Holding Word Running Margin Footer Resource -->
+          <table id="hrdftrtbl" border="0" cellspacing="0" cellpadding="0" style="margin: 0in 0in 0in 900in; width: 1px; height: 1px; overflow: hidden;">
+            <tr>
+              <td>
+                <div style="mso-element:footer" id="f1">
+                  <p class="MsoFooter" style="margin: 0;">
+                    <table width="100%" border="0" cellspacing="0" cellpadding="0" style="border-top: 0.5pt solid #cbd5e1; padding-top: 4pt; font-family: Arial, Helvetica, sans-serif; font-size: 8pt; color: #94a3b8;">
+                      <tr>
+                        <td align="left" style="font-family: Arial, Helvetica, sans-serif; font-size: 8pt; color: #94a3b8;">
+                          ${escapeHtml(caseNoText)}
+                        </td>
+                        <td align="right" style="font-family: Arial, Helvetica, sans-serif; font-size: 8pt; color: #94a3b8;">
+                          Page <span style="mso-field-code:' PAGE '"></span> of <span style="mso-field-code:' NUMPAGES '"></span>
+                        </td>
+                      </tr>
+                    </table>
+                  </p>
+                </div>
+              </td>
+            </tr>
+          </table>
         </body>
         </html>
       `;
@@ -5109,205 +5193,434 @@
       showToast(`Word document exported: ${finalName}`, 'success');
     }
 
-    // Direct 1-Click Export PDF (Guaranteed non-blank, high-fidelity render with html2canvas & jsPDF)
+    // Direct 1-Click Export Searchable Vector Text PDF (100% Highlightable, Copyable, & Searchable)
     async function exportPDF() {
       tryAutoStopSession('PDF Export');
       const active = getActiveProfile();
       const filename = getFormattedFilename('pdf', active);
       const finalName = filename.endsWith('.pdf') ? filename : `${filename}.pdf`;
 
-      const caseNoText = document.getElementById('generatedCaseNo')?.innerText || 'MCCT/BSB/9/2026';
-      const fullCaseNoHdr = document.getElementById('docHdrCaseNo')?.innerText || `CASE NO: ${caseNoText}`;
-      const locText = document.getElementById('docHdrLoc')?.innerText || 'BANDAR SERI BEGAWAN';
-      const magistrateText = document.getElementById('docMagistrate')?.innerText || 'Magistrate';
-      const dateVenueText = document.getElementById('docDateVenue')?.innerText || '';
-      const caseType = document.getElementById('caseType')?.value || 'MCCT';
-      const isMCCS = caseType === 'MCCS';
-      const party1Label = isMCCS ? 'PLAINTIFF & COUNSEL:' : 'PROSECUTION:';
-      const prosecutionText = document.getElementById('docProsecution')?.innerText || '—';
-      const timingsText = document.getElementById('docTimings')?.innerText || '';
-      const defendantsText = document.getElementById('docDefendants')?.innerText || '';
-      const interpreterText = document.getElementById('docInterpreter')?.innerText || '';
+      const jsPdfLib = window.jspdf?.jsPDF || window.jsPDF;
+      if (!jsPdfLib) {
+        showToast('PDF library not ready, opening print dialog.', 'info');
+        window.print();
+        return;
+      }
 
-      // Create visual loading indicator
+      // Visual indicator
       const loadingOverlay = document.createElement('div');
       loadingOverlay.id = 'pdfExportLoadingOverlay';
-      loadingOverlay.style.cssText = 'position: fixed; inset: 0; background: rgba(15, 23, 42, 0.8); z-index: 999999; display: flex; flex-direction: column; align-items: center; justify-content: center; color: white; font-family: Arial, sans-serif; backdrop-filter: blur(2px);';
+      loadingOverlay.style.cssText = 'position: fixed; inset: 0; background: rgba(15, 23, 42, 0.75); z-index: 999999; display: flex; flex-direction: column; align-items: center; justify-content: center; color: white; font-family: Arial, sans-serif; backdrop-filter: blur(2px);';
       loadingOverlay.innerHTML = `
-        <div style="width: 44px; height: 44px; border: 4px solid #f59e0b; border-top-color: transparent; border-radius: 50%; animation: spin 0.8s linear infinite; margin-bottom: 12px;"></div>
-        <div style="font-weight: 700; font-size: 15px; letter-spacing: 0.3px;">Generating Official PDF Document...</div>
-        <div style="font-size: 12px; color: #cbd5e1; margin-top: 4px;">Direct 1-click download to your downloads folder</div>
+        <div style="width: 40px; height: 40px; border: 3px solid #f59e0b; border-top-color: transparent; border-radius: 50%; animation: spin 0.8s linear infinite; margin-bottom: 12px;"></div>
+        <div style="font-weight: 700; font-size: 14px; letter-spacing: 0.3px;">Generating Searchable Vector PDF...</div>
+        <div style="font-size: 11px; color: #cbd5e1; margin-top: 4px;">Highlightable text & full court badges</div>
         <style>@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }</style>
       `;
       document.body.appendChild(loadingOverlay);
 
-      // Wrapper container in normal flow with positive layout dimensions
-      const wrapper = document.createElement('div');
-      wrapper.id = 'pdfExportWrapper';
-      wrapper.style.cssText = 'position: absolute; left: 0; top: 0; width: 794px; background: #ffffff; z-index: 10000; overflow: visible;';
-
-      const sheet = document.createElement('div');
-      sheet.id = 'pdfExportCleanSheet';
-      sheet.style.cssText = 'width: 794px; min-height: 400px; background: #ffffff; color: #0f172a; font-family: Arial, Helvetica, sans-serif; padding: 28px 36px; box-sizing: border-box;';
-
-      const pdfBodyHtml = generateExportBodyHtml(false);
-
-      sheet.innerHTML = `
-        <!-- Court Document Header -->
-        <div style="text-align: center; border-bottom: 2px solid #0f172a; padding-bottom: 10px; margin-bottom: 12px; font-family: Arial, Helvetica, sans-serif;">
-          <h1 style="font-family: Arial, Helvetica, sans-serif; font-size: 17px; font-weight: 700; text-transform: uppercase; margin: 0 0 5px 0; color: #0f172a; letter-spacing: 1px; line-height: 1.25;">IN THE MAGISTRATES' COURT OF BRUNEI DARUSSALAM</h1>
-          <div style="font-family: Arial, Helvetica, sans-serif; font-size: 10.5px; font-weight: 700; text-transform: uppercase; color: #475569; margin: 0 0 6px 0;">HOLDEN AT <span style="text-decoration: underline;">${escapeHtml(locText)}</span></div>
-          <div style="font-family: 'Roboto Mono', Courier, monospace; font-size: 14px; font-weight: 700; color: #d97706; margin: 0; letter-spacing: 0.5px;">${escapeHtml(fullCaseNoHdr)}</div>
-        </div>
-
-        <!-- Metadata Grid Card Matching Screen Exactly -->
-        <table style="width: 100%; border-collapse: collapse; table-layout: fixed; margin-bottom: 16px; background-color: #f8fafc; border: 1px solid #cbd5e1; border-radius: 6px; overflow: hidden; font-family: Arial, Helvetica, sans-serif;">
-          <colgroup>
-            <col width="50%" style="width: 50%;">
-            <col width="50%" style="width: 50%;">
-          </colgroup>
-          <tbody>
-            <tr>
-              <td style="width: 50%; padding: 6px 12px; vertical-align: top; border-bottom: 1px solid #e2e8f0; background-color: #f8fafc;">
-                <span style="font-size: 9px; font-weight: 700; color: #64748b; text-transform: uppercase; display: block; margin-bottom: 2px;">BEFORE:</span>
-                <span style="font-size: 12.5px; font-weight: 600; color: #0f172a;">${escapeHtml(magistrateText)}</span>
-              </td>
-              <td style="width: 50%; padding: 6px 12px; vertical-align: top; border-bottom: 1px solid #e2e8f0; background-color: #f8fafc;">
-                <span style="font-size: 9px; font-weight: 700; color: #64748b; text-transform: uppercase; display: block; margin-bottom: 2px;">DATE & VENUE:</span>
-                <span style="font-size: 12.5px; font-weight: 600; color: #0f172a;">${escapeHtml(dateVenueText)}</span>
-              </td>
-            </tr>
-            <tr>
-              <td style="width: 50%; padding: 6px 12px; vertical-align: top; border-bottom: 1px solid #e2e8f0; background-color: #f8fafc;">
-                <span style="font-size: 9px; font-weight: 700; color: #64748b; text-transform: uppercase; display: block; margin-bottom: 2px;">${escapeHtml(party1Label)}</span>
-                <span style="font-size: 12.5px; font-weight: 600; color: #0f172a;">${escapeHtml(prosecutionText)}</span>
-              </td>
-              <td style="width: 50%; padding: 6px 12px; vertical-align: top; border-bottom: 1px solid #e2e8f0; background-color: #f8fafc;">
-                <span style="font-size: 9px; font-weight: 700; color: #64748b; text-transform: uppercase; display: block; margin-bottom: 2px;">SESSION TIMINGS:</span>
-                <span style="font-family: 'Roboto Mono', Courier, monospace; font-size: 12px; font-weight: 700; color: #0f172a;">${escapeHtml(timingsText)}</span>
-              </td>
-            </tr>
-            <tr>
-              <td style="width: 50%; padding: 6px 12px; vertical-align: top; border: none; background-color: #f8fafc;">
-                <span style="font-size: 9px; font-weight: 700; color: #64748b; text-transform: uppercase; display: block; margin-bottom: 2px;">DEFENDANT(S) & COUNSEL:</span>
-                <span style="font-size: 12.5px; font-weight: 500; color: #0f172a; white-space: pre-line;">${escapeHtml(defendantsText)}</span>
-              </td>
-              <td style="width: 50%; padding: 6px 12px; vertical-align: top; border: none; background-color: #f8fafc;">
-                <span style="font-size: 9px; font-weight: 700; color: #64748b; text-transform: uppercase; display: block; margin-bottom: 2px;">INTERPRETER:</span>
-                <span style="font-size: 12.5px; font-weight: 500; color: #0f172a;">${escapeHtml(interpreterText)}</span>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-
-        <!-- Notes of Proceedings Editor Body in Arial -->
-        <div style="font-family: Arial, Helvetica, sans-serif; font-size: 13.5px; line-height: 1.55; color: #0f172a;">
-          ${pdfBodyHtml}
-        </div>
-      `;
-
-      wrapper.appendChild(sheet);
-      document.body.appendChild(wrapper);
-
-      function cleanupPdfExport() {
-        if (wrapper && wrapper.parentNode) wrapper.remove();
-        if (loadingOverlay && loadingOverlay.parentNode) loadingOverlay.remove();
-      }
-
       try {
-        // Wait 100ms for browser layout to fully compute
-        await new Promise(resolve => setTimeout(resolve, 100));
+        await new Promise(resolve => setTimeout(resolve, 60));
 
-        const jsPdfLib = window.jspdf?.jsPDF || window.jsPDF;
-        const html2canvasLib = window.html2canvas;
+        const caseNoText = resolveCleanCaseRef();
+        const rawDocHdr = document.getElementById('docHdrCaseNo')?.innerText?.trim();
+        const fullCaseNoHdr = (rawDocHdr && !rawDocHdr.includes('[No]')) ? rawDocHdr : `CASE NO: ${caseNoText}`;
+        const locText = document.getElementById('docHdrLoc')?.innerText?.trim() || 'BANDAR SERI BEGAWAN';
+        const magistrateText = document.getElementById('docMagistrate')?.innerText?.trim() || 'Magistrate';
+        const dateVenueText = document.getElementById('docDateVenue')?.innerText?.trim() || '';
+        const caseType = document.getElementById('caseType')?.value || 'MCCT';
+        const isMCCS = caseType === 'MCCS';
+        const party1Label = isMCCS ? 'PLAINTIFF & COUNSEL:' : 'PROSECUTION:';
+        const prosecutionText = document.getElementById('docProsecution')?.innerText?.trim() || '—';
+        const timingsText = document.getElementById('docTimings')?.innerText?.trim() || '--:--';
+        const defendantsText = document.getElementById('docDefendants')?.innerText?.trim() || '';
+        const interpreterText = document.getElementById('docInterpreter')?.innerText?.trim() || '';
 
-        if (html2canvasLib && jsPdfLib) {
-          const canvas = await html2canvasLib(sheet, {
-            scale: 2,
-            useCORS: true,
-            backgroundColor: '#ffffff',
-            logging: false,
-            windowWidth: 794
-          });
+        // Initialize jsPDF document (A4 in points: 595.28 x 841.89 pt)
+        const pdf = new jsPdfLib({
+          orientation: 'portrait',
+          unit: 'pt',
+          format: 'a4'
+        });
 
-          if (!canvas || canvas.width === 0 || canvas.height === 0) {
-            throw new Error('Canvas was empty');
+        const pageWidth = 595.28;
+        const pageHeight = 841.89;
+        const marginLeft = 40;
+        const marginRight = 40;
+        const marginTop = 42;
+        const marginBottom = 45;
+        const contentWidth = pageWidth - marginLeft - marginRight; // 515.28 pt
+        const maxContentY = pageHeight - marginBottom;
+
+        let currentY = marginTop;
+
+        function checkPageBreak(requiredHeight) {
+          if (currentY + requiredHeight > maxContentY) {
+            pdf.addPage();
+            currentY = marginTop;
+            return true;
+          }
+          return false;
+        }
+
+        // Color maps for speaker badges [r, g, b]
+        const badgeColors = {
+          'speaker-court': { text: [30, 58, 138], bg: [219, 234, 254], border: [191, 219, 254] },
+          'speaker-prosecution': { text: [153, 27, 27], bg: [254, 226, 226], border: [254, 202, 202] },
+          'speaker-defence': { text: [6, 95, 70], bg: [209, 250, 229], border: [167, 243, 208] },
+          'speaker-dc': { text: [15, 118, 110], bg: [204, 251, 241], border: [153, 246, 228] },
+          'speaker-interp': { text: [146, 64, 14], bg: [254, 243, 199], border: [253, 230, 138] },
+          'speaker-witness': { text: [67, 56, 202], bg: [224, 231, 255], border: [199, 210, 254] },
+          'tag-order': { text: [107, 33, 168], bg: [243, 232, 255], border: [233, 213, 255] },
+          'tag-timestamp': { text: [71, 85, 105], bg: [241, 245, 249], border: [226, 232, 240] }
+        };
+
+        // 1. COURT HEADER
+        pdf.setFont('helvetica', 'bold');
+        pdf.setFontSize(13);
+        pdf.setTextColor(15, 23, 42); // #0f172a
+        pdf.text("IN THE MAGISTRATES' COURT OF BRUNEI DARUSSALAM", pageWidth / 2, currentY, { align: 'center' });
+        currentY += 15;
+
+        pdf.setFont('helvetica', 'bold');
+        pdf.setFontSize(9);
+        pdf.setTextColor(71, 85, 105); // #475569
+        pdf.text(`HOLDEN AT ${locText.toUpperCase()}`, pageWidth / 2, currentY, { align: 'center' });
+        currentY += 15;
+
+        pdf.setFont('helvetica', 'bold');
+        pdf.setFontSize(11);
+        pdf.setTextColor(217, 119, 6); // #d97706
+        pdf.text(fullCaseNoHdr, pageWidth / 2, currentY, { align: 'center' });
+        currentY += 10;
+
+        pdf.setDrawColor(15, 23, 42);
+        pdf.setLineWidth(1.2);
+        pdf.line(marginLeft, currentY, marginLeft + contentWidth, currentY);
+        currentY += 14;
+
+        // 2. METADATA GRID CARD
+        const boxX = marginLeft;
+        const boxWidth = contentWidth;
+        const colWidth = boxWidth / 2;
+        const boxY = currentY;
+
+        // Compute rows
+        const defLines = pdf.splitTextToSize(defendantsText || 'None', colWidth - 18);
+        const row1Height = 28;
+        const row2Height = 28;
+        const row3Height = Math.max(30, 16 + defLines.length * 11);
+        const totalBoxHeight = row1Height + row2Height + row3Height;
+
+        // Draw card background & border
+        pdf.setFillColor(248, 250, 252); // #f8fafc
+        pdf.setDrawColor(203, 213, 225); // #cbd5e1
+        pdf.setLineWidth(0.8);
+        pdf.roundedRect(boxX, boxY, boxWidth, totalBoxHeight, 4, 4, 'FD');
+
+        // Draw dividers
+        pdf.setDrawColor(226, 232, 240);
+        pdf.setLineWidth(0.6);
+        const r1BorderY = boxY + row1Height;
+        const r2BorderY = r1BorderY + row2Height;
+        pdf.line(boxX, r1BorderY, boxX + boxWidth, r1BorderY);
+        pdf.line(boxX, r2BorderY, boxX + boxWidth, r2BorderY);
+        pdf.line(boxX + colWidth, boxY, boxX + colWidth, boxY + totalBoxHeight);
+
+        // Cell 1: BEFORE
+        pdf.setFont('helvetica', 'bold');
+        pdf.setFontSize(7.5);
+        pdf.setTextColor(100, 116, 139);
+        pdf.text('BEFORE:', boxX + 8, boxY + 11);
+        pdf.setFont('helvetica', 'bold');
+        pdf.setFontSize(9.5);
+        pdf.setTextColor(15, 23, 42);
+        pdf.text(magistrateText, boxX + 8, boxY + 22);
+
+        // Cell 2: DATE & VENUE
+        pdf.setFont('helvetica', 'bold');
+        pdf.setFontSize(7.5);
+        pdf.setTextColor(100, 116, 139);
+        pdf.text('DATE & VENUE:', boxX + colWidth + 8, boxY + 11);
+        pdf.setFont('helvetica', 'bold');
+        pdf.setFontSize(9.5);
+        pdf.setTextColor(15, 23, 42);
+        pdf.text(dateVenueText, boxX + colWidth + 8, boxY + 22);
+
+        // Cell 3: PROSECUTION / PLAINTIFF
+        pdf.setFont('helvetica', 'bold');
+        pdf.setFontSize(7.5);
+        pdf.setTextColor(100, 116, 139);
+        pdf.text(party1Label, boxX + 8, r1BorderY + 11);
+        pdf.setFont('helvetica', 'bold');
+        pdf.setFontSize(9.5);
+        pdf.setTextColor(15, 23, 42);
+        pdf.text(prosecutionText, boxX + 8, r1BorderY + 22);
+
+        // Cell 4: SESSION TIMINGS
+        pdf.setFont('helvetica', 'bold');
+        pdf.setFontSize(7.5);
+        pdf.setTextColor(100, 116, 139);
+        pdf.text('SESSION TIMINGS:', boxX + colWidth + 8, r1BorderY + 11);
+        pdf.setFont('helvetica', 'bold');
+        pdf.setFontSize(9.5);
+        pdf.setTextColor(15, 23, 42);
+        pdf.text(timingsText, boxX + colWidth + 8, r1BorderY + 22);
+
+        // Cell 5: DEFENDANT(S) & COUNSEL
+        pdf.setFont('helvetica', 'bold');
+        pdf.setFontSize(7.5);
+        pdf.setTextColor(100, 116, 139);
+        pdf.text('DEFENDANT(S) & COUNSEL:', boxX + 8, r2BorderY + 11);
+        pdf.setFont('helvetica', 'normal');
+        pdf.setFontSize(8.5);
+        pdf.setTextColor(15, 23, 42);
+        let defY = r2BorderY + 21;
+        defLines.forEach(line => {
+          pdf.text(line, boxX + 8, defY);
+          defY += 10.5;
+        });
+
+        // Cell 6: INTERPRETER
+        pdf.setFont('helvetica', 'bold');
+        pdf.setFontSize(7.5);
+        pdf.setTextColor(100, 116, 139);
+        pdf.text('INTERPRETER:', boxX + colWidth + 8, r2BorderY + 11);
+        pdf.setFont('helvetica', 'normal');
+        pdf.setFontSize(9);
+        pdf.setTextColor(15, 23, 42);
+        pdf.text(interpreterText, boxX + colWidth + 8, r2BorderY + 22);
+
+        currentY = boxY + totalBoxHeight + 18;
+
+        // 3. NOTES OF PROCEEDINGS BODY
+        const editor = document.getElementById('editor');
+        const children = editor ? Array.from(editor.children) : [];
+
+        const badgeWidth = 84;
+        const badgeHeight = 15;
+        const textIndentX = marginLeft + badgeWidth + 10; // 134 pt
+        const textColumnWidth = contentWidth - badgeWidth - 10; // 421.28 pt
+
+        for (let i = 0; i < children.length; i++) {
+          const node = children[i];
+
+          // Check for manual page break
+          if (node.classList && (node.classList.contains('page-break-line') || node.querySelector?.('.page-break-line'))) {
+            pdf.addPage();
+            currentY = marginTop;
+            continue;
           }
 
-          const pdf = new jsPdfLib({
-            orientation: 'portrait',
-            unit: 'mm',
-            format: 'a4'
-          });
-
-          const pageWidthMm = 210;
-          const pageHeightMm = 297;
-          const marginMm = 10;
-          const printableWidthMm = pageWidthMm - (marginMm * 2); // 190mm
-          const printableHeightMm = pageHeightMm - (marginMm * 2); // 277mm
-
-          const pxPerMm = canvas.width / printableWidthMm;
-          const pageHeightPx = Math.floor(printableHeightMm * pxPerMm);
-
-          let renderedHeight = 0;
-          let pageIndex = 0;
-
-          while (renderedHeight < canvas.height) {
-            const currentChunkPx = Math.min(pageHeightPx, canvas.height - renderedHeight);
-
-            const pageCanvas = document.createElement('canvas');
-            pageCanvas.width = canvas.width;
-            pageCanvas.height = currentChunkPx;
-            const ctx = pageCanvas.getContext('2d');
-            ctx.fillStyle = '#ffffff';
-            ctx.fillRect(0, 0, pageCanvas.width, pageCanvas.height);
-            ctx.drawImage(
-              canvas,
-              0, renderedHeight, canvas.width, currentChunkPx,
-              0, 0, canvas.width, currentChunkPx
-            );
-
-            const chunkDataUrl = pageCanvas.toDataURL('image/jpeg', 0.98);
-            const chunkHeightMm = currentChunkPx / pxPerMm;
-
-            if (pageIndex > 0) {
-              pdf.addPage();
+          // Case A: Speech Line with Speaker Tag
+          const tagEl = node.querySelector?.('.speaker-tag');
+          if (tagEl) {
+            let style = { text: [15, 23, 42], bg: [241, 245, 249], border: [203, 213, 225] };
+            for (const [cls, st] of Object.entries(badgeColors)) {
+              if (tagEl.classList.contains(cls)) {
+                style = st;
+                break;
+              }
             }
 
-            pdf.addImage(chunkDataUrl, 'JPEG', marginMm, marginMm, printableWidthMm, chunkHeightMm);
+            const tagText = tagEl.innerText.trim();
+            const clone = node.cloneNode(true);
+            clone.querySelector('.speaker-tag')?.remove();
+            const speechText = clone.innerText.trim();
 
-            renderedHeight += pageHeightPx;
-            pageIndex++;
+            pdf.setFont('helvetica', 'normal');
+            pdf.setFontSize(9.5);
+            const lines = pdf.splitTextToSize(speechText || '', textColumnWidth);
+            const blockHeight = Math.max(badgeHeight, lines.length * 13.5) + 6;
+
+            checkPageBreak(blockHeight);
+
+            // Draw Badge Rectangle
+            pdf.setFillColor(style.bg[0], style.bg[1], style.bg[2]);
+            pdf.setDrawColor(style.border[0], style.border[1], style.border[2]);
+            pdf.setLineWidth(0.7);
+            pdf.roundedRect(marginLeft, currentY, badgeWidth, badgeHeight, 3, 3, 'FD');
+
+            // Draw Badge Text
+            pdf.setFont('helvetica', 'bold');
+            pdf.setFontSize(8);
+            pdf.setTextColor(style.text[0], style.text[1], style.text[2]);
+            pdf.text(tagText, marginLeft + (badgeWidth / 2), currentY + 10.5, { align: 'center' });
+
+            // Draw Speech Text Lines
+            pdf.setFont('helvetica', 'normal');
+            pdf.setFontSize(9.5);
+            pdf.setTextColor(15, 23, 42);
+            let lineY = currentY + 10.5;
+            for (let l = 0; l < lines.length; l++) {
+              if (lineY > maxContentY) {
+                pdf.addPage();
+                lineY = marginTop + 10.5;
+              }
+              pdf.text(lines[l], textIndentX, lineY);
+              lineY += 13.5;
+            }
+
+            currentY = Math.max(currentY + badgeHeight, lineY - 3) + 5;
+            continue;
           }
 
-          pdf.save(finalName);
-          cleanupPdfExport();
-          showToast(`PDF exported: ${finalName}`, 'success');
-          return;
+          // Case B: Speech Continuation
+          if (node.classList && node.classList.contains('speech-continuation')) {
+            const contText = node.innerText.trim();
+            if (!contText) {
+              currentY += 6;
+              continue;
+            }
+
+            pdf.setFont('helvetica', 'normal');
+            pdf.setFontSize(9.5);
+            pdf.setTextColor(15, 23, 42);
+            const lines = pdf.splitTextToSize(contText, textColumnWidth);
+            const blockHeight = lines.length * 13.5 + 4;
+
+            checkPageBreak(blockHeight);
+
+            let lineY = currentY + 10;
+            for (let l = 0; l < lines.length; l++) {
+              if (lineY > maxContentY) {
+                pdf.addPage();
+                lineY = marginTop + 10;
+              }
+              pdf.text(lines[l], textIndentX, lineY);
+              lineY += 13.5;
+            }
+
+            currentY = lineY + 3;
+            continue;
+          }
+
+          // Case C: Order Snippet Tag
+          const orderTag = node.querySelector?.('.tag-order');
+          if (orderTag) {
+            const clone = node.cloneNode(true);
+            clone.querySelector('.tag-order')?.remove();
+            const orderText = clone.innerText.trim();
+
+            pdf.setFont('helvetica', 'bold');
+            pdf.setFontSize(9.5);
+            const lines = pdf.splitTextToSize(orderText, textColumnWidth);
+            const blockHeight = Math.max(badgeHeight, lines.length * 13.5) + 6;
+
+            checkPageBreak(blockHeight);
+
+            // Badge
+            pdf.setFillColor(243, 232, 255); // #f3e8ff
+            pdf.setDrawColor(233, 213, 255);
+            pdf.roundedRect(marginLeft, currentY, badgeWidth, badgeHeight, 3, 3, 'FD');
+            pdf.setFont('helvetica', 'bold');
+            pdf.setFontSize(8);
+            pdf.setTextColor(107, 33, 168);
+            pdf.text('ORDER:', marginLeft + (badgeWidth / 2), currentY + 10.5, { align: 'center' });
+
+            // Order text
+            pdf.setFont('helvetica', 'bold');
+            pdf.setFontSize(9.5);
+            pdf.setTextColor(107, 33, 168);
+            let lineY = currentY + 10.5;
+            for (let l = 0; l < lines.length; l++) {
+              if (lineY > maxContentY) {
+                pdf.addPage();
+                lineY = marginTop + 10.5;
+              }
+              pdf.text(lines[l], textIndentX, lineY);
+              lineY += 13.5;
+            }
+
+            currentY = Math.max(currentY + badgeHeight, lineY - 3) + 6;
+            continue;
+          }
+
+          // Case D: Table (e.g. exhibits table)
+          if (node.tagName === 'TABLE' || node.querySelector?.('table')) {
+            const tableEl = node.tagName === 'TABLE' ? node : node.querySelector('table');
+            const rows = Array.from(tableEl.querySelectorAll('tr'));
+            if (rows.length > 0) {
+              checkPageBreak(rows.length * 18 + 10);
+              const colCount = Math.max(...rows.map(r => r.children.length));
+              const tColWidth = contentWidth / (colCount || 1);
+
+              rows.forEach((tr, rIdx) => {
+                const isHeader = tr.closest('thead') !== null || rIdx === 0;
+                const cellHeight = 16;
+                checkPageBreak(cellHeight);
+
+                pdf.setFillColor(isHeader ? 241 : 255, isHeader ? 245 : 255, isHeader ? 249 : 255);
+                pdf.setDrawColor(203, 213, 225);
+                pdf.setLineWidth(0.5);
+
+                Array.from(tr.children).forEach((td, cIdx) => {
+                  const cellX = marginLeft + cIdx * tColWidth;
+                  pdf.rect(cellX, currentY, tColWidth, cellHeight, 'FD');
+                  pdf.setFont('helvetica', isHeader ? 'bold' : 'normal');
+                  pdf.setFontSize(8);
+                  pdf.setTextColor(15, 23, 42);
+                  const txt = td.innerText.trim();
+                  pdf.text(txt, cellX + 5, currentY + 11, { maxWidth: tColWidth - 10 });
+                });
+                currentY += cellHeight;
+              });
+              currentY += 8;
+              continue;
+            }
+          }
+
+          // Case E: Standard Paragraph / Text
+          const pText = node.innerText.trim();
+          if (!pText) {
+            currentY += 8;
+            continue;
+          }
+
+          pdf.setFont('helvetica', 'normal');
+          pdf.setFontSize(9.5);
+          pdf.setTextColor(15, 23, 42);
+          const pLines = pdf.splitTextToSize(pText, contentWidth);
+          checkPageBreak(pLines.length * 13.5 + 4);
+
+          let pY = currentY + 10;
+          for (let l = 0; l < pLines.length; l++) {
+            if (pY > maxContentY) {
+              pdf.addPage();
+              pY = marginTop + 10;
+            }
+            pdf.text(pLines[l], marginLeft, pY);
+            pY += 13.5;
+          }
+          currentY = pY + 4;
         }
 
-        // Fallback to html2pdf if jsPDF/html2canvas globals not found
-        if (typeof html2pdf !== 'undefined') {
-          const opt = {
-            margin: [10, 10, 10, 10],
-            filename: finalName,
-            image: { type: 'jpeg', quality: 0.98 },
-            html2canvas: { scale: 2, useCORS: true, backgroundColor: '#ffffff' },
-            jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
-            pagebreak: { mode: ['css', 'legacy'] }
-          };
-          await html2pdf().set(opt).from(sheet).save();
-          cleanupPdfExport();
-          showToast(`PDF exported: ${finalName}`, 'success');
-          return;
+        // 4. RUNNING PAGE FOOTER (Subtle page numbering)
+        const totalPages = pdf.internal.getNumberOfPages();
+        for (let p = 1; p <= totalPages; p++) {
+          pdf.setPage(p);
+          pdf.setDrawColor(226, 232, 240);
+          pdf.setLineWidth(0.5);
+          pdf.line(marginLeft, 808, marginLeft + contentWidth, 808);
+
+          pdf.setFont('helvetica', 'normal');
+          pdf.setFontSize(8);
+          pdf.setTextColor(148, 163, 184); // #94a3b8
+          pdf.text(caseNoText, marginLeft, 821);
+          pdf.text(`Page ${p} of ${totalPages}`, marginLeft + contentWidth, 821, { align: 'right' });
         }
 
-        throw new Error('No PDF engine available');
+        // Save native vector PDF directly
+        pdf.save(finalName);
+        showToast(`Selectable PDF exported: ${finalName}`, 'success');
       } catch (err) {
-        console.warn('Direct PDF export error:', err);
-        cleanupPdfExport();
-        showToast('Direct PDF export encountered an issue, opening print dialog.', 'info');
+        console.error('Vector PDF export error:', err);
+        showToast('PDF export issue, opening print dialog.', 'info');
         window.print();
+      } finally {
+        if (loadingOverlay && loadingOverlay.parentNode) {
+          loadingOverlay.remove();
+        }
       }
     }
 
@@ -5443,7 +5756,7 @@
         if (draft && draft.editorHtml) {
           const caseRef = draft.generatedCaseNo && !draft.generatedCaseNo.includes('[No]')
             ? draft.generatedCaseNo
-            : 'MCCT/BSB/1/2026';
+            : 'MCCT/BSB/X/2026';
           const targetKey = `${DRAFT_KEY_PREFIX}${sanitizeCaseRefForKey(caseRef)}`;
           if (!localStorage.getItem(targetKey)) {
             localStorage.setItem(targetKey, JSON.stringify(draft));
@@ -5507,8 +5820,9 @@
         tabSessionId,
         savedAt: now.toISOString(),
         savedAtDisplay: now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }),
-        savedDateDisplay: now.toLocaleDateString('en-GB'),
-        generatedCaseNo: document.getElementById('generatedCaseNo')?.innerText || 'MCCT/BSB/9/2026',
+        generatedCaseNo: (document.getElementById('generatedCaseNo')?.innerText && !document.getElementById('generatedCaseNo')?.innerText.includes('[No]'))
+          ? document.getElementById('generatedCaseNo')?.innerText
+          : resolveCleanCaseRef(),
         editorHtml: document.getElementById('editor')?.innerHTML || '',
         metadata: {
           courtTier: "Magistrate's Court",
@@ -6205,6 +6519,8 @@
 
       window.addEventListener('beforeprint', () => {
         tryAutoStopSession('Print');
+        const printFooterCaseNo = document.getElementById('printFooterCaseNo');
+        if (printFooterCaseNo) printFooterCaseNo.innerText = resolveCleanCaseRef();
       });
     }
 
@@ -6288,8 +6604,10 @@
       const caseType = document.getElementById('caseType')?.value || 'MCCT';
       const docketLoc = document.getElementById('docketLoc')?.value || 'BANDAR SERI BEGAWAN';
       const docketCode = docketLoc.includes('KUALA') ? 'KB' : docketLoc.includes('TUTONG') ? 'TUT' : docketLoc.includes('TEMBURONG') ? 'TEMB' : 'BSB';
-      const docketNo = document.getElementById('caseNoVal')?.value || '1';
-      const year = document.getElementById('caseYearVal')?.value || yyyy;
+      const rawDocketNo = document.getElementById('caseNoVal')?.value?.trim();
+      const docketNo = (rawDocketNo && rawDocketNo !== '[No]') ? rawDocketNo : 'X';
+      const rawYear = document.getElementById('caseYearVal')?.value?.trim();
+      const year = (rawYear && !isNaN(parseInt(rawYear, 10))) ? rawYear : yyyy;
       const magName = active.magistrateName || document.getElementById('magistrateName')?.value?.trim() || 'Magistrate';
 
       // Case number representations
@@ -7047,21 +7365,95 @@
       });
     }
 
-    // Unified Calendar Service Bridge (Direct Google REST API with Local Proxy fallback)
+    // ==========================================
+    // OFFLINE & STANDALONE LOCAL CALENDAR STORAGE
+    // (Enables 100% standalone execution when index.html is opened directly without server.js)
+    // ==========================================
+    const OFFLINE_SCHEDULE_STORAGE_KEY = 'subordinate_courts_bn_offline_schedule_v1';
+
+    function getOfflineStoredEvents(dateStr) {
+      try {
+        const raw = localStorage.getItem(OFFLINE_SCHEDULE_STORAGE_KEY);
+        if (!raw) return [];
+        const list = JSON.parse(raw);
+        if (!Array.isArray(list)) return [];
+        if (!dateStr) return list;
+        return list.filter(evt => evt.date === dateStr || (evt.startTime && evt.startTime.startsWith(dateStr)));
+      } catch (e) {
+        return [];
+      }
+    }
+
+    function saveOfflineStoredEvent(payload) {
+      try {
+        const raw = localStorage.getItem(OFFLINE_SCHEDULE_STORAGE_KEY);
+        const list = raw ? (JSON.parse(raw) || []) : [];
+        const hType = (payload.hearingType || 'FM').toUpperCase();
+        const cfg = HEARING_TYPES_CONFIG[hType] || HEARING_TYPES_CONFIG.FM;
+        const startD = new Date(payload.startDateTime);
+        const duration = parseInt(payload.durationMinutes, 10) || cfg.defaultDuration || 15;
+        const endD = new Date(startD.getTime() + duration * 60 * 1000);
+        const dateStr = !isNaN(startD.getTime()) ? startD.toISOString().slice(0, 10) : new Date().toISOString().slice(0, 10);
+        const timeFormatter = new Intl.DateTimeFormat('en-US', {
+          hour: '2-digit',
+          minute: '2-digit',
+          hour12: true,
+          timeZone: 'Asia/Brunei'
+        });
+
+        const title = `${cfg.titlePrefix}: ${payload.caseNo}`;
+        const newEvt = {
+          id: 'offline_evt_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5),
+          title,
+          date: dateStr,
+          hearingType: hType,
+          startTime: startD.toISOString(),
+          endTime: endD.toISOString(),
+          startTimeFormatted: !isNaN(startD.getTime()) ? timeFormatter.format(startD) : '09:30 AM',
+          endTimeFormatted: !isNaN(endD.getTime()) ? timeFormatter.format(endD) : '09:45 AM',
+          courtRoom: payload.courtRoom || 'Court Room 1',
+          notes: payload.notes || '',
+          color: cfg.hex || '#039be5'
+        };
+
+        list.push(newEvt);
+        localStorage.setItem(OFFLINE_SCHEDULE_STORAGE_KEY, JSON.stringify(list));
+
+        return {
+          success: true,
+          title,
+          eventId: newEvt.id,
+          eventUrl: null,
+          startTime: newEvt.startTime,
+          endTime: newEvt.endTime,
+          hearingLabel: cfg.label,
+          offlineSaved: true
+        };
+      } catch (e) {
+        console.warn('Offline event storage fallback notice:', e);
+        return {
+          success: true,
+          title: `Hearing: ${payload.caseNo}`,
+          eventId: 'offline_local',
+          offlineSaved: true
+        };
+      }
+    }
+
+    // Unified Calendar Service Bridge (Direct Google REST API with Local Proxy & Offline Standalone Fallback)
     const CalendarBridge = {
       async getUserSettings() {
         try {
           const res = await fetch('/api/calendar/settings');
-          return await res.json();
-        } catch (e) {
-          const active = getActiveProfile();
-          return {
-            success: true,
-            calendarId: active?.calendarId || 'primary',
-            defaultDuration: active?.defaultDuration || 15,
-            calendarName: active?.calendarName || "Primary Judicial Calendar"
-          };
-        }
+          if (res.ok) return await res.json();
+        } catch (e) {}
+        const active = getActiveProfile();
+        return {
+          success: true,
+          calendarId: active?.calendarId || 'primary',
+          defaultDuration: active?.defaultDuration || 15,
+          calendarName: active?.calendarName || "Primary Judicial Calendar"
+        };
       },
 
       async saveUserSettings(settingsObj) {
@@ -7071,10 +7463,9 @@
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(settingsObj)
           });
-          return await res.json();
-        } catch (e) {
-          return { success: true, ...settingsObj };
-        }
+          if (res.ok) return await res.json();
+        } catch (e) {}
+        return { success: true, ...settingsObj };
       },
 
       async testConnection(calendarId) {
@@ -7098,26 +7489,27 @@
               };
             }
           } catch (err) {
-            console.warn('Direct Google Calendar test API error, using proxy:', err);
+            console.warn('Direct Google Calendar test notice:', err);
           }
         }
 
-        // Backend proxy fallback
+        // Backend proxy fallback if running with server.js
         try {
           const res = await fetch('/api/calendar/test', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ calendarId: calId })
           });
-          return await res.json();
-        } catch (e) {
-          return {
-            success: true,
-            calendarId: calId,
-            calendarName: calId === 'primary' ? "Primary Judicial Calendar" : `Calendar: ${calId}`,
-            timeZone: 'Asia/Brunei'
-          };
-        }
+          if (res.ok) return await res.json();
+        } catch (e) {}
+
+        // Standalone offline fallback
+        return {
+          success: true,
+          calendarId: calId,
+          calendarName: calId === 'primary' ? "Primary Judicial Calendar" : `Calendar: ${calId}`,
+          timeZone: 'Asia/Brunei'
+        };
       },
 
       async getScheduleForDate(dateStr) {
@@ -7166,20 +7558,33 @@
               return { success: true, date: dateStr, events, authenticated: true };
             }
           } catch (err) {
-            console.warn('Direct Google Calendar schedule fetch failed, falling back to local proxy:', err);
+            console.warn('Direct Google Calendar schedule fetch notice:', err);
           }
         }
 
+        // Try local server endpoint if running with server.js
         try {
           const res = await fetch(`/api/calendar/schedule?date=${encodeURIComponent(dateStr)}`);
-          const data = await res.json();
-          return {
-            ...data,
-            authenticated: hasLiveAuth
-          };
+          if (res.ok) {
+            const data = await res.json();
+            return {
+              ...data,
+              authenticated: hasLiveAuth
+            };
+          }
         } catch (e) {
-          return { success: true, date: dateStr, events: [], authenticated: hasLiveAuth };
+          // Offline / standalone fallback
         }
+
+        // Standalone / Offline Fallback: retrieve local offline events
+        const offlineEvents = getOfflineStoredEvents(dateStr);
+        return {
+          success: true,
+          date: dateStr,
+          events: offlineEvents,
+          authenticated: hasLiveAuth,
+          offline: true
+        };
       },
 
       async createEvent(payload) {
@@ -7233,17 +7638,26 @@
               };
             }
           } catch (err) {
-            console.warn('Direct Google Calendar event creation error, trying local server:', err);
+            console.warn('Direct Google Calendar event creation notice:', err);
           }
         }
 
-        // Local Server API fallback
-        const res = await fetch('/api/calendar/event', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload)
-        });
-        return await res.json();
+        // Try local server endpoint if running with server.js
+        try {
+          const res = await fetch('/api/calendar/event', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+          });
+          if (res.ok) {
+            return await res.json();
+          }
+        } catch (e) {
+          // Offline / standalone fallback
+        }
+
+        // Standalone offline fallback: persist to browser localStorage
+        return saveOfflineStoredEvent(payload);
       }
     };
 
@@ -7653,7 +8067,7 @@
     }
 
     async function syncCaseToGoogleCalendar() {
-      const caseNoText = document.getElementById('generatedCaseNo')?.innerText?.trim() || 'MCCT/BSB/1/2026';
+      const caseNoText = resolveCleanCaseRef();
       const hearingDateVal = document.getElementById('nextHearingDate')?.value;
       const hearingTimeVal = document.getElementById('nextHearingTime')?.value || '09:30';
       const durationVal = parseInt(document.getElementById('nextHearingDuration')?.value, 10) || 15;
@@ -7804,7 +8218,7 @@
       modal.classList.remove('hidden');
 
       // Update case reference badge
-      const caseNoText = document.getElementById('generatedCaseNo')?.innerText?.trim() || 'MCCT/BSB/1/2026';
+      const caseNoText = resolveCleanCaseRef();
       const caseBadge = document.getElementById('adjournmentModalCaseNo');
       if (caseBadge) caseBadge.innerText = caseNoText;
       const contextBadge = document.getElementById('adjournmentContextCaseNo');
