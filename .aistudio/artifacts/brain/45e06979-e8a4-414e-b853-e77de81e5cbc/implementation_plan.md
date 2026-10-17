@@ -1,98 +1,71 @@
-# Fix Duplicate Footer in Word Desktop Export via Off-Page Header/Footer Table [COMPLETED]
+# Implementation Plan: Automatic Background Dropbox Token Renewal (OAuth 2.0 PKCE)
 
-Completely eliminate the duplicate footer on the last page of the Word (`.doc`) export when opened in the Microsoft Word desktop app by wrapping the footer definition in an off-page `#hrdftrtbl` table.
-
-### User Review & Critical Decisions
-
-> [!IMPORTANT]
-> **Root Cause in Microsoft Word Desktop**:
-> In Word-compatible HTML format, any HTML element placed in the document `<body>` (even outside `Section1`) is loaded into Word's document body stream. Because the element was physically visible in the HTML flow, Microsoft Word rendered it twice on the last page:
-> 1. Once as a regular body element directly following the transcript notes (in the middle of the page).
-> 2. Once as the running margin footer at the bottom of the page (from `@page Section1 { mso-footer: f1; }`).
->
-> **Confirmed Solution (Industry Standard for Word HTML)**:
-> Enclose the footer container in `<table id="hrdftrtbl">` with CSS `margin: 0in 0in 0in 900in; width: 1px; height: 1px; overflow: hidden;`. This pushes the body representation 900 inches off the printable canvas while allowing Microsoft Word's document parser to extract the `mso-element:footer` into Word's native margin footer engine.
-
-- **Confirmed Application**: Microsoft Word desktop app.
-- **Confirmed Handling**: Off-page table isolation (`table#hrdftrtbl`) preserving dynamic page numbering (`Page PAGE of NUMPAGES`) and clean case number (`MCCT/BSB/X/2026` or active case).
+This plan outlines the architecture and implementation to allow the Court Workstation to automatically and silently obtain fresh Dropbox access tokens in the background, eliminating the need for the Magistrate to manually copy and paste tokens every 4 hours.
 
 ---
 
-### 1. Overview & Core Concept
+## 1. Core Architecture & Workflow
 
-- **What It Does**:
-  - Adds the standard `table#hrdftrtbl` CSS rule in the document `<head><style>`.
-  - Wraps the footer `div#f1` in `<table id="hrdftrtbl" border="0" cellspacing="0" cellpadding="0"><tr><td>...</td></tr></table>`.
-  - Ensures Word desktop registers `f1` purely as a page layout resource for the bottom margin, with zero residual content rendered in the document body.
-- **Target Audience**: Court clerks, magistrates, and legal officers opening exported Notes of Proceedings in Microsoft Word desktop.
-- **Key Value**: Clean, single running footer at the exact bottom margin of every page without visual clutter or duplication on the final page.
+### A. The PKCE (Proof Key for Code Exchange) Authorization Flow
+Standard developer tokens (`sl...`) only provide short-lived access without a refresh mechanism. By implementing **OAuth 2.0 PKCE with offline access**:
+1. **Initiate Sign-In**:
+   - The user inputs their Dropbox **App Key** once (or uses the default court app key).
+   - The workstation generates a secure cryptographic `code_verifier` and SHA-256 `code_challenge`.
+   - Opens a popup to Dropbox's authorization URL with `response_type=code`, `token_access_type=offline`, and `code_challenge_method=S256`.
+2. **Authorization Code Exchange**:
+   - Once approved, the popup redirects to `/auth/dropbox/callback` with an authorization `code`.
+   - The workstation exchanges the `code` and `code_verifier` with Dropbox's `/oauth2/token` endpoint.
+   - Dropbox returns both an **`access_token`** (valid for 4 hours) AND a permanent **`refresh_token`**.
+3. **Storage**:
+   - The active Magistrate profile saves `dropboxRefreshToken`, `dropboxAccessToken`, `dropboxTokenExpiresAt` (epoch timestamp), and `dropboxAccountEmail`.
 
----
-
-### 2. User Experience & Visual Layout
-
-- **Document Body Flow**:
-  - The Notes of Proceedings transcript ends naturally with the final proceedings paragraph, adjournment timestamp, or signature block.
-  - No horizontal line, no case number text, and no page counter appear within the body flow of the last page.
-- **Running Page Footer**:
-  - Located cleanly in the 24pt bottom margin across all pages:
-    - **Left**: Clean court case reference (e.g., `MCCT/BSB/14/2026` or fallback `MCCT/BSB/X/2026`).
-    - **Right**: Word dynamic page numbering field (`Page 1 of 2`).
-    - **Top Rule**: Subtle `0.5pt solid #cbd5e1` divider line.
-
----
-
-### 3. Key Technical Decisions & Trade-Offs
-
-- **Decision 1: Use `table#hrdftrtbl` with 900-inch offset**:
-  - *Chosen Approach*: Wrap footer definition in `<table id="hrdftrtbl" style="margin:0in 0in 0in 900in; width:1px; height:1px; overflow:hidden;">`.
-  - *Why*: Microsoft Word's HTML import parser specifically scans for `mso-element:header` and `mso-element:footer` inside `table#hrdftrtbl`. The extreme negative/positive offset ensures Word does not allocate space for the container in the body flow, completely removing the inline middle-of-page duplicate.
-  - *Alternatives Considered*: Standard CSS `display: none`—discarded because Word's HTML filter completely strips `display: none` elements and fails to register the footer altogether.
-- **Decision 2: Retain MSO XML block and `@page Section1`**:
-  - *Chosen Approach*: Keep `<w:WordDocument><w:View>Print</w:View></w:WordDocument>` and `@page Section1 { mso-footer: f1; }`.
-  - *Why*: Ensures Word opens directly in Print Layout mode with running margins active and page numbers functioning.
+### B. Silent Background Refresh Engine (`ensureFreshDropboxToken()`)
+Before any file upload or sync operation (`syncBothToDropbox`):
+1. **Check Expiration**:
+   - If `dropboxRefreshToken` is present and `Date.now() >= dropboxTokenExpiresAt - 300000` (within 5 minutes of expiry):
+2. **Silent Refresh Request**:
+   - Sends a background refresh request with `grant_type=refresh_token&refresh_token=...&client_id=...` directly (or via `/api/dropbox/refresh`).
+   - Receives a fresh `access_token` and updated `expires_in`.
+   - Updates local storage and continues the sync operation seamlessly with zero prompts or toasts.
+3. **Resilient Retry**:
+   - If an upload ever encounters a `401` or `expired_access_token/` error despite timestamp checks, it automatically triggers an immediate background refresh and retries the upload once before reporting any error.
 
 ---
 
-### 4. Technical Architecture & Document Structure
+## 2. File & Component Changes
 
-```
-Word HTML Export Output:
-┌────────────────────────────────────────────────────────────────────────┐
-│ <html>                                                                 │
-│   <head>                                                               │
-│     <style>                                                            │
-│       @page Section1 { mso-footer: f1; ... }                           │
-│       table#hrdftrtbl { margin: 0 0 0 900in; width:1px; ... }          │
-│     </style>                                                           │
-│     <xml><w:WordDocument><w:View>Print</w:View></w:WordDocument></xml> │
-│   </head>                                                              │
-│   <body>                                                               │
-│     <div class="Section1">                                             │
-│       <table> ... Court Header & Metadata ... </table>                 │
-│       <div class="editor-body"> ... Notes Body ... </div>              │
-│     </div>                                                             │
-│                                                                        │
-│     <!-- Hidden off-page table holding Word footer definition -->      │
-│     <table id="hrdftrtbl" border="0" cellspacing="0" cellpadding="0">  │
-│       <tr>                                                             │
-│         <td>                                                           │
-│           <div style="mso-element:footer" id="f1">                     │
-│             <p class="MsoFooter">                                      │
-│               <table> Case No | Page PAGE of NUMPAGES </table>         │
-│             </p>                                                       │
-│           </div>                                                       │
-│         </td>                                                          │
-│       </tr>                                                            │
-│     </table>                                                           │
-│   </body>                                                              │
-│ </html>                                                                │
-└────────────────────────────────────────────────────────────────────────┘
-```
+### 1. `server.js` (Backend API & OAuth Proxy)
+- **`/api/dropbox/token`**:
+  - Node.js endpoint to exchange authorization code for tokens and handle refresh token requests using `fetch` to Dropbox OAuth endpoint.
+  - Ensures robust handling across network environments without CORS restrictions.
+- **`/auth/dropbox/callback`**:
+  - Update callback handler to handle both `code` and `access_token` callback parameters and send `DROPBOX_AUTH_CODE` via `postMessage`.
 
-### 5. Implementation Steps
+### 2. `index.html` (Frontend Client & UI)
+- **PKCE Utility Functions**:
+  - `generateCodeVerifier()`: Generates cryptographically random 43–128 character base64url string.
+  - `generateCodeChallenge(verifier)`: Computes SHA-256 hash formatted as URL-safe base64.
+- **Token Manager**:
+  - `ensureFreshDropboxToken()`: Asynchronous helper that returns a valid access token, auto-refreshing in the background if expired.
+  - `refreshDropboxAccessToken(profile)`: Handles the refresh exchange and updates profile credentials.
+- **`syncBothToDropbox()`**:
+  - Calls `await ensureFreshDropboxToken()` prior to calling `uploadFileToDropbox`.
+  - On 401, auto-refreshes and retries the upload once before falling back to manual recovery.
+- **Settings Modal UI**:
+  - Update Dropbox status badge to indicate **"Auto-Renew Enabled"** (Green Shield) when a refresh token is present.
+  - Provide a clear, one-click **"Pair via Browser (Auto-Renews Forever)"** button.
+  - Display token lifespan and auto-renewal health status in the troubleshooting guide.
 
-1. In `/index.html` within `generateWordHtmlDocument()`:
-   - Add `table#hrdftrtbl { margin: 0in 0in 0in 900in; width: 1px; height: 1px; overflow: hidden; }` into the export CSS string.
-   - Wrap the `<div style="mso-element:footer" id="f1">` block in `<table id="hrdftrtbl" border="0" cellspacing="0" cellpadding="0" style="margin:0in 0in 0in 900in; width:1px; height:1px; overflow:hidden;"><tr><td>...</td></tr></table>`.
-2. Verify via `compile_applet` and test export output to confirm that only a single running footer appears at the bottom margin of the final page in Microsoft Word.
+---
+
+## 3. Verification & Testing Plan
+
+1. **OAuth Flow Verification**:
+   - Test one-click pairing popup with PKCE and confirm retrieval of `refresh_token`.
+2. **Background Refresh Simulation**:
+   - Set `dropboxTokenExpiresAt` to a past timestamp or set `dropboxAccessToken` to an expired token string.
+   - Trigger `syncBothToDropbox()` and verify that the workstation silently acquires a new token and completes file upload without manual intervention.
+3. **Fallback Handling**:
+   - Ensure users who still use legacy manual tokens retain the quick-update modal if they have not yet connected via browser OAuth.
+4. **Build & Lint Verification**:
+   - Run `compile_applet` and `lint_applet` to ensure full code integrity.

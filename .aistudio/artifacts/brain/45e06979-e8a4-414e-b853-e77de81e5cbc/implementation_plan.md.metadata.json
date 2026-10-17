@@ -1,6 +1,6 @@
 {
-  "summary":  "Implementation plan to eliminate the duplicate footer on the last page of the Word (.doc) export when opened in the Microsoft Word desktop app using the industry-standard off-page header/footer table (hrdftrtbl) technique.",
-  "updatedAt":  "2026-10-11T15:14:31.932904193Z",
-  "requestFeedback":  true,
-  "userFacing":  true
+  "summary": "Implementation plan for automatic Dropbox token renewal using OAuth 2.0 PKCE and offline refresh tokens. Covers one-click browser sign-in, silent background token refresh before file uploads, server-assisted fallback endpoint, and persistent storage of refresh tokens in magistrate profiles.",
+  "updatedAt": "2026-10-15T12:11:26.428036860Z",
+  "requestFeedback": true,
+  "userFacing": true
 }
