@@ -311,23 +311,13 @@
       pointer-events: none;
     }
 
-    /* Top Navigation Header & Session Toolbar Autohide Engine (Maximizes Laptop Screen Space) */
+    /* Top Navigation Header is permanent throughout */
     #topNavHeader {
-      transition: margin-top 0.28s cubic-bezier(0.16, 1, 0.3, 1),
-                  opacity 0.22s ease,
-                  max-height 0.28s cubic-bezier(0.16, 1, 0.3, 1);
-      overflow: hidden;
-      max-height: 80px;
-      will-change: margin-top, opacity, max-height;
-    }
-    #topNavHeader.nav-autohidden {
-      margin-top: -80px !important;
-      max-height: 0 !important;
-      opacity: 0 !important;
-      pointer-events: none !important;
+      overflow: visible;
+      will-change: auto;
     }
 
-    #toolbar {
+    #richTextToolbar, #toolbar {
       transition: max-height 0.28s cubic-bezier(0.16, 1, 0.3, 1),
                   opacity 0.22s ease,
                   padding-top 0.28s cubic-bezier(0.16, 1, 0.3, 1),
@@ -335,10 +325,10 @@
                   border-bottom-width 0.28s cubic-bezier(0.16, 1, 0.3, 1);
       overflow-x: auto;
       overflow-y: hidden;
-      max-height: 80px;
+      max-height: 120px;
       will-change: max-height, opacity, padding;
     }
-    #toolbar.toolbar-autohidden {
+    #richTextToolbar.toolbar-autohidden, #toolbar.toolbar-autohidden {
       max-height: 0 !important;
       opacity: 0 !important;
       padding-top: 0 !important;
@@ -354,6 +344,17 @@
     .no-scrollbar {
       -ms-overflow-style: none;
       scrollbar-width: none;
+    }
+
+    /* Remove native up and down spinner arrows from Docket No input */
+    #caseNoVal::-webkit-outer-spin-button,
+    #caseNoVal::-webkit-inner-spin-button {
+      -webkit-appearance: none;
+      margin: 0;
+    }
+    #caseNoVal {
+      -moz-appearance: textfield;
+      appearance: textfield;
     }
 
     /* Top Edge Hover Reveal Sensor Zone */
@@ -557,11 +558,6 @@
         <i class="fa-solid fa-sliders text-base text-amber-400"></i>
       </button>
 
-      <!-- Start New Case (Fresh Mention) Action Button -->
-      <button onclick="promptStartNewCase()" id="navNewCaseBtn" class="p-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-emerald-400 transition border border-slate-700 cursor-pointer" title="Start New Case (Clear fields for fresh mention - Ctrl+Alt+N)">
-        <i class="fa-solid fa-file-circle-plus text-base text-emerald-400"></i>
-      </button>
-
       <!-- Further Hearing Adjournment & Calendar Sync Action Button -->
       <button onclick="openAdjournmentModal()" class="px-2.5 py-1.5 bg-blue-600 hover:bg-blue-500 text-white rounded-lg text-xs font-semibold flex items-center gap-1.5 transition shadow-xs cursor-pointer" title="Further Hearing Adjournment & Google Calendar Sync (Alt+C)">
         <i class="fa-solid fa-calendar-check"></i>
@@ -623,21 +619,13 @@
             </div>
             <div>
               <span class="text-[10px] text-slate-400 font-semibold uppercase">Case Type Prefix</span>
-              <select id="caseType" onchange="syncMetadata(); syncCaseTypeChips();" class="w-full bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded p-1.5 font-medium focus:ring-2 focus:ring-amber-500 outline-none text-xs">
+              <select id="caseType" onchange="syncMetadata()" class="w-full bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded p-1.5 font-medium focus:ring-2 focus:ring-amber-500 outline-none text-xs">
                 <option value="MCCT" selected>MCCT (Criminal Trial)</option>
                 <option value="MCCS">MCCS (Civil Suit)</option>
                 <option value="RTA">RTA (Traffic Offence)</option>
                 <option value="INQ">INQ (Inquest / Coroner)</option>
                 <option value="BAIL">BAIL (Bail Review)</option>
               </select>
-              <!-- Quick Case Type Chips -->
-              <div class="flex flex-wrap gap-1 mt-1" id="caseTypeChips">
-                <button type="button" onclick="setCaseTypePreset('MCCT')" class="case-type-chip px-1.5 py-0.5 rounded text-[10px] font-bold border transition cursor-pointer bg-amber-500/15 border-amber-500/40 text-amber-700 dark:text-amber-300" data-val="MCCT">MCCT</button>
-                <button type="button" onclick="setCaseTypePreset('MCCS')" class="case-type-chip px-1.5 py-0.5 rounded text-[10px] font-medium border transition cursor-pointer bg-white dark:bg-slate-700 border-slate-200 dark:border-slate-600 text-slate-600 dark:text-slate-300" data-val="MCCS">MCCS</button>
-                <button type="button" onclick="setCaseTypePreset('RTA')" class="case-type-chip px-1.5 py-0.5 rounded text-[10px] font-medium border transition cursor-pointer bg-white dark:bg-slate-700 border-slate-200 dark:border-slate-600 text-slate-600 dark:text-slate-300" data-val="RTA">RTA</button>
-                <button type="button" onclick="setCaseTypePreset('INQ')" class="case-type-chip px-1.5 py-0.5 rounded text-[10px] font-medium border transition cursor-pointer bg-white dark:bg-slate-700 border-slate-200 dark:border-slate-600 text-slate-600 dark:text-slate-300" data-val="INQ">INQ</button>
-                <button type="button" onclick="setCaseTypePreset('BAIL')" class="case-type-chip px-1.5 py-0.5 rounded text-[10px] font-medium border transition cursor-pointer bg-white dark:bg-slate-700 border-slate-200 dark:border-slate-600 text-slate-600 dark:text-slate-300" data-val="BAIL">BAIL</button>
-              </div>
             </div>
           </div>
 
@@ -645,19 +633,12 @@
           <div class="grid grid-cols-2 gap-2">
             <div>
               <span class="text-[10px] text-slate-400 font-semibold uppercase">Registry Station</span>
-              <select id="docketLoc" onchange="syncMetadata(); syncRegistryChips();" class="w-full bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded p-1.5 font-medium focus:ring-2 focus:ring-amber-500 outline-none">
+              <select id="docketLoc" onchange="syncMetadata()" class="w-full bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded p-1.5 font-medium focus:ring-2 focus:ring-amber-500 outline-none">
                 <option value="BANDAR SERI BEGAWAN" selected>BSB (Bandar Seri Begawan)</option>
                 <option value="KUALA BELAIT">KB (Kuala Belait)</option>
                 <option value="TUTONG">TUT (Tutong)</option>
                 <option value="TEMBURONG">TEMB (Temburong)</option>
               </select>
-              <!-- Quick Registry Chips -->
-              <div class="flex flex-wrap gap-1 mt-1" id="registryChips">
-                <button type="button" onclick="setDocketLocPreset('BANDAR SERI BEGAWAN')" class="registry-chip px-1.5 py-0.5 rounded text-[10px] font-bold border transition cursor-pointer bg-blue-500/15 border-blue-500/40 text-blue-700 dark:text-blue-300" data-val="BANDAR SERI BEGAWAN">BSB</button>
-                <button type="button" onclick="setDocketLocPreset('KUALA BELAIT')" class="registry-chip px-1.5 py-0.5 rounded text-[10px] font-medium border transition cursor-pointer bg-white dark:bg-slate-700 border-slate-200 dark:border-slate-600 text-slate-600 dark:text-slate-300" data-val="KUALA BELAIT">KB</button>
-                <button type="button" onclick="setDocketLocPreset('TUTONG')" class="registry-chip px-1.5 py-0.5 rounded text-[10px] font-medium border transition cursor-pointer bg-white dark:bg-slate-700 border-slate-200 dark:border-slate-600 text-slate-600 dark:text-slate-300" data-val="TUTONG">TUT</button>
-                <button type="button" onclick="setDocketLocPreset('TEMBURONG')" class="registry-chip px-1.5 py-0.5 rounded text-[10px] font-medium border transition cursor-pointer bg-white dark:bg-slate-700 border-slate-200 dark:border-slate-600 text-slate-600 dark:text-slate-300" data-val="TEMBURONG">TEMB</button>
-              </div>
             </div>
             <div>
               <span class="text-[10px] text-slate-400 font-semibold uppercase">Nature of Hearing</span>
@@ -668,24 +649,18 @@
                 <option value="Sentencing">Sentencing</option>
                 <option value="Hearing">Hearing</option>
               </select>
-              <!-- Quick Nature Chips -->
-              <div class="flex flex-wrap gap-1 mt-1">
-                <button type="button" onclick="setHearingNaturePreset('Mention')" class="px-1.5 py-0.5 rounded text-[10px] font-medium border bg-white dark:bg-slate-700 border-slate-200 dark:border-slate-600 hover:border-amber-400 transition cursor-pointer">Mention</button>
-                <button type="button" onclick="setHearingNaturePreset('PTC')" class="px-1.5 py-0.5 rounded text-[10px] font-medium border bg-white dark:bg-slate-700 border-slate-200 dark:border-slate-600 hover:border-amber-400 transition cursor-pointer">PTC</button>
-                <button type="button" onclick="setHearingNaturePreset('Sentencing')" class="px-1.5 py-0.5 rounded text-[10px] font-medium border bg-white dark:bg-slate-700 border-slate-200 dark:border-slate-600 hover:border-amber-400 transition cursor-pointer">Sentence</button>
-              </div>
             </div>
           </div>
 
           <!-- File Reference Numbers with Rapid Stepper and Year Presets -->
           <div class="grid grid-cols-2 gap-2">
             <div>
-              <span class="text-[10px] text-slate-400 font-semibold uppercase">Docket No. (Rapid Stepper)</span>
+              <span class="text-[10px] text-slate-400 font-semibold uppercase">Docket No.</span>
               <div class="flex items-center gap-1">
                 <button type="button" onclick="stepDocketNo(-1)" class="w-7 h-7 flex items-center justify-center bg-slate-200 hover:bg-slate-300 dark:bg-slate-600 dark:hover:bg-slate-500 text-slate-700 dark:text-slate-200 rounded font-bold text-xs transition cursor-pointer" title="Previous Docket No (-1)">
                   <i class="fa-solid fa-minus text-[9px]"></i>
                 </button>
-                <input type="number" id="caseNoVal" value="" placeholder="e.g. 1" min="1" oninput="syncMetadata()" class="flex-1 min-w-0 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded p-1.5 font-bold text-center focus:ring-2 focus:ring-amber-500 outline-none text-xs">
+                <input type="number" id="caseNoVal" value="" placeholder="e.g. 1" min="1" oninput="syncMetadata()" class="flex-1 min-w-0 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded p-1.5 font-bold text-center focus:ring-2 focus:ring-amber-500 outline-none text-xs" style="-moz-appearance: textfield; appearance: textfield;">
                 <button type="button" onclick="stepDocketNo(1)" class="w-7 h-7 flex items-center justify-center bg-slate-200 hover:bg-slate-300 dark:bg-slate-600 dark:hover:bg-slate-500 text-slate-700 dark:text-slate-200 rounded font-bold text-xs transition cursor-pointer" title="Next Docket No (+1)">
                   <i class="fa-solid fa-plus text-[9px]"></i>
                 </button>
@@ -693,21 +668,9 @@
             </div>
             <div>
               <span class="text-[10px] text-slate-400 font-semibold uppercase">Filing Year</span>
-              <input type="number" id="caseYearVal" value="" min="1990" max="2099" oninput="syncMetadata(); syncYearChips();" class="w-full bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded p-1.5 font-medium focus:ring-2 focus:ring-amber-500 outline-none text-xs">
-              <!-- Quick Year Chips -->
-              <div class="flex flex-wrap gap-1 mt-1" id="yearChips">
-                <button type="button" onclick="setCaseYearPreset(2026)" class="year-chip px-1.5 py-0.5 rounded text-[10px] font-bold border transition cursor-pointer bg-slate-200 dark:bg-slate-600 border-slate-300 dark:border-slate-500 text-slate-800 dark:text-slate-100" data-val="2026">2026</button>
-                <button type="button" onclick="setCaseYearPreset(2025)" class="year-chip px-1.5 py-0.5 rounded text-[10px] font-medium border transition cursor-pointer bg-white dark:bg-slate-700 border-slate-200 dark:border-slate-600 text-slate-600 dark:text-slate-300" data-val="2025">2025</button>
-                <button type="button" onclick="setCaseYearPreset(2024)" class="year-chip px-1.5 py-0.5 rounded text-[10px] font-medium border transition cursor-pointer bg-white dark:bg-slate-700 border-slate-200 dark:border-slate-600 text-slate-600 dark:text-slate-300" data-val="2024">2024</button>
-              </div>
+              <input type="number" id="caseYearVal" value="" min="1990" max="2099" oninput="syncMetadata()" class="w-full bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded p-1.5 font-medium focus:ring-2 focus:ring-amber-500 outline-none text-xs">
             </div>
           </div>
-
-          <!-- Rapid Mention Advance Stepper Action -->
-          <button type="button" onclick="quickProceedNextMention()" class="w-full py-1.5 px-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg font-bold text-[11px] flex items-center justify-center gap-1.5 transition shadow-xs cursor-pointer" title="Preserve current draft and roll docket number forward to next mention">
-            <i class="fa-solid fa-forward-step text-[10px]"></i>
-            <span>Next Mention (Save &amp; Advance Docket +1)</span>
-          </button>
 
           <!-- Auto-Combined Case Reference Box with Copy & Adjourn Shortcuts -->
           <div class="p-2.5 bg-slate-900 text-white rounded-lg border border-slate-800 text-center shadow-inner space-y-1.5">
@@ -879,6 +842,7 @@
     <!-- Rich Text NOP Typing Workspace -->
     <main class="flex-1 flex flex-col bg-slate-100 dark:bg-slate-900 overflow-hidden relative">
       
+
       <!-- Compatibility anchor for toolbar -->
       <div id="toolbar" class="hidden"></div>
 
@@ -1042,8 +1006,8 @@
 
           <div class="h-4 w-px bg-slate-300 dark:bg-slate-600 mx-0.5"></div>
 
-          <!-- Toggle Top Navigation Bars (Esc) -->
-          <button type="button" onmousedown="event.preventDefault(); toggleTopBarsManually()" class="p-1.5 px-2 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-500 hover:text-amber-500 dark:text-slate-400 dark:hover:text-amber-400 rounded-lg transition" title="Show / Hide Top Navigation Bars (Esc / Hover Top)">
+          <!-- Toggle Formatting Toolbar (Esc) -->
+          <button id="topNavToggleIconBtn" type="button" onclick="toggleTopBarsManually(true)" onmousedown="event.preventDefault(); toggleTopBarsManually(true)" class="p-1.5 px-2 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-500 hover:text-amber-500 dark:text-slate-400 dark:hover:text-amber-400 rounded-lg transition cursor-pointer" title="Hide Formatting Toolbar (Esc)">
             <i id="topNavToggleIcon" class="fa-solid fa-chevron-up text-xs"></i>
           </button>
         </div>
@@ -1113,7 +1077,7 @@
       </button>
 
       <!-- Floating Pull-Tab to Open Fast Tags Slider when Collapsed -->
-      <button id="floatingFastTagsTab" onclick="toggleFastTagsSlider()" class="absolute right-0 top-[calc(50%+15px)] z-20 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs py-3.5 px-1.5 rounded-l-xl shadow-2xl flex flex-col items-center gap-1.5 transition-all duration-300 hidden border-y border-l border-amber-400/80 group cursor-pointer select-none" title="Slide Out Fast Tags (Alt + S / Cmd + K)">
+      <button id="floatingFastTagsTab" onclick="toggleFastTagsSlider()" class="absolute right-0 top-[calc(50%+15px)] z-20 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs py-3.5 px-1.5 rounded-l-xl shadow-2xl flex flex-col items-center gap-1.5 transition-all duration-300 border-y border-l border-amber-400/80 group cursor-pointer select-none" title="Slide Out Fast Tags (Alt + S / Cmd + K)">
         <i class="fa-solid fa-angles-left text-xs group-hover:-translate-x-0.5 transition-transform"></i>
         <span class="[writing-mode:vertical-rl] tracking-wider text-[10px] font-bold uppercase py-1">Fast Tags</span>
         <i class="fa-solid fa-tags text-[11px]"></i>
@@ -1229,7 +1193,7 @@
     </main>
 
     <!-- Collapsible / Sliding Dynamic Fast Tags Sidebar (Right Side) -->
-    <aside id="fastTagsSidebar" class="w-80 bg-white dark:bg-slate-800 border-l border-slate-200 dark:border-slate-700 flex flex-col z-20 shadow-xl shrink-0 overflow-hidden">
+    <aside id="fastTagsSidebar" class="w-80 bg-white dark:bg-slate-800 border-l border-slate-200 dark:border-slate-700 flex flex-col z-20 shadow-xl shrink-0 overflow-hidden collapsed">
       
       <!-- Panel Header -->
       <div class="p-3 bg-slate-50 dark:bg-slate-800/90 border-b border-slate-200 dark:border-slate-700 flex justify-between items-center">
@@ -1763,7 +1727,7 @@
         </div>
 
         <div class="flex items-center gap-2">
-          <button type="button" onclick="closeAdjournmentModal(); openSettingsModal();" class="p-2 text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition text-xs font-semibold flex items-center gap-1.5 cursor-pointer" title="Configure Calendar Settings">
+          <button type="button" onclick="closeAdjournmentModal(); openSettingsModal('cloud');" class="p-2 text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition text-xs font-semibold flex items-center gap-1.5 cursor-pointer" title="Configure Calendar Settings">
             <i class="fa-solid fa-gear"></i>
             <span class="hidden sm:inline">Settings</span>
           </button>
@@ -1797,7 +1761,7 @@
             <span id="adjournmentAuthStatusPill" class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-500/20">
               <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> Google Calendar Ready
             </span>
-            <button type="button" onclick="closeAdjournmentModal(); openSettingsModal();" class="text-[11px] text-slate-500 hover:text-blue-600 dark:text-slate-400 dark:hover:text-blue-400 font-medium flex items-center gap-1 cursor-pointer" title="Switch or configure judicial calendar in settings">
+            <button type="button" onclick="closeAdjournmentModal(); openSettingsModal('cloud');" class="text-[11px] text-slate-500 hover:text-blue-600 dark:text-slate-400 dark:hover:text-blue-400 font-medium flex items-center gap-1 cursor-pointer" title="Switch or configure judicial calendar in settings">
               <i class="fa-solid fa-gear text-[10px]"></i> Settings
             </button>
           </div>
@@ -2179,145 +2143,266 @@
           </div>
           <div>
             <h3 class="font-bold text-base text-slate-900 dark:text-slate-100 flex items-center gap-2">
-              Magistrate Profile & Court Settings
+              Magistrate Profile &amp; Court Settings
             </h3>
-            <p class="text-xs text-slate-500 dark:text-slate-400">Save judicial defaults, court rooms, interpreters & digital signatures to autofill across cases.</p>
+            <p class="text-xs text-slate-500 dark:text-slate-400">Courtroom identity, document conventions &amp; cloud synchronization.</p>
           </div>
         </div>
-        <button onclick="closeSettingsModal()" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 text-sm p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 transition cursor-pointer">
+        <button onclick="closeSettingsModal()" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 text-sm p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 transition cursor-pointer" title="Close Settings">
           <i class="fa-solid fa-xmark text-base"></i>
         </button>
       </div>
 
-      <!-- Modal Body -->
-      <div class="p-5 space-y-5 text-xs overflow-y-auto flex-1">
+      <!-- Segmented Category Tab Bar -->
+      <div class="flex items-center gap-1 p-1.5 bg-slate-100 dark:bg-slate-900/90 border-b border-slate-200 dark:border-slate-700 shrink-0">
+        <button type="button" id="btnSettingsTab_courtroom" onclick="switchSettingsTab('courtroom')" class="flex-1 py-2 px-2.5 text-xs font-bold rounded-lg transition-all flex items-center justify-center gap-2 bg-white dark:bg-slate-700 text-amber-600 dark:text-amber-400 shadow-xs border border-slate-200 dark:border-slate-600 cursor-pointer">
+          <i class="fa-solid fa-scale-balanced text-amber-500"></i>
+          <span class="truncate">Courtroom &amp; Profile</span>
+        </button>
+        <button type="button" id="btnSettingsTab_documents" onclick="switchSettingsTab('documents')" class="flex-1 py-2 px-2.5 text-xs font-medium rounded-lg transition-all flex items-center justify-center gap-2 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 hover:bg-white/50 dark:hover:bg-slate-800/50 cursor-pointer">
+          <i class="fa-solid fa-file-signature text-blue-500"></i>
+          <span class="truncate">Documents &amp; Signature</span>
+        </button>
+        <button type="button" id="btnSettingsTab_cloud" onclick="switchSettingsTab('cloud')" class="flex-1 py-2 px-2.5 text-xs font-medium rounded-lg transition-all flex items-center justify-center gap-2 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 hover:bg-white/50 dark:hover:bg-slate-800/50 cursor-pointer">
+          <i class="fa-solid fa-cloud text-emerald-500"></i>
+          <span class="truncate">Cloud &amp; Integrations</span>
+        </button>
+      </div>
+
+      <!-- Modal Body (Tabbed Content Panes) -->
+      <div class="p-4 sm:p-5 text-xs overflow-y-auto overflow-x-hidden flex-1 space-y-4">
         
-        <!-- Profile Switcher & Management -->
-        <div class="bg-amber-500/5 dark:bg-amber-500/10 border border-amber-500/20 rounded-xl p-3.5 space-y-2.5">
-          <div class="flex flex-wrap items-center justify-between gap-2">
-            <div>
+        <!-- ========================================== -->
+        <!-- TAB 1: COURTROOM & PROFILE                 -->
+        <!-- ========================================== -->
+        <div id="settingsTab_courtroom" class="space-y-4">
+          <!-- Profile Switcher & Portability Card -->
+          <div class="bg-amber-500/5 dark:bg-amber-500/10 border border-amber-500/20 rounded-xl p-3 space-y-2.5">
+            <div class="flex items-center justify-between gap-2">
               <span class="font-bold text-slate-800 dark:text-slate-200 uppercase tracking-wider text-[11px] flex items-center gap-1.5">
                 <i class="fa-solid fa-id-badge text-amber-500"></i> Active Judicial Profile
               </span>
-              <p class="text-[11px] text-slate-500 dark:text-slate-400">Switch profiles or backup/restore preferences across court machines.</p>
+              <div class="flex items-center gap-1.5">
+                <button type="button" onclick="createNewProfilePrompt()" class="px-2.5 py-1 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-[11px] rounded-lg transition shadow-2xs flex items-center gap-1 cursor-pointer">
+                  <i class="fa-solid fa-plus text-[10px]"></i> New Profile
+                </button>
+                <button type="button" id="deleteProfileBtn" onclick="deleteCurrentProfile()" class="px-2 py-1 text-rose-600 dark:text-rose-400 hover:bg-rose-100 dark:hover:bg-rose-950/40 border border-rose-200 dark:border-rose-900 rounded-lg text-[11px] font-semibold transition cursor-pointer" title="Delete Profile">
+                  <i class="fa-solid fa-trash-can"></i>
+                </button>
+              </div>
             </div>
-            <div class="flex items-center gap-1.5">
-              <button type="button" onclick="createNewProfilePrompt()" class="px-2.5 py-1 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-[11px] rounded-lg transition shadow-2xs flex items-center gap-1 cursor-pointer">
-                <i class="fa-solid fa-plus text-[10px]"></i> New Profile
-              </button>
-              <button type="button" id="deleteProfileBtn" onclick="deleteCurrentProfile()" class="px-2 py-1 text-rose-600 dark:text-rose-400 hover:bg-rose-100 dark:hover:bg-rose-950/40 border border-rose-200 dark:border-rose-900 rounded-lg text-[11px] font-semibold transition cursor-pointer" title="Delete Profile">
-                <i class="fa-solid fa-trash-can"></i>
-              </button>
+
+            <div class="flex items-center gap-2">
+              <select id="settingProfileSelect" onchange="switchSettingsProfile(this.value)" class="flex-1 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-lg p-2 font-semibold text-slate-800 dark:text-slate-100 text-xs focus:ring-2 focus:ring-amber-500 outline-none">
+                <!-- Dynamically rendered profile options -->
+              </select>
+              <span id="activeProfileBadge" class="bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border border-emerald-500/30 px-2.5 py-1.5 rounded-lg font-bold text-[10px] uppercase font-mono shrink-0">
+                Active
+              </span>
+            </div>
+
+            <!-- Profile Portability Controls -->
+            <div class="pt-2 border-t border-amber-500/15 flex flex-wrap items-center justify-between gap-2 text-[11px]">
+              <span class="text-slate-500 dark:text-slate-400 font-medium">Backup &amp; Migration:</span>
+              <div class="flex items-center gap-1.5">
+                <button type="button" onclick="exportMagistrateProfile()" class="px-2.5 py-1 bg-white dark:bg-slate-700 hover:bg-slate-100 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 border border-slate-300 dark:border-slate-600 rounded-lg font-semibold transition flex items-center gap-1 cursor-pointer shadow-2xs" title="Export this profile to a portable .json backup file">
+                  <i class="fa-solid fa-file-export text-blue-500"></i> Export (.json)
+                </button>
+                <button type="button" onclick="document.getElementById('importProfileFileInput').click()" class="px-2.5 py-1 bg-white dark:bg-slate-700 hover:bg-slate-100 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 border border-slate-300 dark:border-slate-600 rounded-lg font-semibold transition flex items-center gap-1 cursor-pointer shadow-2xs" title="Import a previously saved .json profile backup">
+                  <i class="fa-solid fa-file-import text-emerald-500"></i> Import Backup
+                </button>
+                <input type="file" id="importProfileFileInput" accept=".json,application/json" class="hidden" onchange="importMagistrateProfile(event)">
+              </div>
             </div>
           </div>
 
-          <div class="flex items-center gap-2">
-            <select id="settingProfileSelect" onchange="switchSettingsProfile(this.value)" class="flex-1 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-lg p-2 font-semibold text-slate-800 dark:text-slate-100 text-xs focus:ring-2 focus:ring-amber-500 outline-none">
-              <!-- Dynamically rendered profile options -->
-            </select>
-            <span id="activeProfileBadge" class="bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border border-emerald-500/30 px-2.5 py-1.5 rounded-lg font-bold text-[10px] uppercase font-mono shrink-0">
-              Active
+          <!-- Magistrate & Venue Defaults -->
+          <div class="space-y-3 p-3.5 bg-slate-50 dark:bg-slate-900/40 rounded-xl border border-slate-200 dark:border-slate-700">
+            <span class="font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider text-[11px] block border-b pb-1.5 border-slate-200 dark:border-slate-700 flex items-center gap-1.5">
+              <i class="fa-solid fa-user-tie text-amber-500"></i> Magistrate &amp; Venue Defaults
             </span>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <!-- Magistrate Full Name -->
+              <div>
+                <label class="font-bold text-slate-700 dark:text-slate-300 block mb-1">
+                  Magistrate Title &amp; Name <span class="text-rose-500">*</span>
+                </label>
+                <input type="text" id="settingMagistrateName" placeholder="e.g. Senior Magistrate Hajah [Name]" class="w-full bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-lg p-2 font-medium text-slate-800 dark:text-slate-100 text-xs focus:ring-2 focus:ring-amber-500 outline-none">
+                <span class="text-[10px] text-slate-400 mt-0.5 block">Autofills the 'BEFORE:' metadata header.</span>
+              </div>
+
+              <!-- Preferred Court District / Registry -->
+              <div>
+                <label class="font-bold text-slate-700 dark:text-slate-300 block mb-1">
+                  Court District / Registry
+                </label>
+                <select id="settingCourtLocation" class="w-full bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-lg p-2 font-medium text-slate-800 dark:text-slate-100 text-xs focus:ring-2 focus:ring-amber-500 outline-none">
+                  <option value="BANDAR SERI BEGAWAN">BANDAR SERI BEGAWAN (BSB)</option>
+                  <option value="KUALA BELAIT">KUALA BELAIT (KB)</option>
+                  <option value="TUTONG">TUTONG (TUT)</option>
+                  <option value="TEMBURONG">TEMBURONG (TEMB)</option>
+                </select>
+                <span class="text-[10px] text-slate-400 mt-0.5 block">Sets 'HOLDEN AT' location code.</span>
+              </div>
+
+              <!-- Preferred Court Room -->
+              <div>
+                <label class="font-bold text-slate-700 dark:text-slate-300 block mb-1">
+                  Court Room / Venue
+                </label>
+                <select id="settingCourtRoom" class="w-full bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-lg p-2 font-medium text-slate-800 dark:text-slate-100 text-xs focus:ring-2 focus:ring-amber-500 outline-none">
+                  <option value="Court Room 1">Court Room 1</option>
+                  <option value="Court Room 2">Court Room 2</option>
+                  <option value="Court Room 3">Court Room 3</option>
+                  <option value="Court Room 4">Court Room 4</option>
+                  <option value="Court Room 5">Court Room 5</option>
+                  <option value="Court Room 6">Court Room 6</option>
+                  <option value="Court Room 7">Court Room 7</option>
+                  <option value="Court Room 8">Court Room 8</option>
+                  <option value="Chambers">Chambers</option>
+                  <option value="Virtual Court">Virtual Court</option>
+                </select>
+                <span class="text-[10px] text-slate-400 mt-0.5 block">Default courtroom venue.</span>
+              </div>
+
+              <!-- Default Court Interpreter -->
+              <div>
+                <label class="font-bold text-slate-700 dark:text-slate-300 block mb-1">
+                  Default Court Interpreter
+                </label>
+                <input type="text" id="settingInterpreterName" placeholder="e.g. Malay / English Interpreter" class="w-full bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-lg p-2 font-medium text-slate-800 dark:text-slate-100 text-xs focus:ring-2 focus:ring-amber-500 outline-none">
+                <span class="text-[10px] text-slate-400 mt-0.5 block">Autofills the 'INTERPRETER:' field.</span>
+              </div>
+            </div>
           </div>
 
-          <!-- Offline Profile Portability & Backup Controls -->
-          <div class="pt-1.5 border-t border-amber-500/15 flex flex-wrap items-center justify-between gap-2 text-[11px]">
-            <span class="text-slate-600 dark:text-slate-300 font-medium flex items-center gap-1">
-              <i class="fa-solid fa-hard-drive text-amber-500"></i> Profile Portability:
+          <!-- Focus Mode & Screen Preferences -->
+          <div class="bg-slate-50 dark:bg-slate-900/40 p-3 rounded-xl border border-slate-200 dark:border-slate-700">
+            <label class="flex items-start gap-2.5 cursor-pointer">
+              <input type="checkbox" id="settingNavAutohideCheckbox" onchange="toggleAutohideSetting(this.checked)" class="mt-0.5 rounded text-amber-500 focus:ring-amber-400">
+              <div class="text-xs">
+                <span class="font-bold text-slate-800 dark:text-slate-200 block">Autohide formatting &amp; session toolbar while typing transcript</span>
+                <span class="text-slate-500 dark:text-slate-400 text-[11px] block mt-0.5">
+                  Top navigation bar remains permanently visible throughout. The formatting and session bar smoothly slides away while typing to maximize vertical room. Hover over the top bar or press <kbd class="font-mono bg-slate-200 dark:bg-slate-700 px-1 py-0.5 rounded text-[10px]">Esc</kbd> to reveal formatting controls.
+                </span>
+              </div>
+            </label>
+          </div>
+        </div>
+
+        <!-- ========================================== -->
+        <!-- TAB 2: DOCUMENTS & SIGNATURE               -->
+        <!-- ========================================== -->
+        <div id="settingsTab_documents" class="space-y-4 hidden">
+          <!-- File Naming Section -->
+          <div class="space-y-3 p-3.5 bg-slate-50 dark:bg-slate-900/40 rounded-xl border border-slate-200 dark:border-slate-700">
+            <span class="font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider text-[11px] block border-b pb-1.5 border-slate-200 dark:border-slate-700 flex items-center gap-1.5">
+              <i class="fa-solid fa-file-lines text-amber-500"></i> Preferred File Naming Convention
             </span>
-            <div class="flex items-center gap-1.5">
-              <button type="button" onclick="exportMagistrateProfile()" class="px-2.5 py-1 bg-white dark:bg-slate-700 hover:bg-slate-100 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 border border-slate-300 dark:border-slate-600 rounded-lg font-semibold transition flex items-center gap-1 cursor-pointer shadow-2xs" title="Export this profile to a portable .json backup file">
-                <i class="fa-solid fa-file-export text-blue-500"></i> Export Backup (.json)
-              </button>
-              <button type="button" onclick="document.getElementById('importProfileFileInput').click()" class="px-2.5 py-1 bg-white dark:bg-slate-700 hover:bg-slate-100 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 border border-slate-300 dark:border-slate-600 rounded-lg font-semibold transition flex items-center gap-1 cursor-pointer shadow-2xs" title="Import a previously saved .json profile backup">
-                <i class="fa-solid fa-file-import text-emerald-500"></i> Import Backup
-              </button>
-              <input type="file" id="importProfileFileInput" accept=".json,application/json" class="hidden" onchange="importMagistrateProfile(event)">
+
+            <div>
+              <label class="font-bold text-slate-700 dark:text-slate-300 block mb-1">
+                File Naming Convention
+              </label>
+              <select id="settingNamingPreset" onchange="handleNamingPresetChange()" class="w-full bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-lg p-2 font-medium text-slate-800 dark:text-slate-100 text-xs focus:ring-2 focus:ring-amber-500 outline-none">
+                <option value="yymmdd_nature_caseno_spaces">YYMMDD - [Type] - [Case number] (e.g. 261006 - Mention - MCCT BSB 1 2026)</option>
+                <option value="yymmdd_nature_caseno_underscores">YYMMDD - [Type] - [Case_No] (e.g. 261006 - Mention - MCCT_BSB_1_2026)</option>
+                <option value="caseno_nop">[Case_No] - NOP (e.g. MCCT_BSB_1_2026_NOP)</option>
+                <option value="yyyymmdd_magistrate_caseno">YYYY-MM-DD - [Magistrate] - [Case_No] (e.g. 2026-10-06 - Magistrate - MCCT_BSB_1_2026)</option>
+                <option value="custom">Custom Naming Pattern...</option>
+              </select>
+            </div>
+
+            <!-- Custom Pattern Builder (Shown when custom is selected) -->
+            <div id="customPatternBox" class="space-y-1.5 hidden bg-white dark:bg-slate-800 p-3 rounded-lg border border-slate-200 dark:border-slate-700">
+              <div class="flex items-center justify-between">
+                <label class="font-bold text-slate-700 dark:text-slate-300 text-[11px]">
+                  Custom Pattern Template:
+                </label>
+                <span class="text-[10px] text-slate-400 font-mono">Tokens: {YYMMDD}, {Nature}, {CaseNoSpaces}...</span>
+              </div>
+              <input type="text" id="settingCustomNamingPattern" oninput="updateNamingPreview()" placeholder="{YYMMDD} - {Nature} - {CaseNoSpaces}" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-600 rounded p-1.5 font-mono text-xs text-amber-600 dark:text-amber-400 outline-none">
+              
+              <div class="flex flex-wrap gap-1 pt-1">
+                <span class="text-[10px] text-slate-400 font-semibold mr-1">Insert:</span>
+                <button type="button" onclick="insertNamingToken('{YYMMDD}')" class="px-1.5 py-0.5 bg-slate-100 dark:bg-slate-700 hover:bg-amber-100 dark:hover:bg-amber-900/60 border border-slate-200 dark:border-slate-600 rounded text-[10px] font-mono text-slate-700 dark:text-slate-300">{YYMMDD}</button>
+                <button type="button" onclick="insertNamingToken('{Nature}')" class="px-1.5 py-0.5 bg-slate-100 dark:bg-slate-700 hover:bg-amber-100 dark:hover:bg-amber-900/60 border border-slate-200 dark:border-slate-600 rounded text-[10px] font-mono text-slate-700 dark:text-slate-300">{Nature}</button>
+                <button type="button" onclick="insertNamingToken('{CaseNoSpaces}')" class="px-1.5 py-0.5 bg-slate-100 dark:bg-slate-700 hover:bg-amber-100 dark:hover:bg-amber-900/60 border border-slate-200 dark:border-slate-600 rounded text-[10px] font-mono text-slate-700 dark:text-slate-300">{CaseNoSpaces}</button>
+                <button type="button" onclick="insertNamingToken('{CaseNo}')" class="px-1.5 py-0.5 bg-slate-100 dark:bg-slate-700 hover:bg-amber-100 dark:hover:bg-amber-900/60 border border-slate-200 dark:border-slate-600 rounded text-[10px] font-mono text-slate-700 dark:text-slate-300">{CaseNo}</button>
+                <button type="button" onclick="insertNamingToken('{Magistrate}')" class="px-1.5 py-0.5 bg-slate-100 dark:bg-slate-700 hover:bg-amber-100 dark:hover:bg-amber-900/60 border border-slate-200 dark:border-slate-600 rounded text-[10px] font-mono text-slate-700 dark:text-slate-300">{Magistrate}</button>
+              </div>
+            </div>
+
+            <!-- Live Filename Preview -->
+            <div class="bg-slate-900 text-white p-2.5 rounded-lg border border-slate-800 text-xs space-y-1">
+              <span class="text-[9px] uppercase font-bold text-amber-400 block tracking-wider">Live Filename Preview</span>
+              <div class="flex items-center gap-2 font-mono text-[11px] truncate">
+                <i class="fa-solid fa-file-word text-blue-400"></i>
+                <span id="settingNamingPreviewWord" class="text-slate-200 truncate">261006 - Mention - MCCT BSB 1 2026.doc</span>
+              </div>
+              <div class="flex items-center gap-2 font-mono text-[11px] truncate">
+                <i class="fa-solid fa-file-pdf text-amber-400"></i>
+                <span id="settingNamingPreviewPdf" class="text-slate-200 truncate">261006 - Mention - MCCT BSB 1 2026.pdf</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Digital Signature Section -->
+          <div class="space-y-3 p-3.5 bg-slate-50 dark:bg-slate-900/40 rounded-xl border border-slate-200 dark:border-slate-700">
+            <div class="flex items-center justify-between">
+              <span class="font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider text-[11px] flex items-center gap-1.5">
+                <i class="fa-solid fa-signature text-amber-500"></i> Digital Signature
+              </span>
+              <span id="signatureStatusBadge" class="text-[10px] font-mono text-slate-400 font-bold bg-white dark:bg-slate-800 px-2 py-0.5 rounded border border-slate-200 dark:border-slate-700">
+                No signature uploaded
+              </span>
+            </div>
+
+            <input type="file" id="settingSignatureFileInput" accept="image/png,image/jpeg,image/webp,image/svg+xml" onchange="handleSignatureFileUpload(event)" class="hidden">
+
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 items-center">
+              <!-- Signature Preview Card -->
+              <div class="sm:col-span-2 bg-white dark:bg-slate-800 border-2 border-dashed border-slate-300 dark:border-slate-600 rounded-xl p-3 flex flex-col items-center justify-center min-h-[90px] relative">
+                <div id="signaturePreviewPlaceholder" class="text-center text-slate-400 py-2 space-y-1">
+                  <i class="fa-solid fa-file-arrow-up text-xl text-slate-300 dark:text-slate-600"></i>
+                  <span class="block text-[11px] font-medium">Transparent PNG / Scanned Signature</span>
+                </div>
+                <img id="signaturePreviewImg" src="" alt="Signature Preview" class="max-h-16 max-w-full object-contain hidden">
+              </div>
+
+              <!-- Signature Buttons -->
+              <div class="space-y-2">
+                <button type="button" onclick="document.getElementById('settingSignatureFileInput').click()" class="w-full py-2 px-3 bg-slate-900 hover:bg-slate-800 text-white dark:bg-slate-100 dark:hover:bg-slate-200 dark:text-slate-900 font-bold rounded-lg transition text-xs flex items-center justify-center gap-1.5 shadow-xs cursor-pointer">
+                  <i class="fa-solid fa-upload text-amber-400 dark:text-amber-600"></i> Upload Image
+                </button>
+                <button type="button" id="removeSignatureBtn" onclick="removeCurrentSignature()" class="w-full py-1.5 px-3 text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 border border-rose-200 dark:border-rose-900 rounded-lg text-xs font-semibold transition hidden flex items-center justify-center gap-1 cursor-pointer">
+                  <i class="fa-solid fa-trash-can"></i> Remove
+                </button>
+              </div>
             </div>
           </div>
         </div>
 
-        <!-- Judicial Defaults Form -->
-        <div class="space-y-3.5">
-          <span class="font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider text-[11px] block border-b pb-1.5 border-slate-200 dark:border-slate-700 flex items-center gap-1.5">
-            <i class="fa-solid fa-user-tie text-amber-500"></i> Magistrate & Venue Defaults
-          </span>
-
-          <!-- Magistrate Full Name -->
-          <div>
-            <label class="font-bold text-slate-700 dark:text-slate-300 block mb-1">
-              Magistrate Title & Full Name <span class="text-rose-500">*</span>
-            </label>
-            <input type="text" id="settingMagistrateName" placeholder="e.g. Senior Magistrate Hajah [Name] / Magistrate [Name]" class="w-full bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-lg p-2 font-medium text-slate-800 dark:text-slate-100 text-xs focus:ring-2 focus:ring-amber-500 outline-none">
-            <span class="text-[10px] text-slate-400 mt-1 block">Autofills the 'BEFORE:' metadata field and court document header for every case.</span>
-          </div>
-
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <!-- Preferred Court District / Location -->
-            <div>
-              <label class="font-bold text-slate-700 dark:text-slate-300 block mb-1">
-                Court District / Registry
-              </label>
-              <select id="settingCourtLocation" class="w-full bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-lg p-2 font-medium text-slate-800 dark:text-slate-100 text-xs focus:ring-2 focus:ring-amber-500 outline-none">
-                <option value="BANDAR SERI BEGAWAN">BANDAR SERI BEGAWAN (BSB)</option>
-                <option value="KUALA BELAIT">KUALA BELAIT (KB)</option>
-                <option value="TUTONG">TUTONG (TUT)</option>
-                <option value="TEMBURONG">TEMBURONG (TEMB)</option>
-              </select>
-              <span class="text-[10px] text-slate-400 mt-1 block">Sets 'HOLDEN AT' location and district docket code.</span>
+        <!-- ========================================== -->
+        <!-- TAB 3: CLOUD & INTEGRATIONS                -->
+        <!-- ========================================== -->
+        <div id="settingsTab_cloud" class="space-y-4 hidden">
+          <!-- Google Calendar Integration Card -->
+          <div class="space-y-3 p-3.5 bg-slate-50 dark:bg-slate-900/40 rounded-xl border border-slate-200 dark:border-slate-700">
+            <div class="flex items-center justify-between">
+              <span class="font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider text-[11px] flex items-center gap-1.5">
+                <i class="fa-solid fa-calendar-days text-blue-500"></i> Google Calendar Court Integration
+              </span>
+              <span id="settingCalendarStatusBadge" class="text-[10px] font-mono px-2 py-0.5 rounded font-bold bg-white text-slate-600 dark:bg-slate-800 dark:text-slate-300 border border-slate-200 dark:border-slate-700">
+                Checking...
+              </span>
             </div>
 
-            <!-- Preferred Court Room -->
-            <div>
-              <label class="font-bold text-slate-700 dark:text-slate-300 block mb-1">
-                Preferred Court Room / Venue
-              </label>
-              <select id="settingCourtRoom" class="w-full bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-lg p-2 font-medium text-slate-800 dark:text-slate-100 text-xs focus:ring-2 focus:ring-amber-500 outline-none">
-                <option value="Court Room 1">Court Room 1</option>
-                <option value="Court Room 2">Court Room 2</option>
-                <option value="Court Room 3">Court Room 3</option>
-                <option value="Court Room 4">Court Room 4</option>
-                <option value="Court Room 5">Court Room 5</option>
-                <option value="Court Room 6">Court Room 6</option>
-                <option value="Court Room 7">Court Room 7</option>
-                <option value="Court Room 8">Court Room 8</option>
-                <option value="Chambers">Chambers</option>
-                <option value="Virtual Court">Virtual Court</option>
-              </select>
-              <span class="text-[10px] text-slate-400 mt-1 block">Default hearing venue in Date & Venue card.</span>
-            </div>
-          </div>
-
-          <!-- Default Court Interpreter -->
-          <div>
-            <label class="font-bold text-slate-700 dark:text-slate-300 block mb-1">
-              Default Court Interpreter
-            </label>
-            <input type="text" id="settingInterpreterName" placeholder="e.g. Malay / English Interpreter / [Name]" class="w-full bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-lg p-2 font-medium text-slate-800 dark:text-slate-100 text-xs focus:ring-2 focus:ring-amber-500 outline-none">
-            <span class="text-[10px] text-slate-400 mt-1 block">Autofills the 'INTERPRETER:' metadata field.</span>
-          </div>
-        </div>
-
-        <!-- Google Calendar Integration & Multi-User Settings Section -->
-        <div class="space-y-3.5 border-t pt-3.5 border-slate-200 dark:border-slate-700">
-          <div class="flex items-center justify-between">
-            <span class="font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider text-[11px] flex items-center gap-1.5">
-              <i class="fa-solid fa-calendar-days text-blue-500"></i> Google Calendar Judicial Integration
-            </span>
-            <span id="settingCalendarStatusBadge" class="text-[10px] font-mono px-2 py-0.5 rounded font-bold bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300 border border-slate-300 dark:border-slate-600">
-              Checking...
-            </span>
-          </div>
-
-          <p class="text-[11px] text-slate-500 dark:text-slate-400">
-            Connect your judicial Google Workspace or courtroom account with 1-click sign-in. Your available courtroom calendars will be automatically detected for instant scheduling.
-          </p>
-
-          <div class="space-y-3 bg-slate-50 dark:bg-slate-900/60 p-3.5 rounded-xl border border-slate-200 dark:border-slate-700">
             <!-- 1-Click Google Sign-In & Account Banner -->
-            <div id="googleAuthSection" class="p-3 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 space-y-2.5">
+            <div id="googleAuthSection" class="p-3 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700">
               <!-- When Signed In -->
-              <div id="googleSignedInView" class="hidden items-center justify-between">
+              <div id="googleSignedInView" class="hidden items-center justify-between flex-wrap gap-2">
                 <div class="flex items-center gap-2.5">
                   <div class="w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900/40 text-blue-600 dark:text-blue-400 flex items-center justify-center font-bold text-xs" id="googleUserAvatar">
                     <i class="fa-solid fa-user"></i>
@@ -2325,11 +2410,11 @@
                   <div>
                     <div id="googleUserEmail" class="text-xs font-bold text-slate-800 dark:text-slate-100">Signed in with Google</div>
                     <div id="googleUserTokenStatus" class="text-[10px] text-emerald-600 dark:text-emerald-400 font-semibold flex items-center gap-1">
-                      <i class="fa-solid fa-circle-check text-[9px]"></i> Connected & Calendar Access Granted
+                      <i class="fa-solid fa-circle-check text-[9px]"></i> Connected &amp; Calendar Access Granted
                     </div>
                   </div>
                 </div>
-                <div class="flex items-center gap-1.5">
+                <div class="flex items-center gap-1.5 ml-auto">
                   <button type="button" id="googleTokenRefreshBtn" onclick="handleGoogleSignInAndRefresh()" class="px-2.5 py-1 text-xs bg-blue-50 dark:bg-blue-950/40 hover:bg-blue-100 dark:hover:bg-blue-900/60 text-blue-600 dark:text-blue-400 rounded-lg transition font-medium flex items-center gap-1 cursor-pointer" title="Re-authorize Google Calendar Token">
                     <i class="fa-solid fa-key text-[11px]"></i>
                     <span>Authorize</span>
@@ -2348,8 +2433,8 @@
               <!-- When Signed Out: Standard Sign in with Google Button -->
               <div id="googleSignedOutView" class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2.5">
                 <div>
-                  <div class="text-xs font-bold text-slate-800 dark:text-slate-200">Connect Google Calendar</div>
-                  <div class="text-[11px] text-slate-500 dark:text-slate-400">Sign in once to detect your court calendars with zero setup.</div>
+                  <div class="text-xs font-bold text-slate-800 dark:text-slate-200">Connect Google Workspace</div>
+                  <div class="text-[11px] text-slate-500 dark:text-slate-400">Sign in to auto-detect your court scheduling calendars.</div>
                 </div>
                 <button type="button" onclick="handleGoogleSignIn()" class="gsi-material-button w-full sm:w-auto px-4 py-2 bg-white dark:bg-slate-700 hover:bg-slate-50 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-100 border border-slate-300 dark:border-slate-500 rounded-xl text-xs font-semibold shadow-xs flex items-center justify-center gap-2 transition cursor-pointer">
                   <svg version="1.1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" class="w-4 h-4 shrink-0">
@@ -2363,19 +2448,32 @@
               </div>
             </div>
 
-            <!-- Auto-Detected Court Calendar Picker -->
-            <div>
-              <label class="font-bold text-slate-700 dark:text-slate-300 block mb-1 flex items-center justify-between text-xs">
-                <span>Select Target Calendar</span>
-                <span class="text-[10px] text-slate-400 font-normal">Auto-detected from your account</span>
-              </label>
-              <select id="settingCalendarSelect" onchange="handleCalendarSelectChange(this.value)" class="w-full bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-lg p-2 font-medium text-xs text-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-blue-500 outline-none">
-                <option value="primary">Primary Judicial Calendar (Default)</option>
-              </select>
+            <!-- Target Calendar & Settings Grid -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 items-end">
+              <div>
+                <label class="font-bold text-slate-700 dark:text-slate-300 block mb-1">
+                  Target Court Calendar
+                </label>
+                <select id="settingCalendarSelect" onchange="handleCalendarSelectChange(this.value)" class="w-full bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-lg p-2 font-medium text-xs text-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-blue-500 outline-none">
+                  <option value="primary">Primary Judicial Calendar (Default)</option>
+                </select>
+              </div>
+
+              <div>
+                <label class="font-bold text-slate-700 dark:text-slate-300 block mb-1">
+                  Default Mention Duration
+                </label>
+                <select id="settingDefaultDuration" class="w-full bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-lg p-2 font-medium text-slate-800 dark:text-slate-100 text-xs focus:ring-2 focus:ring-blue-500 outline-none">
+                  <option value="15" selected>15 Minutes (Standard Mention)</option>
+                  <option value="30">30 Minutes (Sentencing / PTC)</option>
+                  <option value="45">45 Minutes</option>
+                  <option value="60">60 Minutes (Substantive Trial)</option>
+                </select>
+              </div>
             </div>
 
-            <!-- Optional Direct Calendar ID (Expandable for shared court email IDs) -->
-            <div class="pt-1">
+            <!-- Expandable Manual Calendar ID -->
+            <div>
               <button type="button" onclick="toggleCustomCalIdInput()" class="text-[11px] text-slate-500 hover:text-blue-600 dark:text-slate-400 dark:hover:text-blue-400 font-medium flex items-center gap-1 cursor-pointer">
                 <i id="toggleCalIdIcon" class="fa-solid fa-chevron-right text-[9px]"></i>
                 <span>Enter shared Calendar ID or Courtroom email manually</span>
@@ -2388,173 +2486,39 @@
               </div>
             </div>
 
-            <!-- Duration & Verification Row -->
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 items-center pt-1">
-              <div>
-                <label class="font-bold text-slate-700 dark:text-slate-300 block mb-1 text-xs">
-                  Default Hearing Duration
-                </label>
-                <select id="settingDefaultDuration" class="w-full bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-lg p-2 font-medium text-slate-800 dark:text-slate-100 text-xs focus:ring-2 focus:ring-blue-500 outline-none">
-                  <option value="15" selected>15 Minutes (Standard Mention)</option>
-                  <option value="30">30 Minutes (Sentencing / PTC)</option>
-                  <option value="45">45 Minutes</option>
-                  <option value="60">60 Minutes (Substantive Trial)</option>
-                </select>
-              </div>
-
-              <div class="sm:pt-4">
-                <button type="button" id="testCalendarConnBtn" onclick="testCalendarSettingsUI()" class="w-full py-2 px-3 bg-slate-900 hover:bg-slate-800 text-white dark:bg-slate-100 dark:hover:bg-slate-200 dark:text-slate-900 font-bold rounded-lg text-xs flex items-center justify-center gap-1.5 transition shadow-2xs cursor-pointer">
-                  <i id="testCalSpinner" class="fa-solid fa-plug text-blue-400 dark:text-blue-600"></i>
-                  <span>Test Connection</span>
-                </button>
-              </div>
-            </div>
-
-            <!-- Verification Status Display -->
-            <div id="settingCalendarVerificationBox" class="p-2.5 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs flex items-center justify-between">
-              <div class="flex items-center gap-2 truncate">
-                <i class="fa-solid fa-circle-check text-emerald-500"></i>
-                <span class="text-slate-500 dark:text-slate-400">Target:</span>
+            <!-- Verification Status Display with Integrated Test Connection Button -->
+            <div id="settingCalendarVerificationBox" class="p-2.5 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs flex flex-wrap sm:flex-nowrap items-center justify-between gap-2.5 w-full">
+              <div class="flex items-center gap-2 min-w-0 flex-1">
+                <i class="fa-solid fa-circle-check text-emerald-500 shrink-0"></i>
+                <span class="text-slate-500 dark:text-slate-400 shrink-0">Target:</span>
                 <span id="settingVerifiedCalName" class="font-bold text-slate-800 dark:text-slate-200 truncate">Primary Judicial Calendar</span>
+                <span id="settingVerifiedTimeZone" class="font-mono text-[10px] text-slate-400 font-semibold shrink-0 ml-1">Asia/Brunei</span>
               </div>
-              <span id="settingVerifiedTimeZone" class="font-mono text-[10px] text-slate-400 font-semibold">Asia/Brunei</span>
+              <button type="button" id="testCalendarConnBtn" onclick="testCalendarSettingsUI()" class="w-full sm:w-auto px-3.5 py-1.5 bg-slate-900 hover:bg-slate-800 text-white dark:bg-slate-100 dark:hover:bg-slate-200 dark:text-slate-900 font-bold rounded-lg text-xs flex items-center justify-center gap-1.5 transition shadow-2xs cursor-pointer shrink-0">
+                <i id="testCalSpinner" class="fa-solid fa-plug text-blue-400 dark:text-blue-600 text-[11px]"></i>
+                <span>Test Connection</span>
+              </button>
             </div>
           </div>
-        </div>
 
-        <!-- Laptop Screen Visibility & Courtroom Focus Preferences -->
-        <div class="space-y-3.5 border-t pt-3.5 border-slate-200 dark:border-slate-700">
-          <span class="font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider text-[11px] block border-b pb-1.5 border-slate-200 dark:border-slate-700 flex items-center gap-1.5">
-            <i class="fa-solid fa-laptop text-amber-500"></i> Laptop Screen Visibility & Courtroom Focus
-          </span>
-
-          <div class="bg-slate-50 dark:bg-slate-900/60 p-3.5 rounded-xl border border-slate-200 dark:border-slate-700 space-y-3">
-            <label class="flex items-start gap-2.5 cursor-pointer">
-              <input type="checkbox" id="settingNavAutohideCheckbox" onchange="toggleAutohideSetting(this.checked)" class="mt-0.5 rounded text-amber-500 focus:ring-amber-400">
-              <div class="text-xs">
-                <span class="font-bold text-slate-800 dark:text-slate-200 block">Autohide top navigation bar while typing in transcript</span>
-                <span class="text-slate-500 dark:text-slate-400 text-[11px] block mt-0.5">
-                  Maximizes vertical screen height for transcription during court proceedings. Moving mouse to the top edge (or pressing <kbd class="font-mono bg-slate-200 dark:bg-slate-700 px-1 py-0.5 rounded text-[10px]">Esc</kbd>) smoothly brings the header back into view.
-                </span>
-              </div>
-            </label>
-          </div>
-        </div>
-
-        <!-- Export File Naming Section -->
-        <div class="space-y-3.5 border-t pt-3.5 border-slate-200 dark:border-slate-700">
-          <span class="font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider text-[11px] block border-b pb-1.5 border-slate-200 dark:border-slate-700 flex items-center gap-1.5">
-            <i class="fa-solid fa-file-signature text-amber-500"></i> Preferred File Naming Convention
-          </span>
-
-          <!-- Preferred Naming Convention Preset -->
-          <div>
-            <label class="font-bold text-slate-700 dark:text-slate-300 block mb-1">
-              File Naming Convention
-            </label>
-            <select id="settingNamingPreset" onchange="handleNamingPresetChange()" class="w-full bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-lg p-2 font-medium text-slate-800 dark:text-slate-100 text-xs focus:ring-2 focus:ring-amber-500 outline-none">
-              <option value="yymmdd_nature_caseno_spaces">YYMMDD - [Type] - [Case number] (e.g. 261006 - Mention - MCCT BSB 1 2026)</option>
-              <option value="yymmdd_nature_caseno_underscores">YYMMDD - [Type] - [Case_No] (e.g. 261006 - Mention - MCCT_BSB_1_2026)</option>
-              <option value="caseno_nop">[Case_No] - NOP (e.g. MCCT_BSB_1_2026_NOP)</option>
-              <option value="yyyymmdd_magistrate_caseno">YYYY-MM-DD - [Magistrate] - [Case_No] (e.g. 2026-10-06 - Magistrate - MCCT_BSB_1_2026)</option>
-              <option value="custom">Custom Naming Pattern...</option>
-            </select>
-          </div>
-
-          <!-- Custom Pattern Builder (Shown when custom is selected) -->
-          <div id="customPatternBox" class="space-y-1.5 hidden bg-slate-50 dark:bg-slate-900/60 p-3 rounded-xl border border-slate-200 dark:border-slate-700">
+          <!-- Dropbox Cloud Sync Card -->
+          <div class="space-y-3 p-3.5 bg-slate-50 dark:bg-slate-900/40 rounded-xl border border-slate-200 dark:border-slate-700">
             <div class="flex items-center justify-between">
-              <label class="font-bold text-slate-700 dark:text-slate-300 text-[11px]">
-                Custom Pattern Template:
-              </label>
-              <span class="text-[10px] text-slate-400 font-mono">Tokens: {YYMMDD}, {Nature}, {CaseNoSpaces}...</span>
-            </div>
-            <input type="text" id="settingCustomNamingPattern" oninput="updateNamingPreview()" placeholder="{YYMMDD} - {Nature} - {CaseNoSpaces}" class="w-full bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 rounded p-1.5 font-mono text-xs text-amber-600 dark:text-amber-400 outline-none">
-            
-            <div class="flex flex-wrap gap-1 pt-1">
-              <span class="text-[10px] text-slate-400 font-semibold mr-1">Insert:</span>
-              <button type="button" onclick="insertNamingToken('{YYMMDD}')" class="px-1.5 py-0.5 bg-white dark:bg-slate-800 hover:bg-amber-100 dark:hover:bg-amber-900/60 border border-slate-200 dark:border-slate-700 rounded text-[10px] font-mono text-slate-700 dark:text-slate-300">{YYMMDD}</button>
-              <button type="button" onclick="insertNamingToken('{Nature}')" class="px-1.5 py-0.5 bg-white dark:bg-slate-800 hover:bg-amber-100 dark:hover:bg-amber-900/60 border border-slate-200 dark:border-slate-700 rounded text-[10px] font-mono text-slate-700 dark:text-slate-300">{Nature}</button>
-              <button type="button" onclick="insertNamingToken('{CaseNoSpaces}')" class="px-1.5 py-0.5 bg-white dark:bg-slate-800 hover:bg-amber-100 dark:hover:bg-amber-900/60 border border-slate-200 dark:border-slate-700 rounded text-[10px] font-mono text-slate-700 dark:text-slate-300">{CaseNoSpaces}</button>
-              <button type="button" onclick="insertNamingToken('{CaseNo}')" class="px-1.5 py-0.5 bg-white dark:bg-slate-800 hover:bg-amber-100 dark:hover:bg-amber-900/60 border border-slate-200 dark:border-slate-700 rounded text-[10px] font-mono text-slate-700 dark:text-slate-300">{CaseNo}</button>
-              <button type="button" onclick="insertNamingToken('{Magistrate}')" class="px-1.5 py-0.5 bg-white dark:bg-slate-800 hover:bg-amber-100 dark:hover:bg-amber-900/60 border border-slate-200 dark:border-slate-700 rounded text-[10px] font-mono text-slate-700 dark:text-slate-300">{Magistrate}</button>
-            </div>
-          </div>
-
-          <!-- Live Generated Filename Preview -->
-          <div class="bg-slate-900 text-white p-2.5 rounded-xl border border-slate-800 text-xs space-y-1">
-            <span class="text-[9px] uppercase font-bold text-amber-400 block tracking-wider">Live Filename Preview</span>
-            <div class="flex items-center gap-2 font-mono text-[11px] truncate">
-              <i class="fa-solid fa-file-word text-blue-400"></i>
-              <span id="settingNamingPreviewWord" class="text-slate-200 truncate">261006 - Mention - MCCT BSB 1 2026.doc</span>
-            </div>
-            <div class="flex items-center gap-2 font-mono text-[11px] truncate">
-              <i class="fa-solid fa-file-pdf text-amber-400"></i>
-              <span id="settingNamingPreviewPdf" class="text-slate-200 truncate">261006 - Mention - MCCT BSB 1 2026.pdf</span>
-            </div>
-          </div>
-        </div>
-
-        <!-- Digital Signature Upload & Storage -->
-        <div class="space-y-3 border-t pt-3.5 border-slate-200 dark:border-slate-700">
-          <div class="flex items-center justify-between">
-            <span class="font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider text-[11px] flex items-center gap-1.5">
-              <i class="fa-solid fa-signature text-amber-500"></i> Digital Signature
-            </span>
-            <span id="signatureStatusBadge" class="text-[10px] font-mono text-slate-400 font-bold bg-slate-100 dark:bg-slate-700 px-2 py-0.5 rounded">
-              No signature uploaded
-            </span>
-          </div>
-          <p class="text-[11px] text-slate-500 dark:text-slate-400">
-            Upload a transparent PNG or scanned signature. You can insert it directly into the proceedings using the <strong>Signature</strong> button in the editor toolbar.
-          </p>
-
-          <input type="file" id="settingSignatureFileInput" accept="image/png,image/jpeg,image/webp,image/svg+xml" onchange="handleSignatureFileUpload(event)" class="hidden">
-
-          <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 items-center">
-            <!-- Signature Preview Card -->
-            <div class="sm:col-span-2 bg-white dark:bg-slate-900 border-2 border-dashed border-slate-300 dark:border-slate-700 rounded-xl p-3 flex flex-col items-center justify-center min-h-[100px] relative">
-              <div id="signaturePreviewPlaceholder" class="text-center text-slate-400 py-3 space-y-1">
-                <i class="fa-solid fa-file-arrow-up text-2xl text-slate-300 dark:text-slate-600"></i>
-                <span class="block text-[11px] font-medium">Click "Upload Signature" to add image</span>
-              </div>
-              <img id="signaturePreviewImg" src="" alt="Signature Preview" class="max-h-20 max-w-full object-contain hidden">
+              <span class="font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider text-[11px] flex items-center gap-1.5">
+                <i class="fa-brands fa-dropbox text-blue-500 text-sm"></i> Dropbox Cloud Sync &amp; Auto-Archive
+              </span>
+              <span id="settingDropboxStatusBadge" class="text-[10px] font-mono px-2 py-0.5 rounded font-bold bg-white text-slate-500 dark:bg-slate-800 dark:text-slate-400 border border-slate-200 dark:border-slate-700">
+                Not Connected
+              </span>
             </div>
 
-            <!-- Signature Buttons -->
-            <div class="space-y-2">
-              <button type="button" onclick="document.getElementById('settingSignatureFileInput').click()" class="w-full py-2 px-3 bg-slate-900 hover:bg-slate-800 text-white dark:bg-slate-100 dark:hover:bg-slate-200 dark:text-slate-900 font-bold rounded-lg transition text-xs flex items-center justify-center gap-1.5 shadow-xs cursor-pointer">
-                <i class="fa-solid fa-upload text-amber-400 dark:text-amber-600"></i> Upload Signature
-              </button>
-              <button type="button" id="removeSignatureBtn" onclick="removeCurrentSignature()" class="w-full py-1.5 px-3 text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 border border-rose-200 dark:border-rose-900 rounded-lg text-xs font-semibold transition hidden flex items-center justify-center gap-1 cursor-pointer">
-                <i class="fa-solid fa-trash-can"></i> Remove
-              </button>
-            </div>
-          </div>
-        <!-- Dropbox Cloud Sync & Storage Integration Section -->
-        <div class="space-y-3.5 border-t pt-3.5 border-slate-200 dark:border-slate-700">
-          <div class="flex items-center justify-between">
-            <span class="font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider text-[11px] flex items-center gap-1.5">
-              <i class="fa-brands fa-dropbox text-blue-500 text-sm"></i> Dropbox Cloud Sync & Auto-Archive
-            </span>
-            <span id="settingDropboxStatusBadge" class="text-[10px] font-mono px-2 py-0.5 rounded font-bold bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400 border border-slate-300 dark:border-slate-600">
-              Not Connected
-            </span>
-          </div>
-
-          <p class="text-[11px] text-slate-500 dark:text-slate-400">
-            Automatically export and archive Word (.doc) and PDF documents to separate dedicated Dropbox folders. When enabled, the top navigation replaces individual export buttons with a 1-click <strong>Sync to Dropbox</strong> button.
-          </p>
-
-          <div class="bg-slate-50 dark:bg-slate-900/60 p-3.5 rounded-xl border border-slate-200 dark:border-slate-700 space-y-3.5">
-            
             <!-- Enable Dropbox Sync Toggle -->
             <label class="flex items-start gap-2.5 cursor-pointer">
               <input type="checkbox" id="settingDropboxEnabledCheckbox" onchange="toggleDropboxEnabledUI(this.checked)" class="mt-0.5 rounded text-blue-600 focus:ring-blue-500">
               <div class="text-xs">
-                <span class="font-bold text-slate-800 dark:text-slate-200 block">Enable Dropbox Unified Sync for this Magistrate Profile</span>
+                <span class="font-bold text-slate-800 dark:text-slate-200 block">Enable Dropbox Unified Sync for this Profile</span>
                 <span class="text-slate-500 dark:text-slate-400 text-[11px] block mt-0.5">
-                  Replaces top bar "Export Word" and "Export PDF" buttons with a single <strong>Sync to Dropbox</strong> button that uploads both files to their separate folders immediately.
+                  Replaces top bar export buttons with a 1-click <strong>Sync to Dropbox</strong> button archiving Word and PDF files simultaneously.
                 </span>
               </div>
             </label>
@@ -2562,145 +2526,115 @@
             <!-- Dropbox Pairing & Connection Box -->
             <div id="dropboxConfigContainer" class="space-y-3 pt-1">
               
-              <!-- Connection State Header / Info Card -->
-              <div class="p-3.5 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 space-y-3">
+              <!-- Connection State Card -->
+              <div class="p-3 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 space-y-3">
                 
                 <!-- When Connected: Live Account Status & Controls -->
                 <div id="dropboxConnectedView" class="hidden flex-col gap-3">
                   <div class="flex items-center justify-between flex-wrap gap-2">
-                    <div class="flex items-center gap-3">
-                      <div class="w-9 h-9 rounded-full bg-blue-100 dark:bg-blue-900/40 text-blue-600 dark:text-blue-400 flex items-center justify-center font-bold text-base shadow-xs">
+                    <div class="flex items-center gap-2.5">
+                      <div class="w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900/40 text-blue-600 dark:text-blue-400 flex items-center justify-center font-bold text-sm shadow-xs">
                         <i class="fa-brands fa-dropbox"></i>
                       </div>
                       <div>
                         <div id="dropboxAccountEmailDisplay" class="text-xs font-bold text-slate-800 dark:text-slate-100">Dropbox Account Connected</div>
                         <div id="dropboxAccountSubStatus" class="text-[10px] text-emerald-600 dark:text-emerald-400 font-semibold flex items-center gap-1.5 mt-0.5">
                           <i class="fa-solid fa-circle-check text-[10px]"></i>
-                          <span>Authenticated &bull; Unified export enabled on navigation bar</span>
+                          <span>Authenticated &bull; Unified export enabled</span>
                         </div>
                       </div>
                     </div>
-                    <div class="flex items-center gap-2">
-                      <button type="button" onclick="testDropboxConnectionUI()" class="px-3 py-1.5 text-xs bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 rounded-lg text-slate-700 dark:text-slate-200 transition font-medium flex items-center gap-1.5 cursor-pointer shadow-2xs" title="Verify Token with Dropbox">
+                    <div class="flex items-center gap-1.5 ml-auto">
+                      <button type="button" onclick="testDropboxConnectionUI()" class="px-2.5 py-1 text-xs bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 rounded-lg text-slate-700 dark:text-slate-200 transition font-medium flex items-center gap-1.5 cursor-pointer shadow-2xs" title="Verify Token with Dropbox">
                         <i id="testDropboxSpinner" class="fa-solid fa-arrows-rotate text-[11px]"></i>
                         <span>Verify</span>
                       </button>
-                      <button type="button" onclick="disconnectDropboxUI()" class="px-3 py-1.5 text-xs bg-rose-50 dark:bg-rose-950/40 hover:bg-rose-100 dark:hover:bg-rose-900/60 text-rose-600 dark:text-rose-400 rounded-lg transition font-medium flex items-center gap-1.5 cursor-pointer shadow-2xs" title="Disconnect Dropbox">
+                      <button type="button" onclick="disconnectDropboxUI()" class="px-2.5 py-1 text-xs bg-rose-50 dark:bg-rose-950/40 hover:bg-rose-100 dark:hover:bg-rose-900/60 text-rose-600 dark:text-rose-400 rounded-lg transition font-medium flex items-center gap-1.5 cursor-pointer shadow-2xs" title="Disconnect Dropbox">
                         <i class="fa-solid fa-link-slash text-[11px]"></i>
                         <span>Disconnect</span>
                       </button>
                     </div>
                   </div>
 
-                  <!-- Upgrade to PKCE Auto-Renew Banner (Visible if connected via manual token without refresh token) -->
-                  <div id="dropboxConnectedUpgradeCard" class="p-3.5 bg-gradient-to-r from-emerald-500/10 to-blue-500/10 border border-emerald-500/30 rounded-xl space-y-2.5">
+                  <!-- Upgrade to PKCE Auto-Renew Banner -->
+                  <div id="dropboxConnectedUpgradeCard" class="p-3 bg-gradient-to-r from-emerald-500/10 to-blue-500/10 border border-emerald-500/30 rounded-xl space-y-2">
                     <div class="flex items-center justify-between">
                       <div class="flex items-center gap-2">
-                        <div class="w-6 h-6 rounded-md bg-emerald-600 text-white flex items-center justify-center text-xs shadow-xs">
+                        <div class="w-5 h-5 rounded bg-emerald-600 text-white flex items-center justify-center text-[10px] shadow-xs">
                           <i class="fa-solid fa-shield-halved"></i>
                         </div>
-                        <div>
-                          <span class="font-bold text-slate-800 dark:text-slate-100 text-xs">Switch to One-Click Auto-Renewal (PKCE)</span>
-                          <span class="block text-[10px] text-slate-500 dark:text-slate-400">Eliminates 4-hour token expiration &bull; Silently renews in the background</span>
-                        </div>
+                        <span class="font-bold text-slate-800 dark:text-slate-100 text-xs">Switch to Auto-Renewal (PKCE)</span>
                       </div>
                       <span class="text-[10px] bg-emerald-600 text-white font-bold px-2 py-0.5 rounded-full">Recommended</span>
                     </div>
                     <div class="flex flex-col sm:flex-row gap-2">
                       <div class="relative flex-1">
-                        <input type="text" id="settingDropboxConnectedAppKey" placeholder="Paste your Dropbox App Key (e.g. 15 chars)" class="w-full bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-lg py-2 pl-3 pr-8 font-mono text-xs text-slate-800 dark:text-slate-100 outline-none focus:ring-2 focus:ring-emerald-500">
+                        <input type="text" id="settingDropboxConnectedAppKey" placeholder="Paste Dropbox App Key" class="w-full bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-lg py-1.5 pl-2.5 pr-8 font-mono text-xs text-slate-800 dark:text-slate-100 outline-none focus:ring-2 focus:ring-emerald-500">
                         <button type="button" onclick="pasteToInput('settingDropboxConnectedAppKey')" class="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-emerald-600 p-1 text-xs cursor-pointer" title="Paste App Key">
                           <i class="fa-regular fa-clipboard"></i>
                         </button>
                       </div>
-                      <button type="button" onclick="startDropboxAuthPopup(document.getElementById('settingDropboxConnectedAppKey')?.value)" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold shadow-xs flex items-center justify-center gap-1.5 transition cursor-pointer shrink-0">
+                      <button type="button" onclick="startDropboxAuthPopup(document.getElementById('settingDropboxConnectedAppKey')?.value)" class="px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold shadow-xs flex items-center justify-center gap-1.5 transition cursor-pointer shrink-0">
                         <i class="fa-brands fa-dropbox"></i>
-                        <span>Sign In & Enable Auto-Renew</span>
-                      </button>
-                    </div>
-                    <div class="flex items-center justify-between text-[10px] text-slate-500 dark:text-slate-400 pt-0.5">
-                      <span>In <a href="https://www.dropbox.com/developers/apps" target="_blank" rel="noopener noreferrer" class="text-blue-600 dark:text-blue-400 underline font-semibold">Dropbox App Console</a> &rarr; <em>Settings</em> &rarr; copy your <strong>App key</strong>.</span>
-                      <button type="button" onclick="copyDropboxRedirectUri()" class="text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-1 font-mono cursor-pointer" title="Copy exact Redirect URI">
-                        <i class="fa-solid fa-copy"></i>
-                        <span>Copy Redirect URI</span>
+                        <span>Enable Auto-Renew</span>
                       </button>
                     </div>
                   </div>
                 </div>
 
                 <!-- When Disconnected: Clear Pairing Options -->
-                <div id="dropboxDisconnectedView" class="space-y-3.5">
-                  <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-1.5 border-b border-slate-100 dark:border-slate-700/60 pb-2.5">
-                    <div>
-                      <div class="text-xs font-bold text-slate-800 dark:text-slate-100 flex items-center gap-1.5">
-                        <i class="fa-brands fa-dropbox text-blue-500 text-sm"></i> Connect Dropbox Account
-                      </div>
-                      <div class="text-[11px] text-slate-500 dark:text-slate-400">
-                        Choose your preferred authorization method for this Magistrate Profile.
-                      </div>
-                    </div>
-                    <a href="https://www.dropbox.com/developers/apps" target="_blank" rel="noopener noreferrer" class="text-[11px] text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-1 font-semibold shrink-0">
-                      <span>Dropbox App Console</span>
-                      <i class="fa-solid fa-arrow-up-right-from-square text-[9px]"></i>
-                    </a>
-                  </div>
-
+                <div id="dropboxDisconnectedView" class="space-y-3">
                   <!-- Primary Option: One-Click Browser Sign-in with PKCE (Auto-Renew) -->
-                  <div class="p-3.5 bg-emerald-50/70 dark:bg-emerald-950/25 border-2 border-emerald-500/40 rounded-xl space-y-3">
+                  <div class="p-3 bg-emerald-50/70 dark:bg-emerald-950/25 border-2 border-emerald-500/40 rounded-xl space-y-2.5">
                     <div class="flex items-center justify-between flex-wrap gap-1.5">
                       <div class="flex items-center gap-2">
-                        <div class="w-6 h-6 rounded-md bg-emerald-600 text-white flex items-center justify-center text-xs font-bold shadow-2xs">
+                        <div class="w-5 h-5 rounded bg-emerald-600 text-white flex items-center justify-center text-[10px] font-bold shadow-2xs">
                           <i class="fa-solid fa-shield-halved"></i>
                         </div>
                         <div>
                           <span class="font-bold text-slate-800 dark:text-slate-100 text-xs">Method 1: One-Click Sign-In with PKCE</span>
-                          <span class="block text-[10px] text-emerald-700 dark:text-emerald-400 font-semibold">Recommended &bull; Permanent Background Auto-Renewal</span>
+                          <span class="block text-[10px] text-emerald-700 dark:text-emerald-400 font-semibold">Recommended &bull; Permanent Auto-Renewal</span>
                         </div>
                       </div>
-                      <span class="text-[10px] bg-emerald-600 text-white font-bold px-2 py-0.5 rounded-full">Zero Expired Tokens</span>
+                      <a href="https://www.dropbox.com/developers/apps" target="_blank" rel="noopener noreferrer" class="text-[10px] text-emerald-700 dark:text-emerald-400 hover:underline font-semibold flex items-center gap-1">
+                        <span>Dropbox Console</span>
+                        <i class="fa-solid fa-arrow-up-right-from-square text-[8px]"></i>
+                      </a>
                     </div>
 
-                    <p class="text-[11px] text-slate-600 dark:text-slate-300 leading-relaxed">
-                      Authorize once in a secure browser popup. The workstation receives a permanent offline refresh token and automatically renews access in the background before each upload—no more 4-hour token expirations!
-                    </p>
-
                     <div class="space-y-1.5">
-                      <label for="settingDropboxAppKeyInput" class="text-[11px] font-bold text-slate-700 dark:text-slate-300 flex items-center justify-between">
-                        <span>Dropbox App Key:</span>
-                        <a href="https://www.dropbox.com/developers/apps" target="_blank" rel="noopener noreferrer" class="text-emerald-600 dark:text-emerald-400 hover:underline font-medium">Find in Dropbox App Console &rarr;</a>
-                      </label>
                       <div class="flex flex-col sm:flex-row gap-2">
                         <div class="relative flex-1">
-                          <input type="text" id="settingDropboxAppKeyInput" placeholder="Paste App Key (e.g. 15-character key from Console)" class="w-full bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-lg py-2 pl-3 pr-8 font-mono text-xs text-slate-800 dark:text-slate-100 outline-none focus:ring-2 focus:ring-emerald-500 transition-all">
+                          <input type="text" id="settingDropboxAppKeyInput" placeholder="Paste App Key from Dropbox Console" class="w-full bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-lg py-1.5 pl-2.5 pr-8 font-mono text-xs text-slate-800 dark:text-slate-100 outline-none focus:ring-2 focus:ring-emerald-500 transition-all">
                           <button type="button" onclick="pasteToInput('settingDropboxAppKeyInput')" class="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-emerald-600 dark:hover:text-emerald-400 p-1 cursor-pointer text-xs" title="Paste App Key">
                             <i class="fa-regular fa-clipboard"></i>
                           </button>
                         </div>
-                        <button type="button" onclick="startDropboxAuthPopup(document.getElementById('settingDropboxAppKeyInput')?.value)" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold shadow-xs flex items-center justify-center gap-2 transition cursor-pointer shrink-0">
-                          <i class="fa-brands fa-dropbox text-sm"></i>
-                          <span>Sign In with Dropbox (Auto-Renew)</span>
+                        <button type="button" onclick="startDropboxAuthPopup(document.getElementById('settingDropboxAppKeyInput')?.value)" class="px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold shadow-xs flex items-center justify-center gap-1.5 transition cursor-pointer shrink-0">
+                          <i class="fa-brands fa-dropbox text-xs"></i>
+                          <span>Sign In (Auto-Renew)</span>
                         </button>
                       </div>
                     </div>
 
-                    <!-- Quick Authorization Code Input (Failsafe for manual code entry) -->
-                    <div class="pt-1">
-                      <div class="flex items-center justify-between cursor-pointer text-[10px] text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 font-medium py-0.5" onclick="toggleElementVisibility('manualAuthCodeBox')">
-                        <span class="flex items-center gap-1.5">
-                          <i class="fa-solid fa-key text-emerald-600 text-[11px]"></i>
-                          <span>Have an authorization code from popup or Dropbox URL?</span>
+                    <!-- Failsafe manual auth code box -->
+                    <div class="pt-0.5">
+                      <div class="flex items-center justify-between cursor-pointer text-[10px] text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 font-medium" onclick="toggleElementVisibility('manualAuthCodeBox')">
+                        <span class="flex items-center gap-1">
+                          <i class="fa-solid fa-key text-emerald-600 text-[10px]"></i>
+                          <span>Have an authorization code?</span>
                         </span>
-                        <span class="text-emerald-600 dark:text-emerald-400 font-bold hover:underline">Paste Code & Finish &darr;</span>
+                        <span class="text-emerald-600 dark:text-emerald-400 font-bold hover:underline">Paste Code &darr;</span>
                       </div>
-                      <div id="manualAuthCodeBox" class="hidden mt-1.5 p-2.5 bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 space-y-2">
+                      <div id="manualAuthCodeBox" class="hidden mt-1.5 p-2 bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 space-y-1.5">
                         <div class="flex flex-col sm:flex-row gap-2">
                           <div class="relative flex-1">
-                            <input type="text" id="settingDropboxManualAuthCode" placeholder="Paste Authorization Code from popup or URL (code=...)" class="w-full bg-slate-50 dark:bg-slate-700/60 border border-slate-300 dark:border-slate-600 rounded-lg py-1.5 pl-3 pr-8 font-mono text-xs text-slate-800 dark:text-slate-100 outline-none focus:ring-2 focus:ring-emerald-500">
+                            <input type="text" id="settingDropboxManualAuthCode" placeholder="Paste code=... from URL" class="w-full bg-slate-50 dark:bg-slate-700/60 border border-slate-300 dark:border-slate-600 rounded-lg py-1 pl-2.5 pr-8 font-mono text-xs text-slate-800 dark:text-slate-100 outline-none focus:ring-2 focus:ring-emerald-500">
                             <button type="button" onclick="pasteToInput('settingDropboxManualAuthCode')" class="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-emerald-600 p-1 cursor-pointer text-xs" title="Paste Code">
                               <i class="fa-regular fa-clipboard"></i>
                             </button>
                           </div>
-                          <button type="button" onclick="completeDropboxPairingWithCode(document.getElementById('settingDropboxManualAuthCode')?.value)" class="px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold shadow-xs transition cursor-pointer shrink-0 flex items-center justify-center gap-1.5">
+                          <button type="button" onclick="completeDropboxPairingWithCode(document.getElementById('settingDropboxManualAuthCode')?.value)" class="px-3 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold shadow-xs transition cursor-pointer shrink-0 flex items-center justify-center gap-1">
                             <i class="fa-solid fa-circle-check"></i>
                             <span>Finish Pairing</span>
                           </button>
@@ -2708,25 +2642,18 @@
                       </div>
                     </div>
 
-                    <!-- Redirect URI Guide Box -->
-                    <div class="p-2.5 bg-white/80 dark:bg-slate-800/80 rounded-lg border border-emerald-200 dark:border-emerald-800/60 text-[10px] space-y-1 text-slate-600 dark:text-slate-300">
-                      <div class="flex items-center justify-between">
-                        <span class="font-semibold text-slate-700 dark:text-slate-200 flex items-center gap-1">
-                          <i class="fa-solid fa-link text-emerald-600"></i> Required OAuth Redirect URI:
-                        </span>
-                        <button type="button" onclick="copyDropboxRedirectUri()" class="text-blue-600 dark:text-blue-400 hover:underline font-bold flex items-center gap-1 cursor-pointer">
-                          <i class="fa-solid fa-copy"></i>
-                          <span id="dropboxCallbackUriLabel">Copy Exact URI</span>
-                        </button>
-                      </div>
-                      <div class="text-[10px] text-slate-500 dark:text-slate-400">
-                        In Dropbox Console &rarr; <em>Settings</em> tab &rarr; add to <strong>Redirect URIs</strong> before signing in.
-                      </div>
+                    <!-- Redirect URI Guide Row -->
+                    <div class="flex items-center justify-between text-[10px] pt-0.5 text-slate-500 dark:text-slate-400">
+                      <span>Redirect URI in Console:</span>
+                      <button type="button" onclick="copyDropboxRedirectUri()" class="text-blue-600 dark:text-blue-400 hover:underline font-bold flex items-center gap-1 cursor-pointer">
+                        <i class="fa-solid fa-copy"></i>
+                        <span id="dropboxCallbackUriLabel">Copy Exact URI</span>
+                      </button>
                     </div>
                   </div>
 
                   <!-- Secondary Option: Manual 4-Hour Token Paste -->
-                  <div class="p-3 bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-700 rounded-xl space-y-2">
+                  <div class="p-2.5 bg-slate-50 dark:bg-slate-900/40 border border-slate-200 dark:border-slate-700 rounded-xl space-y-2">
                     <div class="flex items-center justify-between cursor-pointer" onclick="toggleElementVisibility('manualTokenCollapseBox')">
                       <div class="flex items-center gap-1.5">
                         <i class="fa-solid fa-clock text-amber-500 text-xs"></i>
@@ -2738,13 +2665,10 @@
                       </span>
                     </div>
 
-                    <div id="manualTokenCollapseBox" class="space-y-2 pt-1">
-                      <p class="text-[10px] text-slate-500 dark:text-slate-400">
-                        Generate an access token in the Dropbox Console. Note: Dropbox automatically revokes manual developer tokens after 4 hours.
-                      </p>
+                    <div id="manualTokenCollapseBox" class="space-y-1.5 hidden pt-1">
                       <div class="flex flex-col sm:flex-row gap-2">
                         <div class="relative flex-1">
-                          <input type="password" id="settingDropboxManualToken" placeholder="Paste manual token (sl.u...)" class="w-full bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-lg py-1.5 pl-3 pr-16 font-mono text-xs text-slate-800 dark:text-slate-100 outline-none focus:ring-2 focus:ring-blue-500">
+                          <input type="password" id="settingDropboxManualToken" placeholder="Paste manual token (sl.u...)" class="w-full bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-lg py-1.5 pl-2.5 pr-14 font-mono text-xs text-slate-800 dark:text-slate-100 outline-none focus:ring-2 focus:ring-blue-500">
                           <div class="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1">
                             <button type="button" onclick="pasteToInput('settingDropboxManualToken')" class="text-slate-400 hover:text-blue-600 p-1 cursor-pointer text-xs" title="Paste">
                               <i class="fa-regular fa-clipboard"></i>
@@ -2754,40 +2678,40 @@
                             </button>
                           </div>
                         </div>
-                        <button type="button" onclick="applyManualDropboxToken(document.getElementById('settingDropboxManualToken')?.value)" class="px-3.5 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-bold shadow-xs transition cursor-pointer shrink-0">
+                        <button type="button" onclick="applyManualDropboxToken(document.getElementById('settingDropboxManualToken')?.value)" class="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-bold shadow-xs transition cursor-pointer shrink-0">
                           Connect Manual Token
                         </button>
                       </div>
                     </div>
                   </div>
 
-                  <!-- Hidden legacy inputs for internal compatibility -->
+                  <!-- Hidden compatibility inputs -->
                   <input type="hidden" id="settingDropboxAccessToken">
                   <input type="hidden" id="settingDropboxAppKey">
                   <input type="hidden" id="settingDropboxUnifiedCredential">
 
-                  <!-- Dynamic Token Diagnostic & Fix Guidance Alert -->
-                  <div id="dropboxTokenDiagnosticBox" class="hidden p-3 rounded-lg border text-xs space-y-2 animate-fadeIn transition-all"></div>
+                  <!-- Dynamic Token Diagnostic Alert -->
+                  <div id="dropboxTokenDiagnosticBox" class="hidden p-2.5 rounded-lg border text-xs space-y-1.5 animate-fadeIn transition-all"></div>
                 </div>
 
               </div>
 
-              <!-- Dedicated Separate Folder Paths with Quick Reset and Live Preview -->
-              <div class="space-y-2 pt-1">
+              <!-- Dedicated Separate Folder Paths -->
+              <div class="space-y-2 p-3 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700">
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <!-- Word Folder Path -->
                   <div class="space-y-1">
                     <div class="flex items-center justify-between">
                       <label for="settingDropboxWordFolder" class="font-bold text-slate-700 dark:text-slate-300 text-xs flex items-center gap-1.5">
                         <i class="fa-solid fa-file-word text-blue-500"></i>
-                        <span>Word (.doc) Folder Path</span>
+                        <span>Word (.doc) Folder</span>
                       </label>
                       <button type="button" onclick="resetDropboxFolder('word')" class="text-[10px] font-medium text-slate-500 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 flex items-center gap-1 cursor-pointer transition" title="Reset Word folder path to default">
                         <i class="fa-solid fa-arrow-rotate-left text-[9px]"></i>
                         <span>Reset</span>
                       </button>
                     </div>
-                    <input type="text" id="settingDropboxWordFolder" oninput="updateDropboxPathPreviews()" placeholder="/Subordinate Courts/Word" value="/Subordinate Courts/Word" class="w-full bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-lg p-2 font-mono text-xs text-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-blue-500 outline-none">
+                    <input type="text" id="settingDropboxWordFolder" oninput="updateDropboxPathPreviews()" placeholder="/Subordinate Courts/Word" value="/Subordinate Courts/Word" class="w-full bg-slate-50 dark:bg-slate-700/60 border border-slate-300 dark:border-slate-600 rounded-lg p-1.5 font-mono text-xs text-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-blue-500 outline-none">
                   </div>
 
                   <!-- PDF Folder Path -->
@@ -2795,47 +2719,47 @@
                     <div class="flex items-center justify-between">
                       <label for="settingDropboxPdfFolder" class="font-bold text-slate-700 dark:text-slate-300 text-xs flex items-center gap-1.5">
                         <i class="fa-solid fa-file-pdf text-amber-500"></i>
-                        <span>PDF Documents Folder Path</span>
+                        <span>PDF Documents Folder</span>
                       </label>
                       <button type="button" onclick="resetDropboxFolder('pdf')" class="text-[10px] font-medium text-slate-500 dark:text-slate-400 hover:text-amber-600 dark:hover:text-amber-400 flex items-center gap-1 cursor-pointer transition" title="Reset PDF folder path to default">
                         <i class="fa-solid fa-arrow-rotate-left text-[9px]"></i>
                         <span>Reset</span>
                       </button>
                     </div>
-                    <input type="text" id="settingDropboxPdfFolder" oninput="updateDropboxPathPreviews()" placeholder="/Subordinate Courts/PDF" value="/Subordinate Courts/PDF" class="w-full bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-lg p-2 font-mono text-xs text-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-amber-500 outline-none">
+                    <input type="text" id="settingDropboxPdfFolder" oninput="updateDropboxPathPreviews()" placeholder="/Subordinate Courts/PDF" value="/Subordinate Courts/PDF" class="w-full bg-slate-50 dark:bg-slate-700/60 border border-slate-300 dark:border-slate-600 rounded-lg p-1.5 font-mono text-xs text-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-amber-500 outline-none">
                   </div>
                 </div>
 
                 <!-- Live Path Preview Box -->
-                <div class="p-2.5 bg-slate-100/90 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-xl space-y-1.5">
+                <div class="p-2 bg-slate-100 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-700 rounded-lg space-y-1">
                   <div class="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 flex items-center justify-between">
                     <span class="flex items-center gap-1.5">
                       <i class="fa-solid fa-folder-tree text-blue-500"></i>
-                      <span>Live Dropbox Destination Previews</span>
+                      <span>Destination Previews</span>
                     </span>
                     <button type="button" onclick="resetAllDropboxFolders()" class="text-[10px] text-blue-600 dark:text-blue-400 hover:underline cursor-pointer font-medium">
-                      Reset Both to Default
+                      Reset Both
                     </button>
                   </div>
-                  <div class="font-mono text-[11px] text-slate-700 dark:text-slate-300 truncate flex items-center gap-2">
-                    <i class="fa-solid fa-file-word text-blue-500 text-[11px] shrink-0"></i>
+                  <div class="font-mono text-[10px] text-slate-700 dark:text-slate-300 truncate flex items-center gap-1.5">
+                    <i class="fa-solid fa-file-word text-blue-500 text-[10px] shrink-0"></i>
                     <span id="previewWordDropboxPath" class="truncate">/Subordinate Courts/Word/[Docket].doc</span>
                   </div>
-                  <div class="font-mono text-[11px] text-slate-700 dark:text-slate-300 truncate flex items-center gap-2">
-                    <i class="fa-solid fa-file-pdf text-amber-500 text-[11px] shrink-0"></i>
+                  <div class="font-mono text-[10px] text-slate-700 dark:text-slate-300 truncate flex items-center gap-1.5">
+                    <i class="fa-solid fa-file-pdf text-amber-500 text-[10px] shrink-0"></i>
                     <span id="previewPdfDropboxPath" class="truncate">/Subordinate Courts/PDF/[Docket].pdf</span>
                   </div>
                 </div>
-              </div>
 
-              <!-- Local Backup Download Checkbox -->
-              <div class="pt-1">
-                <label class="flex items-center gap-2 cursor-pointer">
-                  <input type="checkbox" id="settingDropboxAutoDownloadBackup" checked class="rounded text-blue-600 focus:ring-blue-500">
-                  <span class="text-xs text-slate-700 dark:text-slate-300 font-medium">
-                    Also download offline backup copies to computer when syncing
-                  </span>
-                </label>
+                <!-- Local Backup Download Checkbox -->
+                <div class="pt-0.5">
+                  <label class="flex items-center gap-2 cursor-pointer">
+                    <input type="checkbox" id="settingDropboxAutoDownloadBackup" checked class="rounded text-blue-600 focus:ring-blue-500">
+                    <span class="text-xs text-slate-700 dark:text-slate-300 font-medium">
+                      Also download offline backup copies to computer when syncing
+                    </span>
+                  </label>
+                </div>
               </div>
 
             </div>
@@ -2846,23 +2770,26 @@
       </div>
 
       <!-- Modal Footer -->
-      <div class="p-4 bg-slate-50 dark:bg-slate-800/90 border-t border-slate-200 dark:border-slate-700 flex flex-wrap items-center justify-between gap-2 shrink-0">
+      <div class="p-3.5 sm:p-4 bg-slate-50 dark:bg-slate-800/90 border-t border-slate-200 dark:border-slate-700 flex flex-wrap items-center justify-between gap-2 shrink-0">
         <div class="flex items-center gap-2">
           <button type="button" onclick="resetMagistrateProfileDefaults()" class="text-rose-500 hover:text-rose-600 dark:text-rose-400 text-xs font-semibold hover:underline flex items-center gap-1 cursor-pointer" title="Reset this profile back to default template">
             <i class="fa-solid fa-rotate-left text-[11px]"></i> Reset Defaults
           </button>
           <span class="text-slate-300 dark:text-slate-600">•</span>
-          <span class="text-[11px] text-slate-400 font-mono hidden sm:inline">Settings saved to Local Storage</span>
+          <span class="text-[11px] text-slate-400 font-mono hidden sm:inline">Saved in Local Storage</span>
         </div>
         <div class="flex items-center gap-2 ml-auto">
           <button type="button" onclick="closeSettingsModal()" class="px-3.5 py-2 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-lg font-medium transition text-xs cursor-pointer">
             Cancel
           </button>
           <button type="button" onclick="saveSettingsAndApply()" class="px-4 py-2 bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold rounded-lg shadow-sm transition text-xs flex items-center gap-1.5 cursor-pointer">
-            <i class="fa-solid fa-check"></i> Save & Apply to Case
+            <i class="fa-solid fa-check"></i> Save &amp; Apply
           </button>
         </div>
       </div>
+
+    </div>
+  </div>
 
     </div>
   </div>
@@ -2952,7 +2879,7 @@
 
       <!-- Modal Footer -->
       <div class="p-3 sm:p-4 border-t border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/80 flex items-center justify-between gap-2">
-        <button type="button" onclick="closeDropboxExpiredModal(); openSettingsModal();" class="text-slate-600 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 text-xs font-semibold flex items-center gap-1 cursor-pointer">
+        <button type="button" onclick="closeDropboxExpiredModal(); openSettingsModal('cloud');" class="text-slate-600 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 text-xs font-semibold flex items-center gap-1 cursor-pointer">
           <i class="fa-solid fa-gear"></i> Open Full Settings
         </button>
         <div class="flex items-center gap-2">
@@ -3030,47 +2957,49 @@
     let isNavAutohidden = false;
     let navMouseOverHeader = false;
     let navHideTimer = null;
+    let lastManualToggleTime = 0;
 
-    function hideTopNav() {
-      if (!navAutohideEnabled) return;
-      if (navMouseOverHeader) return; // Prevent hiding if mouse is hovered over header or toolbar controls
+    function hideTopNav(forceManual = false) {
+      if (!forceManual) {
+        if (!navAutohideEnabled) return;
+        if (navMouseOverHeader) return;
+        if (Date.now() - lastManualToggleTime < 1000) return;
+      } else {
+        lastManualToggleTime = Date.now();
+      }
 
-      const header = document.getElementById('topNavHeader');
-      const toolbar = document.getElementById('toolbar');
-      const hoverZone = document.getElementById('topNavHoverZone');
+      const toolbar = document.getElementById('richTextToolbar') || document.getElementById('toolbar');
       const toggleIcon = document.getElementById('topNavToggleIcon');
       const toggleBtn = document.getElementById('topNavToggleIconBtn');
 
-      if (header) header.classList.add('nav-autohidden');
       if (toolbar) toolbar.classList.add('toolbar-autohidden');
       isNavAutohidden = true;
 
-      if (hoverZone) hoverZone.classList.add('active');
       if (toggleIcon) {
         toggleIcon.className = 'fa-solid fa-chevron-down text-xs text-amber-500';
       }
       if (toggleBtn) {
-        toggleBtn.setAttribute('title', 'Show Top Navigation & Session Bar (Esc / Hover Top)');
+        toggleBtn.setAttribute('title', 'Show Formatting Toolbar (Esc)');
       }
     }
 
     function showTopNav(fromManualClick = false) {
-      const header = document.getElementById('topNavHeader');
-      const toolbar = document.getElementById('toolbar');
-      const hoverZone = document.getElementById('topNavHoverZone');
+      if (fromManualClick) {
+        lastManualToggleTime = Date.now();
+      }
+
+      const toolbar = document.getElementById('richTextToolbar') || document.getElementById('toolbar');
       const toggleIcon = document.getElementById('topNavToggleIcon');
       const toggleBtn = document.getElementById('topNavToggleIconBtn');
 
-      if (header) header.classList.remove('nav-autohidden');
       if (toolbar) toolbar.classList.remove('toolbar-autohidden');
       isNavAutohidden = false;
 
-      if (hoverZone) hoverZone.classList.remove('active');
       if (toggleIcon) {
         toggleIcon.className = 'fa-solid fa-chevron-up text-xs';
       }
       if (toggleBtn) {
-        toggleBtn.setAttribute('title', 'Hide Top Navigation & Session Bar (Esc)');
+        toggleBtn.setAttribute('title', 'Hide Formatting Toolbar (Esc)');
       }
 
       if (navHideTimer) {
@@ -3079,20 +3008,22 @@
       }
     }
 
-    function toggleTopBarsManually() {
+    function toggleTopBarsManually(forceManual = true) {
+      lastManualToggleTime = Date.now();
       if (isNavAutohidden) {
         showTopNav(true);
       } else {
-        hideTopNav();
+        hideTopNav(true);
       }
     }
 
     function handleEditorTypingActivity() {
       if (!navAutohideEnabled) return;
       if (navMouseOverHeader) return;
+      if (Date.now() - lastManualToggleTime < 1200) return;
 
       if (!isNavAutohidden) {
-        hideTopNav();
+        hideTopNav(false);
       }
     }
 
@@ -3108,10 +3039,10 @@
       if (checkbox) checkbox.checked = navAutohideEnabled;
 
       if (!navAutohideEnabled) {
-        showTopNav();
-        showToast('Top navigation bar autohide turned OFF.');
+        showTopNav(true);
+        showToast('Formatting toolbar autohide turned OFF.');
       } else {
-        showToast('Top navigation bar autohide turned ON (hides while typing).');
+        showToast('Formatting toolbar autohide turned ON (hides while typing).');
       }
     }
 
@@ -3120,14 +3051,14 @@
       localStorage.setItem(FOCUS_MODE_KEY, isFocusModeActive ? 'true' : 'false');
       applyFocusModeUI();
       if (isFocusModeActive) {
-        hideTopNav();
+        hideTopNav(true);
         const sidebar = document.getElementById('metadataSidebar');
         if (sidebar && !sidebar.classList.contains('collapsed')) {
           toggleSidebar();
         }
         showToast('Court Focus Mode activated (maximum visibility for proceedings).');
       } else {
-        showTopNav();
+        showTopNav(true);
         showToast('Standard layout restored.');
       }
     }
@@ -3159,40 +3090,36 @@
       }
     }
 
-    // Global mouse tracking & hover triggers for top nav & toolbar
+    // Global mouse tracking & hover triggers for toolbar reveal
     window.addEventListener('mousemove', (e) => {
-      if (isNavAutohidden && e.clientY <= 28) {
+      if (isNavAutohidden && e.clientY <= 55 && Date.now() - lastManualToggleTime > 800) {
         showTopNav();
       }
     });
 
     document.addEventListener('DOMContentLoaded', () => {
       const topHeader = document.getElementById('topNavHeader');
-      const toolbar = document.getElementById('toolbar');
+      const toolbar = document.getElementById('richTextToolbar') || document.getElementById('toolbar');
 
       [topHeader, toolbar].forEach(el => {
         if (!el) return;
         el.addEventListener('mouseenter', () => {
           navMouseOverHeader = true;
           if (navHideTimer) clearTimeout(navHideTimer);
+          if (isNavAutohidden && Date.now() - lastManualToggleTime > 600) {
+            showTopNav();
+          }
         });
         el.addEventListener('mouseleave', () => {
           navMouseOverHeader = false;
           const editor = document.getElementById('editor');
           if (navAutohideEnabled && editor && (document.activeElement === editor || editor.contains(document.activeElement))) {
             navHideTimer = setTimeout(() => {
-              if (!navMouseOverHeader) hideTopNav();
+              if (!navMouseOverHeader && Date.now() - lastManualToggleTime > 600) hideTopNav(false);
             }, 1200);
           }
         });
       });
-
-      const hoverZone = document.getElementById('topNavHoverZone');
-      if (hoverZone) {
-        hoverZone.addEventListener('mouseenter', () => {
-          showTopNav();
-        });
-      }
 
       applyFocusModeUI();
     });
@@ -7002,15 +6929,39 @@
       }
 
       try {
-        const res = await fetch('/api/dropbox/token', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            grant_type: 'refresh_token',
-            refresh_token: active.dropboxRefreshToken,
-            client_id: active.dropboxAppKey || 'hshv9667y45ktdh'
-          })
-        });
+        let res;
+        const appKey = active.dropboxAppKey || 'hshv9667y45ktdh';
+        const isFileProtocol = window.location.protocol === 'file:' || !window.location.host;
+
+        if (!isFileProtocol) {
+          try {
+            res = await fetch('/api/dropbox/token', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                grant_type: 'refresh_token',
+                refresh_token: active.dropboxRefreshToken,
+                client_id: appKey
+              })
+            });
+          } catch (netErr) {
+            console.warn('Backend /api/dropbox/token unavailable, trying direct Dropbox API:', netErr);
+          }
+        }
+
+        // Direct Dropbox API fallback (works in standalone index.html without local server)
+        if (!res || !res.ok) {
+          const directParams = new URLSearchParams();
+          directParams.append('grant_type', 'refresh_token');
+          directParams.append('refresh_token', active.dropboxRefreshToken);
+          directParams.append('client_id', appKey);
+
+          res = await fetch('https://api.dropboxapi.com/oauth2/token', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: directParams.toString()
+          });
+        }
 
         const data = await res.json();
         if (res.ok && data.access_token) {
@@ -9249,17 +9200,42 @@
       const redirectUri = `${window.location.origin}/auth/dropbox/callback`;
 
       try {
-        const res = await fetch('/api/dropbox/token', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            grant_type: 'authorization_code',
-            code: code,
-            code_verifier: codeVerifier,
-            client_id: appKey,
-            redirect_uri: redirectUri
-          })
-        });
+        let res;
+        const isFileProtocol = window.location.protocol === 'file:' || !window.location.host;
+
+        if (!isFileProtocol) {
+          try {
+            res = await fetch('/api/dropbox/token', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                grant_type: 'authorization_code',
+                code: code,
+                code_verifier: codeVerifier,
+                client_id: appKey,
+                redirect_uri: redirectUri
+              })
+            });
+          } catch (netErr) {
+            console.warn('Backend /api/dropbox/token unavailable, trying direct Dropbox API:', netErr);
+          }
+        }
+
+        // Direct fallback
+        if (!res || !res.ok) {
+          const directParams = new URLSearchParams();
+          directParams.append('grant_type', 'authorization_code');
+          directParams.append('code', code);
+          directParams.append('code_verifier', codeVerifier);
+          directParams.append('client_id', appKey);
+          directParams.append('redirect_uri', redirectUri);
+
+          res = await fetch('https://api.dropboxapi.com/oauth2/token', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: directParams.toString()
+          });
+        }
 
         const data = await res.json();
         if (!res.ok || !data.access_token) {
@@ -9580,9 +9556,35 @@
       }
     }
 
-    function openSettingsModal() {
+    let currentSettingsTab = 'courtroom';
+
+    function switchSettingsTab(tabKey) {
+      currentSettingsTab = tabKey || 'courtroom';
+      const tabs = ['courtroom', 'documents', 'cloud'];
+      tabs.forEach(t => {
+        const pane = document.getElementById(`settingsTab_${t}`);
+        const btn = document.getElementById(`btnSettingsTab_${t}`);
+        if (pane) {
+          if (t === currentSettingsTab) {
+            pane.classList.remove('hidden');
+          } else {
+            pane.classList.add('hidden');
+          }
+        }
+        if (btn) {
+          if (t === currentSettingsTab) {
+            btn.className = 'flex-1 py-2 px-2.5 text-xs font-bold rounded-lg transition-all flex items-center justify-center gap-2 bg-white dark:bg-slate-700 text-amber-600 dark:text-amber-400 shadow-xs border border-slate-200 dark:border-slate-600 cursor-pointer';
+          } else {
+            btn.className = 'flex-1 py-2 px-2.5 text-xs font-medium rounded-lg transition-all flex items-center justify-center gap-2 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 hover:bg-white/50 dark:hover:bg-slate-800/50 cursor-pointer';
+          }
+        }
+      });
+    }
+
+    function openSettingsModal(defaultTab) {
       showTopNav();
       populateSettingsUI();
+      switchSettingsTab(defaultTab || currentSettingsTab || 'courtroom');
       const modal = document.getElementById('settingsModal');
       if (modal) modal.classList.remove('hidden');
     }
